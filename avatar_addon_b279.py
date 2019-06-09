@@ -13,12 +13,14 @@ import os
 import bpy
 import numpy as np
 
+import mathutils
 from bpy.props import *
 from mathutils import Vector
 
-# define avatar data path
-avt_data_path = "/mnt/data/jsanchez/Data/Avatar/ScriptData"
-
+# Set a file 'config.py' with variable avt_path that contains the
+# path of the script
+#from config import avt_path
+avt_path = '/home/jsanchez/Software/github-projects/avatar'
 
 def get_vertices (obj):
 	return [(obj.matrix_world * v.co) for v in obj.data.vertices]
@@ -79,7 +81,7 @@ class Avatar:
 	def __init__ (self):
 		
 		# root_path
-		self.root_path = "/mnt/data/jsanchez/Data/Avatar/ScriptData"
+		self.root_path = avt_path
 
 		# avt mesh
 		self.mesh = None # this points to mesh object
@@ -87,6 +89,7 @@ class Avatar:
 		self.skel = None
 		self.mesh_mwi = None
 		self.collision_mesh = None
+		self.body_kdtree = None
 		
 		# respect clohing
 		self.has_tshirt = False
@@ -111,14 +114,17 @@ class Avatar:
 			cloth_mesh = self.tshirt_mesh
 			cloth_verts = self.tshirt_mesh.data.vertices
 			cloth_mat_world = self.tshirt_mesh.matrix_world
+			cloth_mat_world_inv = self.tshirt_mesh.matrix_world.inverted()
 		elif cloth_name == 'pants':
 			cloth_mesh = self.pants_mesh
 			cloth_verts = self.pants_mesh.data.vertices
 			cloth_mat_world = self.pants_mesh.matrix_world
+			cloth_mat_world_inv = self.pants_mesh.matrix_world.inverted()
 		elif cloth_name == 'dress':
 			cloth_mesh = self.dress_mesh
 			cloth_verts = self.dress_mesh.data.vertices
 			cloth_mat_world = self.dress_mesh.matrix_world
+			cloth_mat_world_inv = self.dress_mesh.matrix_world.inverted()
 		else:
 			print("ERROR")
 			
@@ -130,8 +136,16 @@ class Avatar:
 			#self.update_vertex()   
 
 			# Need to pre-compute most of the values to make reshaping cloths faster
+			#current_vertex = cloth_verts[cloth_vertex_index].co * cloth_mat_world_inv 
 			current_vertex = cloth_mat_world * cloth_verts[cloth_vertex_index].co    
-			self.mesh_chosen_vertices = self.select_required_verts(current_vertex,0) 
+			#self.mesh_chosen_vertices = self.select_required_verts(current_vertex,0) 
+
+			# 2 possible versions - radius or n-neighbours
+			# kd.find_range() or kd.find_n()
+			for (co, index, dist) in self.body_kdtree.find_n(current_vertex, 3):
+			#for (co, index, dist) in self.body_kdtree.find_range(current_vertex, 0.2):
+				#print("    ", co, index, dist)
+				self.mesh_chosen_vertices.append(index)
 
 #			for idx in range(0,len(self.mesh_chosen_vertices)):
 #				self.mesh.data.vertices[self.mesh_chosen_vertices[idx]].select = True
@@ -212,7 +226,7 @@ class Avatar_OT_LoadModel(bpy.types.Operator):
 	bl_label = "Load human model"
 	bl_description = "Loads a parametric naked human model"
 
-	path_input = "/mnt/data/jsanchez/Data/Avatar/ScriptData/Eigenbodies"
+	path_input = "%s/models/Eigenbodies" % avt_path
 
 	global eigenbody0
 	eigenbody0 = []
@@ -421,16 +435,25 @@ class Avatar_OT_LoadModel(bpy.types.Operator):
 		
 		# load makehuman model
 		if bpy.data.objects.get("Naked_body") is None:
-			#model_file = "%s/base_model.mhx2" % avt_data_path
-			#model_file = "%s/cmu_naked.mhx2" % avt_data_path
-			model_file = "%s/Base.mhx2" % avt_data_path
+			#model_file = "%s/models/base_model.mhx2" % avt_path
+			model_file = "%s/models/cmu_naked.mhx2" % avt_path
+			#model_file = "%s/models/Base.mhx2" % avt_path
 			#	bpy.ops.import_scene.fbx(filepath=model_file, axis_forward='Y', axis_up='Z')
 			bpy.ops.import_scene.makehuman_mhx2(filepath=model_file)
 			
-			mAvt.mesh = bpy.data.objects["Base:Body"]
-			#mAvt.mesh = bpy.data.objects["Cmu_naked:Body"]
+			#mAvt.mesh = bpy.data.objects["Base:Body"]
+			mAvt.mesh = bpy.data.objects["Cmu_naked:Body"]
 			#mAvt.skel = bpy.data.objects["Cmu_naked"]
 			mAvt.mesh_mwi = mAvt.mesh.matrix_world.inverted()
+
+			# save it as kd tree data
+			size = len(mAvt.mesh.data.vertices)
+			mAvt.body_kdtree = mathutils.kdtree.KDTree(size)
+		
+			for i, v in enumerate (mAvt.mesh.data.vertices):
+				mAvt.body_kdtree.insert(v.co, i)
+			
+			mAvt.body_kdtree.balance()
 			
 			
 		# set mean according PCA vertices
@@ -451,7 +474,7 @@ class Avatar_OT_PutTshirt (bpy.types.Operator):
 		obj = context.active_object
 		
 		#
-		tshirt_file = "%s/tshirt_v2.obj" % avt_data_path
+		tshirt_file = "%s/models/tshirt.obj" % avt_path
 		bpy.ops.import_scene.obj(filepath=tshirt_file)
 		
 		# change name to object
@@ -460,7 +483,7 @@ class Avatar_OT_PutTshirt (bpy.types.Operator):
 		
 		mAvt.tshirt_mesh = bpy.data.objects["tshirt"]
 		mAvt.has_tshirt = True
-		
+				
 		return {'FINISHED'}
 
 class Avatar_OT_PutPants (bpy.types.Operator):
@@ -475,12 +498,21 @@ class Avatar_OT_PutPants (bpy.types.Operator):
 		obj = context.active_object
 		
 		#
-		pants_file = "%s/tshirt.obj" % avt_data_path
+		pants_file = "%s/models/pants.obj" % avt_path
 		bpy.ops.import_scene.obj(filepath=pants_file)
 		
 		mAvt.pants_mesh = bpy.data.objects["Supermanshirt.001"]
 		mAvt.has_pants = True
+
+		# save it as kd tree data
+		size = len(mAvt.pants_mesh.data.vertices)
+		mAvt.kd_pants = mathutils.kdtree.KDTree(size)
 		
+		for i, v in enumerate (mAvt.pants_mesh.data.vertices):
+			mAvt.kd_pants.insert(v.co, i)
+			
+		mAvt.kd_pants.balance()
+					
 		return {'FINISHED'}
 	
 class Avatar_OT_PutDress (bpy.types.Operator):
@@ -495,12 +527,21 @@ class Avatar_OT_PutDress (bpy.types.Operator):
 		obj = context.active_object
 		
 		#
-		dress_file = "%s/tshirt.obj" % avt_data_path
+		dress_file = "%s/models/dress.obj" % avt_path
 		bpy.ops.import_scene.obj(filepath=dress_file)
 		
 		mAvt.dress_mesh = bpy.data.objects["Supermanshirt.001"]
 		mAvt.has_dress = True
-			
+
+		# save it as kd tree data
+		size = len(mAvt.dress_mesh.data.vertices)
+		mAvt.kd_dress = mathutils.kdtree.KDTree(size)
+		
+		for i, v in enumerate (mAvt.dress_mesh.data.vertices):
+			mAvt.kd_dress.insert(v.co, i)
+
+		mAvt.kd_dress.balance()
+						
 		return {'FINISHED'}
 
 
