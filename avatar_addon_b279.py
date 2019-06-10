@@ -155,14 +155,17 @@ class Avatar:
 		# all vertices in destination mesh
 		for cloth_vertex_index in range(0,total_vertices):
 #		for cloth_vertex_index in range(0,1):
-			#self.update_vertex()   
+			#self.update_vertex() 
+			
+			# set vertices to empty first
+			self.mesh_chosen_vertices = []  
 
 			# Need to pre-compute most of the values to make reshaping cloths faster
 			current_vertex2 = cloth_verts[cloth_vertex_index].co * cloth_mat_world_inv 
 			current_vertex = cloth_mat_world * cloth_verts[cloth_vertex_index].co    
 			#self.mesh_chosen_vertices = self.select_required_verts(current_vertex,0)
-			print("Vertices found 1")
-			print(self.select_required_verts(current_vertex,0)) 
+#			print("Vertices found 1")
+#			print(self.select_required_verts(current_vertex,0)) 
 
 			# 2 possible versions - radius or n-neighbours
 			# kd.find_range() or kd.find_n()
@@ -171,8 +174,8 @@ class Avatar:
 				#print("    ", co, index, dist)
 				self.mesh_chosen_vertices.append(index)
 
-			print("Vertices found 2")
-			print(self.mesh_chosen_vertices)
+#			print("Vertices found 2")
+#			print(self.mesh_chosen_vertices)
 
 #			for idx in range(0,len(self.mesh_chosen_vertices)):
 #				self.mesh.data.vertices[self.mesh_chosen_vertices[idx]].select = True
@@ -202,6 +205,9 @@ class Avatar:
 			disp = np.mean(vals, axis=0)
 #			print(disp)
 			result = Vector((disp[0], disp[1], disp[2])) + current_vertex
+			print("Result")
+			print(current_vertex)
+			print(result)
 
 			# set vertex position
 			cloth_verts[cloth_vertex_index].co = cloth_mesh.matrix_world.inverted() * result
