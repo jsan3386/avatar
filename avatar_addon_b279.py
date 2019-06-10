@@ -41,7 +41,9 @@ def update_weights (self, context):
 	
 	# set previous mesh vertices values
 	cp_vals = obj.data.copy()
-	mAvt.mesh_prev = cp_vals.vertices
+	# store as np data
+	#mAvt.mesh_prev = cp_vals.vertices
+	mAvt.np_mesh_prev = mAvt.read_verts(cp_vals)
 
 	# calculate new shape with PCA shapes
 	w1 = self.weight_k1/30
@@ -59,6 +61,8 @@ def update_weights (self, context):
 	for i in range(0,len(verts)):
 		verts[i].co = Vector((vertexeigen0[i][0]*w1 + vertexeigen1[i][0]*w2 + vertexeigen2[i][0]*w3 + vertexeigen3[i][0]*w4 + vertexeigen4[i][0]*w5+ vertexeigen5[i][0]*w6+ vertexeigen6[i][0]*w7 + vertexeigen7[i][0]*w8 + vertexeigen8[i][0]*w9+ vertexeigen9[i][0]*w10 +vertexeigen10[i][0]*w11  +vertexmean[i][0], vertexeigen0[i][1]*w1+ vertexeigen1[i][1]*w2+ vertexeigen2[i][1]*w3 + vertexeigen3[i][1]*w4 +vertexeigen4[i][1]*w5+ vertexeigen5[i][1]*w6+ vertexeigen6[i][1]*w7 + vertexeigen7[i][1]*w8 + vertexeigen7[i][1]*w9 + vertexeigen9[i][1]*w10 + vertexeigen10[i][1]*w11 +vertexmean[i][1], vertexeigen0[i][2]*w1+ vertexeigen1[i][2]*w2+ vertexeigen2[i][2]*w3 + vertexeigen3[i][2]*w4 + vertexeigen4[i][2]*w5 + vertexeigen5[i][2]*w6+ vertexeigen6[i][2]*w7 + vertexeigen7[i][2]*w8 + vertexeigen8[i][2]*w9+ vertexeigen9[i][2]*w10 + vertexeigen10[i][2]*w11 + vertexmean[i][2]))
 
+	mAvt.np_mesh = mAvt.read_verts(obj.data)
+	mAvt.np_mesh_diff = mAvt.np_mesh - mAvt.np_mesh_prev
 
 	# move also collision mesh
 
@@ -85,13 +89,15 @@ class Avatar:
 
 		# avt mesh
 		self.mesh = None # this points to mesh object
-		self.mesh_prev = None # this points to mesh vertices
+		self.np_mesh = None
+		self.np_mesh_prev = None
+		self.np_mesh_diff = None
 		self.skel = None
 		self.mesh_mwi = None
 		self.collision_mesh = None
 		self.body_kdtree = None
 		
-		# respect clohing
+		# clohing
 		self.has_tshirt = False
 		self.has_pants = False
 		self.has_dress = False
@@ -106,6 +112,22 @@ class Avatar:
 		self.mesh_chosen_vertices = []
 		self.number_increments = 20
 		self.increment_radius = 0.2
+
+	def read_verts(self, mesh):
+		mverts_co = np.zeros((len(mesh.vertices)*3), dtype=np.float)
+		mesh.vertices.foreach_get("co", mverts_co)
+		return np.reshape(mverts_co, (len(mesh.vertices), 3))      
+    
+	def read_edges(self, mesh):
+		fastedges = np.zeros((len(mesh.edges)*2), dtype=np.int) # [0.0, 0.0] * len(mesh.edges)
+		mesh.edges.foreach_get("vertices", fastedges)
+		return np.reshape(fastedges, (len(mesh.edges), 2))
+    
+	def read_norms(self, mesh):
+		mverts_no = np.zeros((len(mesh.vertices)*3), dtype=np.float)
+		mesh.vertices.foreach_get("normal", mverts_no)
+		return np.reshape(mverts_no, (len(mesh.vertices), 3))
+
 		
 	def deform_cloth(self, cloth_name):
 		
@@ -132,20 +154,25 @@ class Avatar:
 			
 		# all vertices in destination mesh
 		for cloth_vertex_index in range(0,total_vertices):
-#		for cloth_vertex_index in range(0,100):
+#		for cloth_vertex_index in range(0,1):
 			#self.update_vertex()   
 
 			# Need to pre-compute most of the values to make reshaping cloths faster
-			#current_vertex = cloth_verts[cloth_vertex_index].co * cloth_mat_world_inv 
+			current_vertex2 = cloth_verts[cloth_vertex_index].co * cloth_mat_world_inv 
 			current_vertex = cloth_mat_world * cloth_verts[cloth_vertex_index].co    
-			#self.mesh_chosen_vertices = self.select_required_verts(current_vertex,0) 
+			#self.mesh_chosen_vertices = self.select_required_verts(current_vertex,0)
+			print("Vertices found 1")
+			print(self.select_required_verts(current_vertex,0)) 
 
 			# 2 possible versions - radius or n-neighbours
 			# kd.find_range() or kd.find_n()
-			for (co, index, dist) in self.body_kdtree.find_n(current_vertex, 3):
+			for (co, index, dist) in self.body_kdtree.find_n(current_vertex2, 3):
 			#for (co, index, dist) in self.body_kdtree.find_range(current_vertex, 0.2):
 				#print("    ", co, index, dist)
 				self.mesh_chosen_vertices.append(index)
+
+			print("Vertices found 2")
+			print(self.mesh_chosen_vertices)
 
 #			for idx in range(0,len(self.mesh_chosen_vertices)):
 #				self.mesh.data.vertices[self.mesh_chosen_vertices[idx]].select = True
@@ -157,17 +184,24 @@ class Avatar:
 				print("Failed to find surrounding vertices")
 				return False
 
-			# update cloth vertex position
-			result_position = Vector()    
-			for v in self.mesh_chosen_vertices:
-				result_position +=  self.mesh_prev[v].co    
-			result_position /= len(self.mesh_chosen_vertices)
+#			# update cloth vertex position
+#			result_position = Vector()    
+#			for v in self.mesh_chosen_vertices:
+#				result_position +=  self.mesh_prev[v].co    
+#			result_position /= len(self.mesh_chosen_vertices)
 
-			result_position2 = Vector()
-			for v in self.mesh_chosen_vertices:
-				result_position2 += self.mesh.data.vertices[v].co        
-			result_position2 /= len(self.mesh_chosen_vertices)    
-			result = result_position2 - result_position + current_vertex        
+#			result_position2 = Vector()
+#			for v in self.mesh_chosen_vertices:
+#				result_position2 += self.mesh.data.vertices[v].co        
+#			result_position2 /= len(self.mesh_chosen_vertices)    
+#			result = result_position2 - result_position + current_vertex        
+
+			vals = self.np_mesh_diff[self.mesh_chosen_vertices,:]
+#			print("VALUES TEST")
+#			print(vals)
+			disp = np.mean(vals, axis=0)
+#			print(disp)
+			result = Vector((disp[0], disp[1], disp[2])) + current_vertex
 
 			# set vertex position
 			cloth_verts[cloth_vertex_index].co = cloth_mesh.matrix_world.inverted() * result
