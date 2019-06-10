@@ -10,6 +10,7 @@
 #	'category': 'Avatar'}
 
 import os
+import sys
 import bpy
 import numpy as np
 
@@ -19,8 +20,14 @@ from mathutils import Vector
 
 # Set a file 'config.py' with variable avt_path that contains the
 # path of the script
-#from config import avt_path
-avt_path = '/home/jsanchez/Software/github-projects/avatar'
+# need to add the root path in the blender preferences panel
+for p in bpy.utils.script_paths():
+	sys.path.append(p)
+	
+from avatar.config import avt_path
+#avt_path = '/home/jsanchez/Software/github-projects/avatar'
+
+print(avt_path)
 
 def get_vertices (obj):
 	return [(obj.matrix_world * v.co) for v in obj.data.vertices]
