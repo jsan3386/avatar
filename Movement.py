@@ -1,3 +1,5 @@
+# coding=utf-8
+
 import bpy
 import math
 from mathutils import Vector, Quaternion, Matrix
@@ -7,6 +9,7 @@ import numpy as np
 import os
 import time
 from time import sleep
+
 
 ### This code works only if the original_position of the avatar is the position when imported.
 
@@ -460,7 +463,7 @@ def get_skeleton_parameters2(skel_basis, goal_pts, correction_params, reference)
 ##############################################################################################################
 
 context = bpy.context
-path_input="/home/aniol/IRI/DadesMarta/frames"
+path_input="/home/aniol/avatar/frames"
 path_output="/home/aniol/IRI/DadesMarta/sequences"
 
 # Set rotation matrix to transform from Matlab coordinates to Blender coordinates
