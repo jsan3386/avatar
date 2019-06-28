@@ -22,8 +22,8 @@ import numpy as np
 
 from numpy import *
 
-import mathutils # no es pot comentar
-from bpy.props import *  # no es pot comentar
+import mathutils 
+from bpy.props import * 
 
 
 
@@ -193,9 +193,9 @@ def get_skeleton_coords (skel):
 	pts_skel.append(pt15)
 	return pts_skel
 
-def checkError(R,A,T,B):
+def checkError(R,A,T,B): # UNUSED 
 
-    print("Calculating the error.... won't take long")
+    print("Calculating the error....")
     error = (R*A.T+tile(T,(1,4))).T-B
     print(error)
     error = multiply(error,error)
@@ -280,6 +280,7 @@ def get_skeleton_parameters (skel_basis, goal_pts, correction_params):
 #        poseBone.rotation_mode = "ZYX"
 #        poseBone.rotation_euler = Vector(newp)
 		rotation.append(newp)
+		
 
 
 	skel_params.append(p_hips_loc)
@@ -505,6 +506,7 @@ def update_weights (self, context):
 		mAvt.deform_cloth(cloth_name='pants')
 	if (mAvt.has_dress):
 		mAvt.deform_cloth(cloth_name='dress')
+	update_verts()
 
 def update_scale(self,context):
 	
@@ -526,9 +528,9 @@ def update_scale(self,context):
 	w10 = 1 + (self.weight_k10-1)/5.0
 	vector_scale = Vector((w10,w10,w10))
 	a.scale = vector_scale
-	if clothes:
-		b.scale = vector_scale
-		c.scale = vector_scale
+	#if clothes:
+	#	b.scale = vector_scale
+		#c.scale = vector_scale
 	
 	# Scale size of the limbs
 	w11 = self.weight_k11
@@ -543,6 +545,7 @@ def update_scale(self,context):
 	w12 = self.weight_k12
 	vector_tors = Vector((w12,w12,w12))
 	a.pose.bones['Neck'].scale = vector_tors
+	update_verts()
 	
 	
 	mAvt.np_mesh = mAvt.read_verts(obj.data)
@@ -563,6 +566,21 @@ def update_scale(self,context):
 		print("he entrat a pantalons")
 	if (mAvt.has_dress):
 		mAvt.deform_cloth(cloth_name='dress')
+	update_verts()
+		
+		
+def update_verts():
+	print("**************")
+	print(" UPDATING VERTS ")
+	vlp = bpy.data.objects["verylowpoly"]
+	sp = bpy.data.objects["Standard:Body"]
+	mesh_low_poly = vlp.data
+	mesh = sp.data
+	for i in range(len(match_list)):
+		mesh_low_poly.vertices[i].co = sp.matrix_world * mesh.vertices[match_list[i]].co 
+		mesh_low_poly.vertices[i].co = vlp.matrix_world.inverted() * mesh_low_poly.vertices[i].co
+	print(" Weights Updated ")
+	print("*********")
 	
 
 class Avatar:
@@ -1086,6 +1104,63 @@ class Avatar_OT_LoadModel(bpy.types.Operator):
 			
 			mAvt.body_kdtree.balance()
 			
+			low_poly_model_file = "%s/models/low_poly.obj" % avt_path
+			bpy.ops.import_scene.obj(filepath=low_poly_model_file)
+			
+			bpy.context.selected_objects[0].name = 'verylowpoly'
+			bpy.context.selected_objects[0].data.name = 'verylowpoly'
+			mAvt.collision_mesh = bpy.data.objects["verylowpoly"]
+			
+			for obj in bpy.data.objects:
+				obj.select = False
+		
+			if bpy.data.objects.get("Standard") is not False:
+		
+				a = bpy.data.objects["Standard"]
+				b = bpy.data.objects["verylowpoly"]
+				a.select = True
+				b.select = True
+				bpy.context.scene.objects.active = a
+				bpy.ops.object.parent_set(type='ARMATURE_AUTO')
+				
+			# importar low poly mavt.collision_mesh 
+			vp = bpy.data.objects['verylowpoly']
+			#
+			#bpy.ops.rigidbody.objects_add(type='ACTIVE')
+			vp.hide = True
+			stb = bpy.data.objects['Standard']
+			#vp.location = stb.pose.bones['Hips'].head #- Vector((0,0,0.5)) # NO ESTA BE DEL TOT
+			st = bpy.data.objects['Standard:Body']
+			global match_list 
+			match_list = []
+			global match_list_lp 
+			match_list_lp= []
+			mesh = st.data
+			mesh_low_poly = vp.data
+			
+			for vert_lp in mesh_low_poly.vertices:
+				w_v_lp = vp.matrix_world * vert_lp.co
+				d = 10000000
+				# now we have world position vertex, try to find match in other mesh
+				for vert in mesh.vertices:
+					w_v = st.matrix_world * vert.co
+					# we have a match
+					if ((w_v_lp - w_v).length < d):
+						d = (w_v_lp - w_v).length
+						min_vert = vert.index
+						min_lp_vert = vert_lp.index
+				
+				match_list.append(min_vert)
+				match_list_lp.append(min_lp_vert)
+				
+			print(len(match_list))
+			print(len(match_list_lp))
+			# print(match_list_lp) IS AN ARRAY FROM 0 TO 411 LOGICALLY
+			print(match_list)
+			
+			update_verts()
+
+			
 			
 		# set mean according PCA vertices
 		
@@ -1112,8 +1187,28 @@ class Avatar_OT_PutTshirt (bpy.types.Operator):
 		bpy.context.selected_objects[0].name = 'tshirt'
 		bpy.context.selected_objects[0].data.name = 'tshirt'
 		
+		b = bpy.data.objects["tshirt"]
+		b.select = True
+		bpy.context.scene.objects.active = b
+		bpy.ops.object.mode_set(mode='OBJECT')
+		bpy.ops.object.modifier_add(type='CLOTH')
+		
 		mAvt.tshirt_mesh = bpy.data.objects["tshirt"]
 		mAvt.has_tshirt = True
+		
+		for obj in bpy.data.objects:
+			obj.select = False
+		#bpy.context.scene.objects.active = b
+		#bpy.ops.object.modifier_add(type='CLOTH')
+		
+		if bpy.data.objects.get("Standard") is not False:
+		
+			a = bpy.data.objects["Standard"]
+			b = bpy.data.objects["tshirt"]
+			a.select = True
+			b.select = True
+			bpy.context.scene.objects.active = a
+			bpy.ops.object.parent_set(type='ARMATURE_AUTO')
 				
 		return {'FINISHED'}
 
@@ -1135,8 +1230,14 @@ class Avatar_OT_PutPants (bpy.types.Operator):
 		# change name to object
 		bpy.context.selected_objects[0].name = 'pants'
 		bpy.context.selected_objects[0].data.name = 'pants'
+		b = bpy.data.objects["pants"]
+		b.select = True
+		bpy.context.scene.objects.active = b
+		bpy.ops.object.mode_set(mode='OBJECT')
+		bpy.ops.object.modifier_add(type='CLOTH')
 		
 		mAvt.pants_mesh = bpy.data.objects["pants"]
+		
 		mAvt.has_pants = True
 
 		# save it as kd tree data
@@ -1147,7 +1248,18 @@ class Avatar_OT_PutPants (bpy.types.Operator):
 			mAvt.kd_pants.insert(v.co, i)
 			
 		mAvt.kd_pants.balance()
-					
+		for obj in bpy.data.objects:
+			obj.select = False
+			
+		if bpy.data.objects.get("Standard") is not False:
+		
+			a = bpy.data.objects["Standard"]
+			b = bpy.data.objects["pants"]
+			a.select = True
+			b.select = True
+			bpy.context.scene.objects.active = a
+			bpy.ops.object.parent_set(type='ARMATURE_AUTO')
+			
 		return {'FINISHED'}
 	
 class Avatar_OT_PutDress (bpy.types.Operator):
@@ -1316,62 +1428,67 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 		print("**** INITIAL MATRIX DISTRIBUTION ****")
 		bones = ["Hips","LHipJoint","LeftUpLeg","LeftLeg","LeftFoot","LeftToeBase","LowerBack","Spine","Spine1","LeftShoulder","LeftArm","LeftForeArm","LeftHand","LThumb","LeftFingerBase","LeftHandFinger1","Neck","Neck1","Head","RightShoulder","RightArm","RightForeArm","RightHand","RThumb","RightFingerBase","RightHandFinger1","RHipJoint","RightUpLeg","RightLeg","RightFoot","RightToeBase"]
 		for i in range(len(bones)):
-		    #print(bones[i])
-		    bone = bones[i]
-		    matrix = arm2.pose.bones[bone].matrix.copy()
-		    original_position.append(matrix)
-		    #print(matrix)
+			#print(bones[i])
+			bone = bones[i]
+			matrix = arm2.pose.bones[bone].matrix.copy()
+			original_position.append(matrix)
+			#print(matrix)
 
-		while f<200:
+		while f<50:
 
-		    bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+			bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
-		    if f == 1:
-		        ref = original_position.copy()
-		        for i in range(len(bones)):
-		            #print(bones[i])
-		            bone = bones[i]
-		            poseBone = arm2.pose.bones[bone]
-		            poseBone.matrix = ref[i]
-		            bpy.context.scene.update()
-		        print("RUNNING EXPERIMENT NUMBER: " + str(f))
-		        bpy.context.scene.update()
-		        fname = "frame_SA%02d_%05d.txt" % (2, f)
-		        print(fname)
-		        fpname = "%s/%s" % (path_input,fname)
-		        pts_skel = loadtxt(fpname)
-		        # adjust 3D points axis to Blender axis
-		        pts_skel = np.matmul(pts_skel, M_mb)
+			if f == 1:
+				ref = original_position.copy()
+				for i in range(len(bones)):
+					#print(bones[i])
+					bone = bones[i]
+					poseBone = arm2.pose.bones[bone]
+					poseBone.matrix = ref[i]
+					bpy.context.scene.update()
+				print("RUNNING EXPERIMENT NUMBER: " + str(f))
+				bpy.context.scene.update()
+				fname = "frame_SA%02d_%05d.txt" % (2, f)
+				print(fname)
+				fpname = "%s/%s" % (path_input,fname)
+				pts_skel = loadtxt(fpname)
+				# adjust 3D points axis to Blender axis
+				pts_skel = np.matmul(pts_skel, M_mb)
 		#        print("############### ORIGINAL skeleton params ################")
 		####        reference_skel_coords = get_skeleton_parameters(arm2,pts_skel,correction_params)
 		#        for x in range(0,15):
 		#            print([reference_skel_coords[x].x,reference_skel_coords[x].y,reference_skel_coords[x].z])
 		#        print("%%%%%%%%%% Coords at step 40 %%%%%%%%%%%%%%%%")
-		        skel_coords = get_skeleton_joints(arm2)
+				skel_coords = get_skeleton_joints(arm2)
+				update_verts()
 		#        for x in range(0,15):
 		#            print([skel_coords[x].x,skel_coords[x].y,skel_coords[x].z])
 
 
-		    else:
-		        ref = original_position.copy()
-		        for i in range(len(bones)):
-		            #print(bones[i])
-		            bone = bones[i]
-		            poseBone = arm2.pose.bones[bone]
-		            poseBone.matrix = ref[i]
-		            bpy.context.scene.update()
-		        print("RUNNING EXPERIMENT NUMBER: " + str(f))
-		        bpy.context.scene.update()
-		        fname = "frame_SA%02d_%05d.txt" % (2, f)
-		        print(fname)
-		        fpname = "%s/%s" % (path_input,fname)
-		        pts_skel = loadtxt(fpname)
-		        # adjust 3D points axis to Blender axis
-		        pts_skel = np.matmul(pts_skel, M_mb)
-		        #print("############### ORIGINAL skeleton params ################")
-		        params = get_skeleton_parameters(arm2,pts_skel,correction_params)
-
-		    f+=1
+			else:
+				ref = original_position.copy()
+				for i in range(len(bones)):
+					#print(bones[i])
+					bone = bones[i]
+					poseBone = arm2.pose.bones[bone]
+					poseBone.matrix = ref[i]
+					bpy.context.scene.update()
+				print("RUNNING EXPERIMENT NUMBER: " + str(f))
+				bpy.context.scene.update()
+				fname = "frame_SA%02d_%05d.txt" % (2, f)
+				print(fname)
+				fpname = "%s/%s" % (path_input,fname)
+				pts_skel = loadtxt(fpname)
+				# adjust 3D points axis to Blender axis
+				pts_skel = np.matmul(pts_skel, M_mb)
+				#print("############### ORIGINAL skeleton params ################")
+				params = get_skeleton_parameters(arm2,pts_skel,correction_params)
+				update_verts()
+			
+			bpy.context.scene.frame_set(f)
+			bpy.data.objects["Standard"].keyframe_insert(data_path = "location", frame = f)
+			bpy.data.objects["Standard"].keyframe_insert(data_path = "rotation_euler", frame = f)
+			f+=1
 
 
 		
