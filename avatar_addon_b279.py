@@ -22,6 +22,7 @@ import numpy as np
 
 from numpy import *
 
+
 import mathutils 
 from bpy.props import * 
 
@@ -157,41 +158,6 @@ def get_skeleton_joints (obj):
 
     return jnts
 
-def get_skeleton_coords (skel):
-
-	pts_skel = []
-
-	pt1 = skel.location + skel.pose.bones["Head"].head
-	pts_skel.append(pt1)
-	pt2 = skel.location + skel.pose.bones["Spine1"].tail
-	pts_skel.append(pt2)
-	pt3 = skel.location + skel.pose.bones["RightShoulder"].tail
-	pts_skel.append(pt3)
-	pt4 = skel.location + skel.pose.bones["RightArm"].tail
-	pts_skel.append(pt4)
-	pt5 = skel.location + skel.pose.bones["RightForeArm"].tail
-	pts_skel.append(pt5)
-	pt6 = skel.location + skel.pose.bones["LeftShoulder"].tail
-	pts_skel.append(pt6)
-	pt7 = skel.location + skel.pose.bones["LeftArm"].tail
-	pts_skel.append(pt7)
-	pt8 = skel.location + skel.pose.bones["LeftForeArm"].tail
-	pts_skel.append(pt8)
-	pt9 = skel.location + skel.pose.bones["RightUpLeg"].head
-	pts_skel.append(pt9)
-	pt10 = skel.location + skel.pose.bones["RightLeg"].head
-	pts_skel.append(pt10)
-	pt11 = skel.location + skel.pose.bones["RightLeg"].tail #--> food.head
-	pts_skel.append(pt11)
-	pt12 = skel.location + skel.pose.bones["LeftUpLeg"].head
-	pts_skel.append(pt12)
-	pt13 = skel.location + skel.pose.bones["LeftLeg"].head
-	pts_skel.append(pt13)
-	pt14 = skel.location + skel.pose.bones["LeftLeg"].tail #--> food.head
-	pts_skel.append(pt14)
-	pt15 = skel.location + skel.pose.bones["Hips"].head
-	pts_skel.append(pt15)
-	return pts_skel
 
 def checkError(R,A,T,B): # UNUSED 
 
@@ -223,7 +189,7 @@ def getcoords(Vector):
 		points.append([i.x,i.y,i.z])
 	return points
 
-def get_skeleton_parameters (skel_basis, goal_pts, correction_params):
+def get_skeleton_parameters(skel_basis, goal_pts, correction_params):
 	skel_params = []
 	ref_arm = get_skeleton_joints(skel_basis)
 	ref_skel = np.array(ref_arm)
@@ -319,153 +285,125 @@ def get_skeleton_parameters (skel_basis, goal_pts, correction_params):
 	return reference
 
 
+def get_skeleton_parameters_correction(skel_basis, goal_pts, correction_params):
+	skel_params = []
+	ref_arm = get_skeleton_joints(skel_basis)
+	ref_skel = np.array(ref_arm)
+	
+	A = np.mat((ref_skel[14,:], ref_skel[8,:], ref_skel[11,:], ref_skel[1,:]))
+	B = np.mat((goal_pts[14,:], goal_pts[8,:], goal_pts[11,:], goal_pts[1,:]))
+	R, T = rigid_transform_3D(A,B)
+	
+	mR = Matrix([[R[0,0],R[0,1],R[0,2]], [R[1,0],R[1,1],R[1,2]], [R[2,0],R[2,1],R[2,2]]])
+	vT = Vector(T)
+	
+	# move arm2 to orient with pts_skel
+	pts_r1 = []
+	for vec in ref_skel: pts_r1.append(mR*Vector(vec))
+	pts_tr1 = []
+	for vec in pts_r1: pts_tr1.append(vT+Vector(vec))
+	skel_coords = pts_tr1
+	#apply translation and first rotation to all skeleton
+	bpy.context.scene.update()
+	#mR.resize_4x4()
+	poseBone = skel_basis.pose.bones["Hips"]
+	boneRefPoseMtx = poseBone.bone.matrix_local.copy()
+	bonePoseMtx = poseBone.matrix.to_3x3().copy()
+	vT = Vector(getcoords(skel_coords)[-1])
+	bone_translate_matrix = Matrix.Translation(vT)
+	loc = (boneRefPoseMtx.inverted() * bone_translate_matrix).to_translation()
+	poseBone.location = loc
+	rotMtx = boneRefPoseMtx.to_3x3().inverted() * mR * boneRefPoseMtx.to_3x3()
+	poseBone.rotation_mode = "QUATERNION"
+	poseBone.rotation_quaternion = rotMtx.to_quaternion()
+	p_hips_rot = [degrees(mR.to_euler().z), degrees(mR.to_euler().y), degrees(mR.to_euler().x)]
+	p_hips_loc = [vT.x, vT.y, vT.z]
+	reference = get_skeleton_joints(skel_basis)
+	#compute other rotations[
+	bone_name = ["Neck","LHipJoint","LeftUpLeg", "LeftLeg", "RHipJoint", "RightUpLeg", "RightLeg", "LeftShoulder", "LeftArm", "LeftForeArm", "RightShoulder", "RightArm", "RightForeArm"]
+	begin = [1, 14, 11, 12, 14, 8, 9, 1, 5, 6, 1, 2, 3]
+	end = [0, 11, 12, 13, 8, 9, 10, 5, 6, 7, 2, 3, 4]
+	rotation = []
+	previous_q = Quaternion([1,0,0,0])
+	skel_coords = get_skeleton_joints(skel_basis)
+	for interpolation in range(0,20):
+		for x in range(0, 13):
+			bpy.context.scene.update()
+			#skel_coords = get_skeleton_coords(skel_basis)
+			skel_coords = get_skeleton_joints(skel_basis)
+			poseBone = skel_basis.pose.bones[bone_name[x]]
+			boneRefPoseMtx = poseBone.bone.matrix_local.copy()
+			parentRefPoseMtx = poseBone.parent.bone.matrix_local.copy()
+			parentPoseMtx = poseBone.parent.matrix.copy()
+			bonePoseMtx = poseBone.matrix.copy()
+			#print(bonePoseMtx)
+			# print("############ " + bone_name[x] + "  #############")
+			start_point_bone = Vector(skel_coords[begin[x]])
+			end_point_bone = Vector(skel_coords[end[x]])
+			goal_point_end_bone = Vector(goal_pts[end[x]])
+			#q2 = compute_rotation(poseBone, start_point_bone, end_point_bone, goal_point_end_bone)
+			q2 = compute_rotation(bonePoseMtx.to_3x3(), start_point_bone, end_point_bone, goal_point_end_bone)
+			poseBone.rotation_mode = "QUATERNION"
+			
+			###########
+			
+			q2 = q2/20
+			
+			###########
+			
+			
+			poseBone.rotation_quaternion = q2
+			#mat_final = parentRefPoseMtx * parentPoseMtx.inverted() * bonePoseMtx * q2.to_matrix().to_4x4() * boneRefPoseMtx.inverted()
+			mat_final = parentRefPoseMtx.to_3x3() * parentPoseMtx.to_3x3().inverted() * bonePoseMtx.to_3x3() * q2.to_matrix().to_3x3() * boneRefPoseMtx.to_3x3().inverted()
+			#p = [degrees(mat_final.to_euler().z), degrees(mat_final.to_euler().y), degrees(mat_final.to_euler().x)]
+			p =  [mat_final.to_euler().z,mat_final.to_euler().y,mat_final.to_euler().x]
+			newp = [x - y for x, y in zip(p, correction_params[x])]
+
+	            ##POCA BROMA QUE AIXÒ CONVERGIA (GAIREBÉ TOT)
+	#        poseBone.rotation_mode = "ZYX"
+	#        poseBone.rotation_euler = Vector(newp)
+			rotation.append(newp)
+			bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+		
 
 
-def get_skeleton_parameters2(skel_basis, goal_pts, correction_params, reference):
-
-    # output variable
-    skel_params = []
-    reference = reference.copy()
-
-#    arm2 = skel_basis
-#    pts_skel = goal_points
-
-    # need to get skeleton points (ref_skel)
-    #ref_arm = get_skeleton_coords(skel_basis)
-    #ref_arm = get_skeleton_joints(reference)
-    ref_skel = np.array(reference)
-
-    # compute translation and first rotation between rest position and desired points
-    A = np.mat((ref_skel[14,:], ref_skel[8,:], ref_skel[11,:], ref_skel[1,:]))
-    B = np.mat((goal_pts[14,:], goal_pts[8,:], goal_pts[11,:], goal_pts[1,:]))
-    R, T = rigid_transform_3D(A,B)
-   # checkError(R,A,T,B)
+	skel_params.append(p_hips_loc)
+	skel_params.append(p_hips_rot)
+	skel_params.append(rotation[0])
+	skel_params.append(rotation[1])
+	skel_params.append([0,0,0])
+	skel_params.append(rotation[2])
+	skel_params.append(rotation[3])
+	skel_params.append([0,0,0])
+	skel_params.append([0,0,0])
+	skel_params.append(rotation[4])
+	skel_params.append(rotation[5])
+	skel_params.append(rotation[6])
+	skel_params.append(rotation[7])
+	skel_params.append(rotation[8])
+	skel_params.append(rotation[9])
+	skel_params.append(rotation[10])
+	previous_q = q2
 
 
+    ## SKEL PARAMS ARE QUITE IMPORTANT TOO. THERE ARE THE ROTATIONS OF THE BONES (INVERSE CAN BE COMPUTED EZI)
 
-    mR = Matrix([[R[0,0],R[0,1],R[0,2]], [R[1,0],R[1,1],R[1,2]], [R[2,0],R[2,1],R[2,2]]])
-    vT = Vector(T)
-
-    # move arm2 to orient with pts_skel
-    pts_r1 = []
-    for vec in ref_skel: pts_r1.append(mR*Vector(vec))
-    pts_tr1 = []
-    for vec in pts_r1: pts_tr1.append(vT+Vector(vec))
-
-    skel_coords = pts_tr1
-
-    #apply translation and first rotation to all skeleton
-    bpy.context.scene.update()
-
-    #mR.resize_4x4()
-
-    poseBone = skel_basis.pose.bones["Hips"]
-
-    boneRefPoseMtx = poseBone.bone.matrix_local.copy()
-    bonePoseMtx = poseBone.matrix.to_3x3().copy()
-
-
-    vT = Vector(getcoords(skel_coords)[-1])
-
-    bone_translate_matrix = Matrix.Translation(vT)
-    loc = (boneRefPoseMtx.inverted() * bone_translate_matrix).to_translation()
-    poseBone.location = loc
-
-    rotMtx = boneRefPoseMtx.to_3x3().inverted() * mR * boneRefPoseMtx.to_3x3()
-
-    poseBone.rotation_mode = "QUATERNION"
-    poseBone.rotation_quaternion = rotMtx.to_quaternion()
-
-    p_hips_rot = [degrees(mR.to_euler().z), degrees(mR.to_euler().y), degrees(mR.to_euler().x)]
-    p_hips_loc = [vT.x, vT.y, vT.z]
-
-
-    #compute other rotations[
-    bone_name = ["Neck","LHipJoint","LeftUpLeg", "LeftLeg", "RHipJoint", "RightUpLeg", "RightLeg", "LeftShoulder", "LeftArm", "LeftForeArm", "RightShoulder", "RightArm", "RightForeArm"]
-    begin = [1, 14, 11, 12, 14, 8, 9, 1, 5, 6, 1, 2, 3]
-    end = [0, 11, 12, 13, 8, 9, 10, 5, 6, 7, 2, 3, 4]
-
-    rotation = []
-    previous_q = Quaternion([1,0,0,0])
-
-
-
-#    print("|||||***** This are the goal points for the end points bones ****|||||")
-#    for x in range(0,13):
-#        print(goal_pts[end[x]])
-
-
-    for x in range(0, 13):
-
-        bpy.context.scene.update()
-        #skel_coords = get_skeleton_coords(skel_basis)
-        skel_coords = get_skeleton_joints(skel_basis)
-
-
-
-        poseBone = skel_basis.pose.bones[bone_name[x]]
-
-        boneRefPoseMtx = poseBone.bone.matrix_local.copy()
-        parentRefPoseMtx = poseBone.parent.bone.matrix_local.copy()
-        parentPoseMtx = poseBone.parent.matrix.copy()
-        bonePoseMtx = poseBone.matrix.copy()
-        #print(bonePoseMtx)
-
-        start_point_bone = Vector(skel_coords[begin[x]])
-        end_point_bone = Vector(skel_coords[end[x]])
-        goal_point_end_bone = Vector(goal_pts[end[x]])
-
-
-        #q2 = compute_rotation(poseBone, start_point_bone, end_point_bone, goal_point_end_bone)
-        q2 = compute_rotation(bonePoseMtx.to_3x3(), start_point_bone, end_point_bone, goal_point_end_bone)
-
-        poseBone.rotation_mode = "QUATERNION"
-        poseBone.rotation_quaternion = q2
-#        print("THE QUATERNION FOR THIS BONE IS")
-#        print(q2)
-
-        #mat_final = parentRefPoseMtx * parentPoseMtx.inverted() * bonePoseMtx * q2.to_matrix().to_4x4() * boneRefPoseMtx.inverted()
-        mat_final = parentRefPoseMtx.to_3x3() * parentPoseMtx.to_3x3().inverted() * bonePoseMtx.to_3x3() * q2.to_matrix().to_3x3() * boneRefPoseMtx.to_3x3().inverted()
-        #p = [degrees(mat_final.to_euler().z), degrees(mat_final.to_euler().y), degrees(mat_final.to_euler().x)]
-        p =  [mat_final.to_euler().z,mat_final.to_euler().y,mat_final.to_euler().x]
-        newp = [x - y for x, y in zip(p, correction_params[x])]
-
-            ##POCA BROMA QUE AIXÒ CONVERGIA (GAIREBÉ TOT)
-#        poseBone.rotation_mode = "ZYX"
-#        poseBone.rotation_euler = Vector(newp)
-        rotation.append(newp)
-
-
-    skel_params.append(p_hips_loc)
-    skel_params.append(p_hips_rot)
-    skel_params.append(rotation[0])
-    skel_params.append(rotation[1])
-    skel_params.append([0,0,0])
-    skel_params.append(rotation[2])
-    skel_params.append(rotation[3])
-    skel_params.append([0,0,0])
-    skel_params.append([0,0,0])
-    skel_params.append(rotation[4])
-    skel_params.append(rotation[5])
-    skel_params.append(rotation[6])
-    skel_params.append(rotation[7])
-    skel_params.append(rotation[8])
-    skel_params.append(rotation[9])
-    skel_params.append(rotation[10])
-    previous_q = q2
-
-    return skel_params
+	return reference
 
 
 
 
 
+##########################################################################################################
 
 ##########################################################################################################
 
 ###################################### MODEL DEFORMATION FUNCTIONS #######################################
 
 ##########################################################################################################
+
+##########################################################################################################
+
 
 def get_vertices (obj):
 	return [(obj.matrix_world * v.co) for v in obj.data.vertices]
@@ -537,12 +475,17 @@ def update_scale(self,context):
 		clothes = True 
 		b = bpy.data.objects['pants']
 		c = bpy.data.objects['tshirt']
+	if "dress" in bpy.data.objects:
+		dress = True
+		d = bpy.data.objects['dress']
 	w10 = 1 + (self.weight_k10-1)/5.0
 	vector_scale = Vector((w10,w10,w10))
 	a.scale = vector_scale
-	#if clothes:
-	#	b.scale = vector_scale
-		#c.scale = vector_scale
+	if clothes:
+		b.scale = vector_scale
+		c.scale = vector_scale
+	if dress:
+		d.scale = vector_scale
 	
 	# Scale size of the limbs
 	w11 = self.weight_k11
@@ -578,6 +521,7 @@ def update_scale(self,context):
 		print("he entrat a pantalons")
 	if (mAvt.has_dress):
 		mAvt.deform_cloth(cloth_name='dress')
+		print("he entrat a vestit")
 	update_verts()
 		
 		
@@ -1137,6 +1081,10 @@ class Avatar_OT_LoadModel(bpy.types.Operator):
 				
 			# importar low poly mavt.collision_mesh 
 			vp = bpy.data.objects['verylowpoly']
+			vp.select = True
+			bpy.context.scene.objects.active = vp
+			bpy.ops.object.mode_set(mode='OBJECT')
+			bpy.ops.object.modifier_add(type='COLLISION')
 			#
 			#bpy.ops.rigidbody.objects_add(type='ACTIVE')
 			vp.hide = True
@@ -1213,14 +1161,14 @@ class Avatar_OT_PutTshirt (bpy.types.Operator):
 		#bpy.context.scene.objects.active = b
 		#bpy.ops.object.modifier_add(type='CLOTH')
 		
-		if bpy.data.objects.get("Standard") is not False:
-		
-			a = bpy.data.objects["Standard"]
-			b = bpy.data.objects["tshirt"]
-			a.select = True
-			b.select = True
-			bpy.context.scene.objects.active = a
-			bpy.ops.object.parent_set(type='ARMATURE_AUTO')
+#		if bpy.data.objects.get("Standard") is not False:
+#		
+#			a = bpy.data.objects["Standard"]
+#			b = bpy.data.objects["tshirt"]
+#			a.select = True
+#			b.select = True
+#			bpy.context.scene.objects.active = a
+#			bpy.ops.object.parent_set(type='ARMATURE_AUTO')
 				
 		return {'FINISHED'}
 
@@ -1263,14 +1211,14 @@ class Avatar_OT_PutPants (bpy.types.Operator):
 		for obj in bpy.data.objects:
 			obj.select = False
 			
-		if bpy.data.objects.get("Standard") is not False:
-		
-			a = bpy.data.objects["Standard"]
-			b = bpy.data.objects["pants"]
-			a.select = True
-			b.select = True
-			bpy.context.scene.objects.active = a
-			bpy.ops.object.parent_set(type='ARMATURE_AUTO')
+#		if bpy.data.objects.get("Standard") is not False:
+#		
+#			a = bpy.data.objects["Standard"]
+#			b = bpy.data.objects["pants"]
+#			a.select = True
+#			b.select = True
+#			bpy.context.scene.objects.active = a
+#			bpy.ops.object.parent_set(type='ARMATURE_AUTO')
 			
 		return {'FINISHED'}
 	
@@ -1312,17 +1260,17 @@ class Avatar_OT_PutDress (bpy.types.Operator):
 			mAvt.kd_dress.insert(v.co, i)
 
 		mAvt.kd_dress.balance()
-		for obj in bpy.data.objects:
-			obj.select = False
+#		for obj in bpy.data.objects:
+#			obj.select = False
 			
-		if bpy.data.objects.get("Standard") is not False:
-		
-			a = bpy.data.objects["Standard"]
-			b = bpy.data.objects["dress"]
-			a.select = True
-			b.select = True
-			bpy.context.scene.objects.active = a
-			bpy.ops.object.parent_set(type='ARMATURE_AUTO')
+#		if bpy.data.objects.get("Standard") is not False:
+#		
+#			a = bpy.data.objects["Standard"]
+#			b = bpy.data.objects["dress"]
+#			a.select = True
+#			b.select = True
+#			bpy.context.scene.objects.active = a
+#			bpy.ops.object.parent_set(type='ARMATURE_AUTO')
 						
 		return {'FINISHED'}
 
@@ -1464,7 +1412,7 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 			original_position.append(matrix)
 			#print(matrix)
 
-		while f<50:
+		while f<3:
 
 			bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
@@ -1495,6 +1443,30 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 				update_verts()
 		#        for x in range(0,15):
 		#            print([skel_coords[x].x,skel_coords[x].y,skel_coords[x].z])
+		
+			elif f == 2:
+				ref = original_position.copy()
+				for i in range(len(bones)):
+					#print(bones[i])
+					bone = bones[i]
+					poseBone = arm2.pose.bones[bone]
+					poseBone.matrix = ref[i]
+					bpy.context.scene.update()
+				print("RUNNING EXPERIMENT NUMBER: " + str(f))
+				bpy.context.scene.update()
+				fname = "frame_SA%02d_%05d.txt" % (2, f)
+				print(fname)
+				fpname = "%s/%s" % (path_input,fname)
+				pts_skel = loadtxt(fpname)
+				# adjust 3D points axis to Blender axis
+				pts_skel = np.matmul(pts_skel, M_mb)
+				pts_skel = correct_pose(pts_skel,trans_correction)
+				print(pts_skel)
+				#print("############### ORIGINAL skeleton params ################")
+				print(arm2)
+				params = get_skeleton_parameters_correction(arm2,pts_skel,correction_params)
+				update_verts()
+				
 
 
 			else:
