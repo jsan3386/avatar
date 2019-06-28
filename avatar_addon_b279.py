@@ -51,8 +51,8 @@ print(avt_path)
 def rigid_transform_3D(A, B):
 	assert len(A) == len(B)
 	N = A.shape[0]; # total points
-	print(A)
-	print(B)
+	#print(A)
+	#print(B)
 	centroid_A = mean(A, axis=0)
 	centroid_B = mean(B, axis=0)
 	# centre the points
@@ -203,6 +203,18 @@ def checkError(R,A,T,B): # UNUSED
     rmse = sqrt(error/4)
     print(rmse)
     print("IF RMSE IS NEAR ZERO, THE FUNCTION IS CORRECT")
+
+
+def correct_pose(pts_skel,correction):
+	new_pts_skel = []
+	hips = pts_skel[14,:]
+	translation = hips - [correction[0],correction[1],correction[2]]
+	print("translation")
+	print(translation)
+	for i in pts_skel:
+		new_pts_skel.append([i[0]-translation[0],i[1]-translation[1],i[2]-translation[2]])
+	
+	return np.array(new_pts_skel)
 
 
 def getcoords(Vector):
@@ -397,7 +409,7 @@ def get_skeleton_parameters2(skel_basis, goal_pts, correction_params, reference)
         parentRefPoseMtx = poseBone.parent.bone.matrix_local.copy()
         parentPoseMtx = poseBone.parent.matrix.copy()
         bonePoseMtx = poseBone.matrix.copy()
-        print(bonePoseMtx)
+        #print(bonePoseMtx)
 
         start_point_bone = Vector(skel_coords[begin[x]])
         end_point_bone = Vector(skel_coords[end[x]])
@@ -570,8 +582,8 @@ def update_scale(self,context):
 		
 		
 def update_verts():
-	print("**************")
-	print(" UPDATING VERTS ")
+	#print("**************")
+	#print(" UPDATING VERTS ")
 	vlp = bpy.data.objects["verylowpoly"]
 	sp = bpy.data.objects["Standard:Body"]
 	mesh_low_poly = vlp.data
@@ -579,8 +591,8 @@ def update_verts():
 	for i in range(len(match_list)):
 		mesh_low_poly.vertices[i].co = sp.matrix_world * mesh.vertices[match_list[i]].co 
 		mesh_low_poly.vertices[i].co = vlp.matrix_world.inverted() * mesh_low_poly.vertices[i].co
-	print(" Weights Updated ")
-	print("*********")
+	#print(" Weights Updated ")
+	#print("*********")
 	
 
 class Avatar:
@@ -1441,6 +1453,7 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 		f = 1
 		#bpy.ops.import_scene.makehuman_mhx2(filter_glob = "Model02.mhx2",filepath = "/home/aniol/IRI/DadesMarta/models/Model02.mhx2")
 		arm2 = bpy.data.objects[model]
+		trans_correction = arm2.pose.bones['Hips'].head
 		original_position = []
 		print("**** INITIAL MATRIX DISTRIBUTION ****")
 		bones = ["Hips","LHipJoint","LeftUpLeg","LeftLeg","LeftFoot","LeftToeBase","LowerBack","Spine","Spine1","LeftShoulder","LeftArm","LeftForeArm","LeftHand","LThumb","LeftFingerBase","LeftHandFinger1","Neck","Neck1","Head","RightShoulder","RightArm","RightForeArm","RightHand","RThumb","RightFingerBase","RightHandFinger1","RHipJoint","RightUpLeg","RightLeg","RightFoot","RightToeBase"]
@@ -1469,8 +1482,10 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 				print(fname)
 				fpname = "%s/%s" % (path_input,fname)
 				pts_skel = loadtxt(fpname)
+				print(pts_skel)
 				# adjust 3D points axis to Blender axis
 				pts_skel = np.matmul(pts_skel, M_mb)
+				pts_skel = correct_pose(pts_skel,trans_correction)
 		#        print("############### ORIGINAL skeleton params ################")
 		####        reference_skel_coords = get_skeleton_parameters(arm2,pts_skel,correction_params)
 		#        for x in range(0,15):
@@ -1496,9 +1511,15 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 				print(fname)
 				fpname = "%s/%s" % (path_input,fname)
 				pts_skel = loadtxt(fpname)
+				print("initial pts skel")
+				print(pts_skel)
 				# adjust 3D points axis to Blender axis
 				pts_skel = np.matmul(pts_skel, M_mb)
+				pts_skel = correct_pose(pts_skel,trans_correction)
+				print("final pts skel")
+				print(pts_skel)
 				#print("############### ORIGINAL skeleton params ################")
+				print(arm2)
 				params = get_skeleton_parameters(arm2,pts_skel,correction_params)
 				update_verts()
 			
