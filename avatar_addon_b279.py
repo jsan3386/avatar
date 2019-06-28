@@ -1283,6 +1283,12 @@ class Avatar_OT_PutDress (bpy.types.Operator):
 		bpy.context.selected_objects[0].name = 'dress'
 		bpy.context.selected_objects[0].data.name = 'dress'
 		
+		b = bpy.data.objects["dress"]
+		b.select = True
+		bpy.context.scene.objects.active = b
+		bpy.ops.object.mode_set(mode='OBJECT')
+		bpy.ops.object.modifier_add(type='CLOTH')
+		
 		mAvt.dress_mesh = bpy.data.objects["dress"]
 		mAvt.has_dress = True
 
@@ -1294,6 +1300,17 @@ class Avatar_OT_PutDress (bpy.types.Operator):
 			mAvt.kd_dress.insert(v.co, i)
 
 		mAvt.kd_dress.balance()
+		for obj in bpy.data.objects:
+			obj.select = False
+			
+		if bpy.data.objects.get("Standard") is not False:
+		
+			a = bpy.data.objects["Standard"]
+			b = bpy.data.objects["dress"]
+			a.select = True
+			b.select = True
+			bpy.context.scene.objects.active = a
+			bpy.ops.object.parent_set(type='ARMATURE_AUTO')
 						
 		return {'FINISHED'}
 
