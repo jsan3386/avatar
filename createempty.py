@@ -8,8 +8,7 @@ import os
 
 
 context = bpy.context
-path_input="/home/aniol/IRI/DadesMarta/frames"
-path_output="/home/aniol/IRI/DadesMarta/sequences"
+path_input="/home/aniol/avatar/frames"
 
 rx = math.radians(90)
 ry = math.radians(0)
@@ -24,15 +23,18 @@ M_rz = np.array([[math.cos(rz),math.sin(rz),0],[-math.sin(rz),math.cos(rz),0],[0
 M_mb1 = np.matmul(M_rx, M_ry)
 M_mb = np.matmul(M_mb1, M_rz)
 
-fname = "frame_SA%02d_%05d.txt" % (2, 300)
+fname = "frame_SA%02d_%05d.txt" % (2, 2)
 #           fpname = "%s/A%d/%s" % (path_input, action, fname)
-path_input="/home/aniol/IRI/DadesMarta/frames"
 fpname = "%s/%s" % (path_input,fname)
 pts_skel = loadtxt(fpname)
 # adjust 3D points axis to Blender axis
 pts_skel = np.matmul(pts_skel, M_mb)
-for i in range(0,15):
-    loc = pts_skel[i]
-    print(loc[0],loc[1],loc[2])
-    bpy.ops.object.empty_add(location=(loc[0],loc[1],loc[2]))
-    print("a new empty is born")
+new_pts_skel = []
+hips = pts_skel[14,:]
+arm2 = bpy.data.objects["Standard"]
+correction = arm2.pose.bones['Hips'].head
+translation = hips - [correction[0],correction[1],correction[2]]
+
+for i in pts_skel:
+		bpy.ops.object.empty_add(location=([i[0]-translation[0],i[1]-translation[1],i[2]-translation[2]]))
+

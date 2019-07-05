@@ -183,6 +183,97 @@ def correct_pose(pts_skel,correction):
 	return np.array(new_pts_skel)
 
 
+def slerp(v0, v1, t_array):
+
+    # >>> slerp([1,0,0,0],[0,0,0,1],np.arange(0,1,0.001))
+
+    t_array = np.array(t_array)
+
+    v0 = np.array(v0)
+
+    v1 = np.array(v1)
+
+    dot = np.sum(v0*v1)
+
+
+    if (dot < 0.0):
+
+        v1 = -v1
+
+        dot = -dot
+
+    
+
+    DOT_THRESHOLD = 0.9995
+
+    if (dot > DOT_THRESHOLD):
+
+        result = v0[np.newaxis,:] + t_array[:,np.newaxis]*(v1 - v0)[np.newaxis,:]
+
+        return (result.T / np.linalg.norm(result, axis=1)).T
+
+    
+
+    theta_0 = np.arccos(dot)
+
+    sin_theta_0 = np.sin(theta_0)
+
+
+    theta = theta_0*t_array
+
+    sin_theta = np.sin(theta)
+
+    
+
+    s0 = np.cos(theta) - dot * sin_theta / sin_theta_0
+
+    s1 = sin_theta / sin_theta_0
+
+    return (s0[:,np.newaxis] * v0[np.newaxis,:]) + (s1[:,np.newaxis] * v1[np.newaxis,:])
+
+
+def transition_to_desired_motion(q_list,initial_rotation,skel_basis,correction_iteration):
+	
+	list_of_rotations = []
+	initial_quaternion = Quaternion((1,0,0,0))
+	bone_name = ["Neck","LHipJoint","LeftUpLeg", "LeftLeg", "RHipJoint", "RightUpLeg", "RightLeg", "LeftShoulder", "LeftArm", "LeftForeArm", "RightShoulder", "RightArm", "RightForeArm"]
+	for i in range(len(q_list)):
+		movements = slerp(initial_quaternion,q_list[i],np.arange(0,1,0.05))
+		list_of_rotations.append(movements)
+	initial = slerp(initial_quaternion,initial_rotation,np.arange(0,1,0.05))
+	print(len(list_of_rotations))
+	print(len(list_of_rotations[0]))
+	poseBone = skel_basis.pose.bones["Hips"]
+	scene = bpy.context.scene
+	
+	for i in range(len(initial)):
+		bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+		poseBone.rotation_mode = "QUATERNION"
+		poseBone.rotation_quaternion = initial[i]
+		bpy.context.scene.frame_set(2+correction_iteration)
+		for ob in scene.objects:
+			ob.keyframe_insert(data_path = "location", frame = 2+correction_iteration)
+			ob.keyframe_insert(data_path = "rotation_euler", frame = 2+correction_iteration)
+		correction_iteration+=1
+	
+	for step in range(len(list_of_rotations[0])):
+		bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+		for i in range(len(bone_name)):
+			#bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+			poseBone = skel_basis.pose.bones[bone_name[i]]
+			poseBone.rotation_mode = "QUATERNION"
+			poseBone.rotation_quaternion = list_of_rotations[i][step]
+			bpy.context.scene.frame_set(2+correction_iteration)
+		for ob in scene.objects:
+			ob.keyframe_insert(data_path = "location", frame = 2+correction_iteration)
+			ob.keyframe_insert(data_path = "rotation_euler", frame = 2+correction_iteration)
+		correction_iteration+=1
+	return correction_iteration
+	
+
+
+
+
 def getcoords(Vector):
 	points = []
 	for i in Vector:
@@ -193,6 +284,7 @@ def get_skeleton_parameters(skel_basis, goal_pts, correction_params):
 	skel_params = []
 	ref_arm = get_skeleton_joints(skel_basis)
 	ref_skel = np.array(ref_arm)
+	q_list = []
 	
 	A = np.mat((ref_skel[14,:], ref_skel[8,:], ref_skel[11,:], ref_skel[1,:]))
 	B = np.mat((goal_pts[14,:], goal_pts[8,:], goal_pts[11,:], goal_pts[1,:]))
@@ -218,8 +310,11 @@ def get_skeleton_parameters(skel_basis, goal_pts, correction_params):
 	loc = (boneRefPoseMtx.inverted() * bone_translate_matrix).to_translation()
 	poseBone.location = loc
 	rotMtx = boneRefPoseMtx.to_3x3().inverted() * mR * boneRefPoseMtx.to_3x3()
+	initial_rotation = rotMtx.to_quaternion()
 	poseBone.rotation_mode = "QUATERNION"
+	
 	poseBone.rotation_quaternion = rotMtx.to_quaternion()
+	q_list.append(rotMtx.to_quaternion())
 	p_hips_rot = [degrees(mR.to_euler().z), degrees(mR.to_euler().y), degrees(mR.to_euler().x)]
 	p_hips_loc = [vT.x, vT.y, vT.z]
 	reference = get_skeleton_joints(skel_basis)
@@ -248,6 +343,7 @@ def get_skeleton_parameters(skel_basis, goal_pts, correction_params):
 		q2 = compute_rotation(bonePoseMtx.to_3x3(), start_point_bone, end_point_bone, goal_point_end_bone)
 		poseBone.rotation_mode = "QUATERNION"
 		poseBone.rotation_quaternion = q2
+		q_list.append(q2)
 		#mat_final = parentRefPoseMtx * parentPoseMtx.inverted() * bonePoseMtx * q2.to_matrix().to_4x4() * boneRefPoseMtx.inverted()
 		mat_final = parentRefPoseMtx.to_3x3() * parentPoseMtx.to_3x3().inverted() * bonePoseMtx.to_3x3() * q2.to_matrix().to_3x3() * boneRefPoseMtx.to_3x3().inverted()
 		#p = [degrees(mat_final.to_euler().z), degrees(mat_final.to_euler().y), degrees(mat_final.to_euler().x)]
@@ -282,13 +378,14 @@ def get_skeleton_parameters(skel_basis, goal_pts, correction_params):
 
     ## SKEL PARAMS ARE QUITE IMPORTANT TOO. THERE ARE THE ROTATIONS OF THE BONES (INVERSE CAN BE COMPUTED EZI)
 
-	return reference
+	return q_list
 
 
 def get_skeleton_parameters_correction(skel_basis, goal_pts, correction_params):
 	skel_params = []
 	ref_arm = get_skeleton_joints(skel_basis)
 	ref_skel = np.array(ref_arm)
+	q_list = []
 	
 	A = np.mat((ref_skel[14,:], ref_skel[8,:], ref_skel[11,:], ref_skel[1,:]))
 	B = np.mat((goal_pts[14,:], goal_pts[8,:], goal_pts[11,:], goal_pts[1,:]))
@@ -314,6 +411,7 @@ def get_skeleton_parameters_correction(skel_basis, goal_pts, correction_params):
 	loc = (boneRefPoseMtx.inverted() * bone_translate_matrix).to_translation()
 	poseBone.location = loc
 	rotMtx = boneRefPoseMtx.to_3x3().inverted() * mR * boneRefPoseMtx.to_3x3()
+	initial_rotation = rotMtx.to_quaternion()
 	poseBone.rotation_mode = "QUATERNION"
 	poseBone.rotation_quaternion = rotMtx.to_quaternion()
 	p_hips_rot = [degrees(mR.to_euler().z), degrees(mR.to_euler().y), degrees(mR.to_euler().x)]
@@ -326,44 +424,32 @@ def get_skeleton_parameters_correction(skel_basis, goal_pts, correction_params):
 	rotation = []
 	previous_q = Quaternion([1,0,0,0])
 	skel_coords = get_skeleton_joints(skel_basis)
-	for interpolation in range(0,20):
-		for x in range(0, 13):
-			bpy.context.scene.update()
-			#skel_coords = get_skeleton_coords(skel_basis)
-			skel_coords = get_skeleton_joints(skel_basis)
-			poseBone = skel_basis.pose.bones[bone_name[x]]
-			boneRefPoseMtx = poseBone.bone.matrix_local.copy()
-			parentRefPoseMtx = poseBone.parent.bone.matrix_local.copy()
-			parentPoseMtx = poseBone.parent.matrix.copy()
-			bonePoseMtx = poseBone.matrix.copy()
-			#print(bonePoseMtx)
-			# print("############ " + bone_name[x] + "  #############")
-			start_point_bone = Vector(skel_coords[begin[x]])
-			end_point_bone = Vector(skel_coords[end[x]])
-			goal_point_end_bone = Vector(goal_pts[end[x]])
-			#q2 = compute_rotation(poseBone, start_point_bone, end_point_bone, goal_point_end_bone)
-			q2 = compute_rotation(bonePoseMtx.to_3x3(), start_point_bone, end_point_bone, goal_point_end_bone)
-			poseBone.rotation_mode = "QUATERNION"
+	for x in range(len(bone_name)):
+		bpy.context.scene.update()
+		#skel_coords = get_skeleton_coords(skel_basis)
+		skel_coords = get_skeleton_joints(skel_basis)
+		poseBone = skel_basis.pose.bones[bone_name[x]]
+		boneRefPoseMtx = poseBone.bone.matrix_local.copy()
+		parentRefPoseMtx = poseBone.parent.bone.matrix_local.copy()
+		parentPoseMtx = poseBone.parent.matrix.copy()
+		bonePoseMtx = poseBone.matrix.copy()
+		#print(bonePoseMtx)
+		# print("############ " + bone_name[x] + "  #############")
+		start_point_bone = Vector(skel_coords[begin[x]])
+		end_point_bone = Vector(skel_coords[end[x]])
+		goal_point_end_bone = Vector(goal_pts[end[x]])
+		#q2 = compute_rotation(poseBone, start_point_bone, end_point_bone, goal_point_end_bone)
+		q2 = compute_rotation(bonePoseMtx.to_3x3(), start_point_bone, end_point_bone, goal_point_end_bone)
+		poseBone.rotation_mode = "QUATERNION"
+		poseBone.rotation_quaternion = q2
+		q_list.append(q2)
+		#mat_final = parentRefPoseMtx * parentPoseMtx.inverted() * bonePoseMtx * q2.to_matrix().to_4x4() * boneRefPoseMtx.inverted()
+		mat_final = parentRefPoseMtx.to_3x3() * parentPoseMtx.to_3x3().inverted() * bonePoseMtx.to_3x3() * q2.to_matrix().to_3x3() * boneRefPoseMtx.to_3x3().inverted()
+		#p = [degrees(mat_final.to_euler().z), degrees(mat_final.to_euler().y), degrees(mat_final.to_euler().x)]
+		p =  [mat_final.to_euler().z,mat_final.to_euler().y,mat_final.to_euler().x]
+		newp = [x - y for x, y in zip(p, correction_params[x])]
+		rotation.append(newp)
 			
-			###########
-			
-			q2 = q2/20
-			
-			###########
-			
-			
-			poseBone.rotation_quaternion = q2
-			#mat_final = parentRefPoseMtx * parentPoseMtx.inverted() * bonePoseMtx * q2.to_matrix().to_4x4() * boneRefPoseMtx.inverted()
-			mat_final = parentRefPoseMtx.to_3x3() * parentPoseMtx.to_3x3().inverted() * bonePoseMtx.to_3x3() * q2.to_matrix().to_3x3() * boneRefPoseMtx.to_3x3().inverted()
-			#p = [degrees(mat_final.to_euler().z), degrees(mat_final.to_euler().y), degrees(mat_final.to_euler().x)]
-			p =  [mat_final.to_euler().z,mat_final.to_euler().y,mat_final.to_euler().x]
-			newp = [x - y for x, y in zip(p, correction_params[x])]
-
-	            ##POCA BROMA QUE AIXÒ CONVERGIA (GAIREBÉ TOT)
-	#        poseBone.rotation_mode = "ZYX"
-	#        poseBone.rotation_euler = Vector(newp)
-			rotation.append(newp)
-			bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 		
 
 
@@ -383,12 +469,12 @@ def get_skeleton_parameters_correction(skel_basis, goal_pts, correction_params):
 	skel_params.append(rotation[8])
 	skel_params.append(rotation[9])
 	skel_params.append(rotation[10])
-	previous_q = q2
+
 
 
     ## SKEL PARAMS ARE QUITE IMPORTANT TOO. THERE ARE THE ROTATIONS OF THE BONES (INVERSE CAN BE COMPUTED EZI)
 
-	return reference
+	return q_list, initial_rotation
 
 
 
@@ -514,14 +600,14 @@ def update_scale(self,context):
 	if (mAvt.has_tshirt):
 		k +=1 
 		mAvt.deform_cloth(cloth_name='tshirt')
-		print("he entrat a samarreta")
+		print("he deformat la samarreta")
 	if (mAvt.has_pants):
 		mAvt.deform_cloth(cloth_name='pants')
 		j+=1
-		print("he entrat a pantalons")
+		print("he deformat els pantalons")
 	if (mAvt.has_dress):
 		mAvt.deform_cloth(cloth_name='dress')
-		print("he entrat a vestit")
+		print("he deformat el vestit")
 	update_verts()
 		
 		
@@ -1113,10 +1199,10 @@ class Avatar_OT_LoadModel(bpy.types.Operator):
 				match_list.append(min_vert)
 				match_list_lp.append(min_lp_vert)
 				
-			print(len(match_list))
-			print(len(match_list_lp))
+			#print(len(match_list))
+			#print(len(match_list_lp))
 			# print(match_list_lp) IS AN ARRAY FROM 0 TO 411 LOGICALLY
-			print(match_list)
+			#print(match_list)
 			
 			update_verts()
 
@@ -1376,6 +1462,10 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 		scn = context.scene
 		obj = context.active_object
 		
+		scn = bpy.context.scene
+		scn.frame_start = 1
+		scn.frame_end = 400
+		
 		# read file points and transfer motion: TODO
 		context = bpy.context
 		path_input = "%s/frames" % avt_path
@@ -1411,8 +1501,10 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 			matrix = arm2.pose.bones[bone].matrix.copy()
 			original_position.append(matrix)
 			#print(matrix)
-
-		while f<3:
+			
+		correction_iteration = 0
+		correction_iterations = 0
+		while f<30:
 
 			bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
@@ -1464,9 +1556,26 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 				print(pts_skel)
 				#print("############### ORIGINAL skeleton params ################")
 				print(arm2)
-				params = get_skeleton_parameters_correction(arm2,pts_skel,correction_params)
+				q_list, initial_rotation = get_skeleton_parameters_correction(arm2,pts_skel,correction_params)
 				update_verts()
-				
+				#print(q_list)
+				for i in range(len(bones)):
+					#print(bones[i])
+					bone = bones[i]
+					poseBone = arm2.pose.bones[bone]
+					poseBone.matrix = ref[i]
+					bpy.context.scene.update()
+				update_verts()
+				correction_iterations = transition_to_desired_motion(q_list,initial_rotation,arm2,correction_iteration)
+#				for i in range(len(bones)):
+#					#print(bones[i])
+#					bone = bones[i]
+#					poseBone = arm2.pose.bones[bone]
+#					poseBone.matrix = ref[i]
+#					bpy.context.scene.update()
+#				q_list = get_skeleton_parameters_correction(arm2,pts_skel,correction_params)
+				correction_iterations+=1
+		
 
 
 			else:
@@ -1491,13 +1600,15 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 				print("final pts skel")
 				print(pts_skel)
 				#print("############### ORIGINAL skeleton params ################")
-				print(arm2)
+				#print(arm2)
 				params = get_skeleton_parameters(arm2,pts_skel,correction_params)
 				update_verts()
 			
-			bpy.context.scene.frame_set(f)
-			bpy.data.objects["Standard"].keyframe_insert(data_path = "location", frame = f)
-			bpy.data.objects["Standard"].keyframe_insert(data_path = "rotation_euler", frame = f)
+			scn.frame_set(f+correction_iterations)
+			for ob in scn.objects:
+				ob.keyframe_insert(data_path = "location", frame = f+correction_iteration)
+				ob.keyframe_insert(data_path = "rotation_euler", frame = f+correction_iteration)
+			
 			f+=1
 
 
