@@ -34,8 +34,7 @@ from bpy.props import *
 # need to add the root path in the blender preferences panel
 for p in bpy.utils.script_paths():
 	sys.path.append(p)
-	print(p)
-	print("aixo era una p")
+
 from config import avt_path
 #avt_path = '/home/jsanchez/Software/github-projects/avatar'
 #avt_path = "/home/aniol/avatar"
@@ -132,6 +131,7 @@ def update_scale(self,context):
 		dress = True
 		d = bpy.data.objects['dress']
 	w10 = 1 + (self.weight_k10-1)/5.0
+	mAvt.weight_k10 = w10
 	vector_scale = Vector((w10,w10,w10))
 	a.scale = vector_scale
 	if clothes:
@@ -227,6 +227,9 @@ class Avatar:
 		self.mesh_chosen_vertices = []
 		self.number_increments = 20
 		self.increment_radius = 0.2
+		
+		# Scale
+		self.weight_k10 = 1
 
 	def read_verts(self, mesh):
 		mverts_co = np.zeros((len(mesh.vertices)*3), dtype=np.float)
@@ -1031,7 +1034,7 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 		
 		scn = bpy.context.scene
 		scn.frame_start = 1
-		scn.frame_end = 400
+		#scn.frame_end = 400
 		
 		# read file points and transfer motion: TODO
 		context = bpy.context
@@ -1057,6 +1060,8 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 		correction_params = np.zeros((14,3),dtype=np.float32)
 		f = 1
 		arm2 = mAvt.skel
+		mesh_arm2 = mAvt.mesh
+		w10 = 1 + (mAvt.weight_k10-1)/5.0
 		#arm2 = bpy.data.objects[model]
 		trans_correction = arm2.pose.bones['Hips'].head
 		original_position = []
@@ -1071,7 +1076,8 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 			
 		correction_iteration = 0
 		correction_iterations = 0
-		while f<250:
+		
+		while f<50:
 
 			bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
@@ -1092,7 +1098,7 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 				print(pts_skel)
 				# adjust 3D points axis to Blender axis
 				pts_skel = np.matmul(pts_skel, M_mb)
-				pts_skel = movement.correct_pose(pts_skel,trans_correction)
+				pts_skel = movement.correct_pose(pts_skel,trans_correction,w10)
 		#        print("############### ORIGINAL skeleton params ################")
 		####        reference_skel_coords = get_skeleton_parameters(arm2,pts_skel,correction_params)
 		#        for x in range(0,15):
@@ -1119,7 +1125,7 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 				pts_skel = loadtxt(fpname)
 				# adjust 3D points axis to Blender axis
 				pts_skel = np.matmul(pts_skel, M_mb)
-				pts_skel = movement.correct_pose(pts_skel,trans_correction)
+				pts_skel = movement.correct_pose(pts_skel,trans_correction,w10)
 				print(pts_skel)
 				#print("############### ORIGINAL skeleton params ################")
 				print(arm2)
@@ -1133,7 +1139,7 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 					poseBone.matrix = ref[i]
 					bpy.context.scene.update()
 				update_verts()
-				correction_iterations = movement.transition_to_desired_motion(q_list,initial_rotation,arm2,correction_iteration)
+				correction_iterations = movement.transition_to_desired_motion(q_list,initial_rotation,arm2,correction_iteration,mesh_arm2)
 #				for i in range(len(bones)):
 #					#print(bones[i])
 #					bone = bones[i]
@@ -1141,7 +1147,7 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 #					poseBone.matrix = ref[i]
 #					bpy.context.scene.update()
 #				q_list = get_skeleton_parameters_correction(arm2,pts_skel,correction_params)
-				correction_iterations+=1
+				#correction_iterations+=1
 		
 
 
@@ -1163,7 +1169,7 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 				print(pts_skel)
 				# adjust 3D points axis to Blender axis
 				pts_skel = np.matmul(pts_skel, M_mb)
-				pts_skel = movement.correct_pose(pts_skel,trans_correction)
+				pts_skel = movement.correct_pose(pts_skel,trans_correction,w10)
 				print("final pts skel")
 				print(pts_skel)
 				#print("############### ORIGINAL skeleton params ################")
@@ -1171,12 +1177,15 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 				params = movement.get_skeleton_parameters(arm2,pts_skel,correction_params)
 				update_verts()
 			
-			scn.frame_set(f+correction_iterations)
+			#scn.frame_set(f+correction_iterations)
 			
+			## EN ALGUN MOMENT S'HAURÀ D'INSERTAR BÉ ELS LOCATION . . . 
+			mAvt.skel.keyframe_insert(data_path = "location", index = -1, frame = f+correction_iterations)
 			
-			mAvt.skel.keyframe_insert(data_path = "location", frame = f + correction_iterations)
-			mAvt.skel.keyframe_insert(data_path = "rotation_euler", frame = f + correction_iterations)
-		
+			for bone in bones:
+				mAvt.skel.pose.bones[bone].keyframe_insert(data_path = "rotation_quaternion", index = -1, frame = f+correction_iterations)
+			#mAvt.mesh.keyframe_insert(data_path = "location", index = -1, frame = f+correction_iterations)
+			#mAvt.mesh.keyframe_insert(data_path = "rotation_euler", index = -1, frame = f+correction_iterations)
 				
 			f+=1
 

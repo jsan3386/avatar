@@ -133,8 +133,9 @@ def checkError(R,A,T,B): # UNUSED
     print("IF RMSE IS NEAR ZERO, THE FUNCTION IS CORRECT")
 
 
-def correct_pose(pts_skel,correction):
+def correct_pose(pts_skel,correction,scale):
 	new_pts_skel = []
+	pts_skel = pts_skel*scale
 	hips = pts_skel[14,:]
 	translation = hips - [correction[0],correction[1],correction[2]]
 	print("translation")
@@ -194,29 +195,20 @@ def slerp(v0, v1, t_array):
     return (s0[:,np.newaxis] * v0[np.newaxis,:]) + (s1[:,np.newaxis] * v1[np.newaxis,:])
 
 
-def transition_to_desired_motion(q_list,initial_rotation,skel_basis,correction_iteration):
+def transition_to_desired_motion(q_list,initial_rotation,skel_basis,correction_iteration,mesh):
 
 	list_of_rotations = []
 	initial_quaternion = Quaternion((1,0,0,0))
-	bone_name = ["Neck","LHipJoint","LeftUpLeg", "LeftLeg", "RHipJoint", "RightUpLeg", "RightLeg", "LeftShoulder", "LeftArm", "LeftForeArm", "RightShoulder", "RightArm", "RightForeArm"]
+	bone_name = ["Hips","Neck","LHipJoint","LeftUpLeg", "LeftLeg", "RHipJoint", "RightUpLeg", "RightLeg", "LeftShoulder", "LeftArm", "LeftForeArm", "RightShoulder", "RightArm", "RightForeArm"]
+
+	initial = slerp(initial_quaternion,initial_rotation,np.arange(0,1,0.05))
+	list_of_rotations.append(initial)
 	for i in range(len(q_list)):
 		movements = slerp(initial_quaternion,q_list[i],np.arange(0,1,0.05))
 		list_of_rotations.append(movements)
-	initial = slerp(initial_quaternion,initial_rotation,np.arange(0,1,0.05))
-	print(len(list_of_rotations))
-	print(len(list_of_rotations[0]))
-	poseBone = skel_basis.pose.bones["Hips"]
+
 	scene = bpy.context.scene
-
-	for i in range(len(initial)):
-		bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-		poseBone.rotation_mode = "QUATERNION"
-		poseBone.rotation_quaternion = initial[i]
-		# bpy.context.scene.frame_set(2+correction_iteration)
-		skel_basis.keyframe_insert(data_path = "location", index = -1)
-		skel_basis.keyframe_insert(data_path = "rotation_euler",index = -1)
-		correction_iteration+=1
-
+	bones = ["Hips","LHipJoint","LeftUpLeg","LeftLeg","LeftFoot","LeftToeBase","LowerBack","Spine","Spine1","LeftShoulder","LeftArm","LeftForeArm","LeftHand","LThumb","LeftFingerBase","LeftHandFinger1","Neck","Neck1","Head","RightShoulder","RightArm","RightForeArm","RightHand","RThumb","RightFingerBase","RightHandFinger1","RHipJoint","RightUpLeg","RightLeg","RightFoot","RightToeBase"]
 	for step in range(len(list_of_rotations[0])):
 		bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 		for i in range(len(bone_name)):
@@ -224,10 +216,11 @@ def transition_to_desired_motion(q_list,initial_rotation,skel_basis,correction_i
 			poseBone = skel_basis.pose.bones[bone_name[i]]
 			poseBone.rotation_mode = "QUATERNION"
 			poseBone.rotation_quaternion = list_of_rotations[i][step]
-			#bpy.context.scene.frame_set(2+correction_iteration)
 
-		skel_basis.keyframe_insert(data_path = "location", index = -1)
-		skel_basis.keyframe_insert(data_path = "rotation_euler", index = -1)
+		#bpy.context.scene.frame_set(2+correction_iteration)
+		skel_basis.keyframe_insert(data_path = "location", frame = 2 + correction_iteration)
+		for bone in bones:
+			skel_basis.pose.bones[bone].keyframe_insert(data_path = "rotation_quaternion", frame = 2 + correction_iteration)
 		correction_iteration+=1
 	return correction_iteration
 
