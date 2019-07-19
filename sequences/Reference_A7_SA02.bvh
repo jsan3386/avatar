@@ -1,0 +1,101 @@
+HIERARCHY
+ROOT Hips
+{
+	 OFFSET 0.00 0.00 0.00
+	 CHANNELS 6 Xposition Yposition Zposition Zrotation Yrotation Xrotation
+	 JOINT LeftUpLeg
+	 {
+	 	 OFFSET 1.33 0.00 0.00
+	 	 CHANNELS 3 Zrotation Yrotation Xrotation
+	 	 JOINT LeftLowLeg
+	 	 {
+	 	 	 OFFSET 0.00 -4.43 0.00
+	 	 	 CHANNELS 3 Zrotation Yrotation Xrotation
+	 	 	 JOINT LeftFoot
+	 	 	 {
+	 	 	 	 OFFSET 0.00 -4.54 0.00
+	 	 	 	 CHANNELS 3 Zrotation Yrotation Xrotation
+	 	 	 	 End Site
+	 	 	 	 {
+	 	 	 	 	 OFFSET 0.00 -0.10 0.00
+	 	 	 	 }
+	 	 	 }
+	 	 }
+	 }
+	 JOINT RightUpLeg
+	 {
+	 	 OFFSET -1.33 0.00 0.00
+	 	 CHANNELS 3 Zrotation Yrotation Xrotation
+	 	 JOINT RightLowLeg
+	 	 {
+	 	 	 OFFSET 0.00 -4.43 0.00
+	 	 	 CHANNELS 3 Zrotation Yrotation Xrotation
+	 	 	 JOINT RightFoot
+	 	 	 {
+	 	 	 	 OFFSET 0.00 -4.54 0.00
+	 	 	 	 CHANNELS 3 Zrotation Yrotation Xrotation
+	 	 	 	 End Site
+	 	 	 	 {
+	 	 	 	 	 OFFSET 0.00 -0.10 0.00
+	 	 	 	 }
+	 	 	 }
+	 	 }
+	 }
+	 JOINT Chest
+	 {
+	 	 OFFSET 0.00 0.00 0.00
+	 	 CHANNELS 3 Zrotation Yrotation Xrotation
+	 	 JOINT LeftCollar
+	 	 {
+	 	 	 OFFSET 0.00 4.89 0.00
+	 	 	 CHANNELS 3 Zrotation Yrotation Xrotation
+	 	 	 JOINT LeftUpArm
+	 	 	 {
+	 	 	 	 OFFSET 1.51 0.00 0.00
+	 	 	 	 CHANNELS 3 Zrotation Yrotation Xrotation
+	 	 	 	 JOINT LeftLowArm
+	 	 	 	 {
+	 	 	 	 	 OFFSET 0.00 -2.79 0.00
+	 	 	 	 	 CHANNELS 3 Zrotation Yrotation Xrotation
+	 	 	 	 	 End Site
+	 	 	 	 	 {
+	 	 	 	 	 	 OFFSET 0.00 -2.52 0.00
+	 	 	 	 	 }
+	 	 	 	 }
+	 	 	 }
+	 	 }
+	 	 JOINT RightCollar
+	 	 {
+	 	 	 OFFSET 0.00 4.89 0.00
+	 	 	 CHANNELS 3 Zrotation Yrotation Xrotation
+	 	 	 JOINT RightUpArm
+	 	 	 {
+	 	 	 	 OFFSET -1.51 0.00 0.00
+	 	 	 	 CHANNELS 3 Zrotation Yrotation Xrotation
+	 	 	 	 JOINT RightLowArm
+	 	 	 	 {
+	 	 	 	 	 OFFSET 0.00 -2.79 0.00
+	 	 	 	 	 CHANNELS 3 Zrotation Yrotation Xrotation
+	 	 	 	 	 End Site
+	 	 	 	 	 {
+	 	 	 	 	 	 OFFSET 0.00 -2.52 0.00
+	 	 	 	 	 }
+	 	 	 	 }
+	 	 	 }
+	 	 }
+	 	 JOINT Neck
+	 	 {
+	 	 	 OFFSET 0.00 4.89 0.00
+	 	 	 CHANNELS 3 Zrotation Yrotation Xrotation
+	 	 	 End Site
+	 	 	 {
+	 	 	 	 OFFSET 0.00 1.79 0.00
+	 	 	 }
+	 	 }
+	 }
+}
+
+MOTION
+Frames: 992
+Frame Time: 0.03
+0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 
