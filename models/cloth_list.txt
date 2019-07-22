@@ -1,0 +1,74 @@
+#
+#
+# List of Makehuman clothes with high quality mesh/textures
+#
+
+
+Gown/Robe
+----------
+F Dress 01
+F Dress 02
+F Dress 03
+F Dress 06
+F Dress 08
+F Dress 11
+
+Pants
+------
+M trousers 01
+M trousers 02
+F trousers 01
+Custom leggings
+M swimming trunks 02
+M swimming trunks 01
+Male classic jeans
+Short jeans (female)
+
+Shirt
+-----
+F lusekofta
+Kintted sweater 02
+Knitted sweater 01
+Tank top 01
+Spaghetti strap tank top
+Lace up blouse
+Camisole top
+
+Skirt
+-----
+Jeans skirt
+black mini skirt
+
+Helmet
+------
+Patrol cap
+Ridding helmet
+Knitted hat 01
+Fishing hat 01
+
+Shoes
+-----
+Riding boots
+Medieval boots
+Female knee boots
+Female half boots
+heel sandals
+Martial arts shoes
+Tennis shoes
+shoes monk strap male
+shoes oxford male
+running shoes
+
+Accessory
+---------
+Ladies sunglass by Elv
+Glasses (modern form)
+
+Others
+------
+Frill bikini bottom
+Frill bikini top
+Denim jacket
+M suit 01
+
+
