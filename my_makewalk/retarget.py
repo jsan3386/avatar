@@ -91,15 +91,17 @@ class CAnimation:
         scn.frame_set(0)
         for banim in self.boneAnims.values():
             banim.getTPoseMatrix()
+	#########################
+        selectAndSetRestPose(self.srcRig,scn)
 
 
     def retarget(self, frames, scn):
         objects = hideObjects(scn, self.srcRig)
         try:
             for frame in frames:
-                scn.frame_set(frame+40)
+                scn.frame_set(frame+50)
                 for banim in self.boneAnims.values():
-                    banim.retarget(frame+40)
+                    banim.retarget(frame+50)
         finally:
             unhideObjects(objects)
 

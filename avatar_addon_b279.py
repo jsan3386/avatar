@@ -1,4 +1,4 @@
-# coding=utf-8
+#coding=utf-8
 
 #bl_info = {
 #	'name': "Avatar",
@@ -1036,23 +1036,24 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 	
 	def execute(self, context):
 		global mAvt
-		scn = context.scene
+		scn = bpy.context.scene
 		arm2 = mAvt.skel
 		mesh_arm2 = mAvt.mesh
 		original_position = []
 		
 		bones = ["Hips","LHipJoint","LeftUpLeg","LeftLeg","LeftFoot","LeftToeBase","LowerBack","Spine","Spine1","LeftShoulder","LeftArm","LeftForeArm","LeftHand","LThumb","LeftFingerBase","LeftHandFinger1","Neck","Neck1","Head","RightShoulder","RightArm","RightForeArm","RightHand","RThumb","RightFingerBase","RightHandFinger1","RHipJoint","RightUpLeg","RightLeg","RightFoot","RightToeBase"]
 		
+#		for i in range(len(bones)):
+#			bone = bones[i]
+#			quaternion = arm2.pose.bones[bone].matrix.to_quaternion().copy()
+#			original_position.append(quaternion)
+			
 		for i in range(len(bones)):
 			bone = bones[i]
-			quaternion = arm2.pose.bones[bone].matrix.to_quaternion().copy()
-			original_position.append(quaternion)
-			poseBone = arm2.pose.bones[bone]
-			poseBone.rotation_mode = "QUATERNION"
-			poseBone.rotation_quaternion = quaternion
-			arm2.pose.bones[bone].keyframe_insert(data_path = "rotation_quaternion", frame = 0)
+			matrix = arm2.pose.bones[bone].matrix
+			original_position.append(matrix)
 			
-			
+#		scn.frame_set = 9	
 		### Start reading BVH file
 		bone_bvh = ["Hips","LeftUpLeg","LeftLowLeg","LeftFoot","RightUpLeg","RightLowLeg","RightFoot","Chest","LeftCollar","LeftUpArm","LeftLowArm","LeftHand","RightCollar","RightUpArm","RightLowArm","RightHand","Neck","Head"]
 		bone_conversion = ["Hips","LeftUpLeg","LeftLeg","LeftFoot","RightUpLeg","RightLeg","RightFoot","Spine1","LeftShoulder","LeftArm","LeftForeArm","LeftHand","RightShoulder","RightArm","RightForeArm","RightHand","Neck","Head"]
@@ -1063,29 +1064,19 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 #		for i in range(len(bones)):
 #			bone = bones[i]
 #			poseBone = arm2.pose.bones[bone]
-#			poseBone.rotation_mode = "QUATERNION"
-#			poseBone.rotation_quaternion = ref[i]
-#			bpy.context.scene.update()
-#			arm2.pose.bones[bone].keyframe_insert(data_path = "rotation_quaternion", frame = 0)
-	
-	
-	##############################################################################
-#		read_bvh_custom.load(context,
-#         file_path,
-#         skel_basis = mAvt.skel,
-#         target='OBJECT',
-#         rotate_mode='NATIVE',
-#         global_scale=1.0,
-#         use_cyclic=False,
-#         frame_start=1,
-#         global_matrix=None,
-#         use_fps_scale=False,
-#         update_scene_fps=False,
-#         update_scene_duration=False,
-#         report=print       
-#         )
-
-
+#			poseBone.matrix = ref[i]
+#		bpy.context.scene.update()
+		
+		ref = original_position.copy()
+		for i in range(len(bones)):
+			bone = bones[i]
+			poseBone = arm2.pose.bones[bone]
+			poseBone.rotation_mode = "QUATERNION"
+			poseBone.rotation_quaternion = Quaternion((1,0,0,0))###3ref[i]
+			bpy.context.scene.update()
+			#bpy.ops.graph.keyframe_insert(type='ALL')
+			arm2.pose.bones[bone].keyframe_insert(data_path = "rotation_quaternion", frame = 0)
+		bpy.context.scene.update()
 
 ######################################################################################
 #		file_lines = file.readlines()
@@ -1169,8 +1160,7 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 	
 	def execute(self, context):
 		global mAvt
-		scn = context.scene
-		obj = context.active_object
+		obj = bpy.context.active_object
 		
 		scn = bpy.context.scene
 		scn.frame_start = 1
