@@ -86,8 +86,8 @@ class CAnimation:
         t_pose.setTPose(self.srcRig, scn)
         selectAndSetRestPose(self.trgRig, scn)
         t_pose.setTPose(self.trgRig, scn)
-        for banim in self.boneAnims.values():
-            banim.insertTPoseFrame()
+        #for banim in self.boneAnims.values():
+            #banim.insertTPoseFrame()
         scn.frame_set(0)
         for banim in self.boneAnims.values():
             banim.getTPoseMatrix()

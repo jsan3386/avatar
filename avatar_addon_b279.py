@@ -44,7 +44,7 @@ print(avt_path)
 
 
 import movement   # For the movement from frames
-import read_bvh_custom # For the movement from BVH 
+#import read_bvh_custom # For the movement from BVH 
 sys.path.insert(0,"/home/aniol/avatar/my_makewalk/")
 import load
 import retarget
@@ -1043,29 +1043,22 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 		
 		bones = ["Hips","LHipJoint","LeftUpLeg","LeftLeg","LeftFoot","LeftToeBase","LowerBack","Spine","Spine1","LeftShoulder","LeftArm","LeftForeArm","LeftHand","LThumb","LeftFingerBase","LeftHandFinger1","Neck","Neck1","Head","RightShoulder","RightArm","RightForeArm","RightHand","RThumb","RightFingerBase","RightHandFinger1","RHipJoint","RightUpLeg","RightLeg","RightFoot","RightToeBase"]
 		
-#		for i in range(len(bones)):
-#			bone = bones[i]
-#			quaternion = arm2.pose.bones[bone].matrix.to_quaternion().copy()
-#			original_position.append(quaternion)
 			
 		for i in range(len(bones)):
 			bone = bones[i]
 			matrix = arm2.pose.bones[bone].matrix
 			original_position.append(matrix)
 			
-#		scn.frame_set = 9	
+
 		### Start reading BVH file
 		bone_bvh = ["Hips","LeftUpLeg","LeftLowLeg","LeftFoot","RightUpLeg","RightLowLeg","RightFoot","Chest","LeftCollar","LeftUpArm","LeftLowArm","LeftHand","RightCollar","RightUpArm","RightLowArm","RightHand","Neck","Head"]
 		bone_conversion = ["Hips","LeftUpLeg","LeftLeg","LeftFoot","RightUpLeg","RightLeg","RightFoot","Spine1","LeftShoulder","LeftArm","LeftForeArm","LeftHand","RightShoulder","RightArm","RightForeArm","RightHand","Neck","Head"]
 		file_path = avt_path + "/sequences/" + "breakdance.bvh"
 		retarget.loadRetargetSimplify(context,file_path)
 		
-#		ref = original_position.copy()
-#		for i in range(len(bones)):
-#			bone = bones[i]
-#			poseBone = arm2.pose.bones[bone]
-#			poseBone.matrix = ref[i]
-#		bpy.context.scene.update()
+		
+		scn.frame_set(50)
+		
 		
 		ref = original_position.copy()
 		for i in range(len(bones)):
@@ -1076,78 +1069,27 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 			bpy.context.scene.update()
 			#bpy.ops.graph.keyframe_insert(type='ALL')
 			arm2.pose.bones[bone].keyframe_insert(data_path = "rotation_quaternion", frame = 0)
+		bone = arm2.pose.bones["Hips"]
+		bone.location = Vector((0,0,0))
+		arm2.pose.bones["Hips"].keyframe_insert(data_path = "location", frame = 0)
+		
+		scn.frame_set(50)
+		quat = bone.matrix.to_quaternion()
+		quat_n = Quaternion((round(quat.w),round(quat.x),round(quat.y),round(quat.z)))
+		print(quat)
+		
+		scn.frame_set(0)
+		quat2 = bone.matrix.to_quaternion()
+		quat2_n = Quaternion((round(quat2.w),round(quat2.x),round(quat2.y),round(quat2.z)))
+		print(quat2)
+		if quat2_n != quat_n:
+			bone.rotation_mode = "QUATERNION"
+			bone.rotation_quaternion = Quaternion((0,0,0.91,0.41))
+			bone.keyframe_insert(data_path = "rotation_quaternion", frame = 0)
+		
+
 		bpy.context.scene.update()
-
-######################################################################################
-#		file_lines = file.readlines()
-#		print(len(file_lines))
-#		file_lines = [ll for ll in [l.split() for l in file_lines] if ll]
-#		lineIdx = 0  # An index for the file.
-#		
-#		print(file_lines[200])
-#		while lineIdx < len(file_lines) - 1:
-#			if len(file_lines[lineIdx]) == 1 and file_lines[lineIdx][0].lower() == 'motion':
-#				lineIdx += 1  # Read frame count.
-#				print("acabo de llegir motion")
-#				if (len(file_lines[lineIdx]) == 2 and file_lines[lineIdx][0].lower() == 'frames:'):
-#					print("numero de frames: ")
-#					bvh_frame_count = int(file_lines[lineIdx][1])
-#					print(bvh_frame_count)
-#				lineIdx += 1  # Read frame rate.
-#				if (len(file_lines[lineIdx]) == 3 and file_lines[lineIdx][0].lower() == 'frame' and file_lines[lineIdx][1].lower() == 'time:'):
-#					bvh_frame_time = float(file_lines[lineIdx][2])
-#				lineIdx += 1  # Set the cursor to the first frame
-#				break
-#			lineIdx += 1
-#		print("estic a la linia: " + str(lineIdx))
-#		f = 0
-#		while lineIdx < len(file_lines):
-#			line = file_lines[lineIdx]
-#			print(len(line))
-#			lx = ly = lz = rx = ry = rz = 0.0
-#			bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-#			for i in range(len(bone_conversion)):
-#			
-#				print(i)
-#				if bone_conversion[i] == "Hips":
-#					print("Moving Hips")
-#					bone = mAvt.skel.pose.bones[bone_conversion[i]]
-#					lx = float(line[0]) 
-#					ly = float(line[1])
-#					lz = float(line[2])
-#					bone.location = Vector((lx,ly,lz))
-#					#rz = radians(float(line[3]))
-#					#ry = radians(float(line[4]))
-#					#rx = radians(float(line[5]))
-#					ry = -radians(float(line[3]))
-#					rz = radians(float(line[4]))
-#					rx = radians(float(line[5]))
-#					bone.rotation_mode = "ZYX"
-#					bone.rotation_euler = Vector((rz,ry,rx))
-#				else:
-#					bone = mAvt.skel.pose.bones[bone_conversion[i]]
-#					print("Moving skeleton")
-#					#rz = radians(float(line[6+(i-1)*3]))
-#					#ry = radians(float(line[6+(i-1)*3+1]))
-#					#rx = radians(float(line[6+(i-1)*3+2]))
-#					ry = -radians(float(line[6+(i-1)*3]))
-#					rz = radians(float(line[6+(i-1)*3+1]))
-#					rx = radians(float(line[6+(i-1)*3+2]))
-#					bone.rotation_mode = "ZYX"
-#					bone.rotation_euler = Vector((rz,ry,rx))
-#			for bone in bones:
-#				mAvt.skel.pose.bones[bone].keyframe_insert(data_path = "location", index = -1, frame = f)
-#				mAvt.skel.pose.bones[bone].keyframe_insert(data_path = "rotation_euler", index = -1, frame = f)
-#				
-#			if f == 0 or f == 1:
-#				f+=10		
-#			else:
-#				f+=1
-#			lineIdx +=1
-
-#				
-
-
+		
 				
 		return {'FINISHED'}
 

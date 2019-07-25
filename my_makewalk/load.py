@@ -30,9 +30,11 @@
 
 import bpy, os, mathutils, math, time
 from math import sin, cos
-from mathutils import *
+#from mathutils import *
+import mathutils
 from bpy_extras.io_utils import ImportHelper
 from bpy.props import *
+from mathutils import Vector, Quaternion, Matrix
 
 import props
 import simplify
@@ -126,6 +128,7 @@ def readBvhFile(context, filepath, scn, scan):
     startFrame = scn.McpStartFrame
     endFrame = scn.McpEndFrame
     frameno = 1
+    translation_vector = Vector((0,0,0))
     if scn.McpFlipYAxis:
         flipMatrix = Matrix.Rotation(math.pi, 3, 'X') * Matrix.Rotation(math.pi, 3, 'Y')
     else:
@@ -235,11 +238,33 @@ def readBvhFile(context, filepath, scn, scan):
                 for pb in pbones:
                     pb.rotation_mode = 'QUATERNION'
         elif status == Frames:
-            if (frame >= startFrame and
-                frame <= endFrame and
-                frame % ssFactor == 0 and
-                frame < nFrames):
-                addFrame(words, frameno, nodes, pbones, scale, flipMatrix)
+            if (frame >= startFrame and frame <= endFrame and frame % ssFactor == 0 and frame < nFrames):
+                if frameno == 1:
+                    for node in nodes:
+                        if node.name == "Hips":
+                            for (mode, indices) in node.channels:
+                                if mode == Location:
+                                    vec = Vector((0,0,0))
+                                    for (index, sign) in indices:
+                                        vec[index] = sign*float(words[0])
+
+
+                                elif mode == Rotation:
+                                    mats = []
+                                    for (axis, sign) in indices:
+                                        angle = sign*float(words[0])*Deg2Rad
+                                        mats.append(Matrix.Rotation(angle, 3, axis))
+                                    flipInv = flipMatrix.inverted()
+                                    mat = node.inverse * flipMatrix *mats[0] * mats[1] * mats[2] * flipInv * node.matrix# node.inverse * flipMatrix *mats[0] * mats[1] * mats[2] * flipInv * node.matrixç
+                print("TRANSLATION VECTOR!!")
+                print(vec)
+                print("ROTATION MATRIX")
+                print(mat)
+                print(mat.to_quaternion())
+                print(mat.to_euler())
+                start_rotation = mat
+                translation_vector = vec ###############node.inverse * (scale * flipMatrix * vec - node.head)
+                addFrame(words, frameno, nodes, pbones, scale, flipMatrix, translation_vector, start_rotation)
                 showProgress(frameno, frame, nFrames, step=200)
                 frameno += 1
             frame += 1
@@ -261,7 +286,7 @@ def readBvhFile(context, filepath, scn, scan):
 #    addFrame(words, frame, nodes, pbones, scale, flipMatrix):
 #
 
-def addFrame(words, frame, nodes, pbones, scale, flipMatrix):
+def addFrame(words, frame, nodes, pbones, scale, flipMatrix , translation_vector, start_rotation):
     m = 0
     first = True
     flipInv = flipMatrix.inverted()
@@ -279,7 +304,16 @@ def addFrame(words, frame, nodes, pbones, scale, flipMatrix):
                         vec[index] = sign*float(words[m])
                         m += 1
                     if first:
+                        print("translation_vector")
+                        print(translation_vector)
+                        print("Current vector")
+                        print(node.inverse * (scale * flipMatrix * vec - node.head))
                         pb.location = node.inverse * (scale * flipMatrix * vec - node.head)
+                        ################
+                        pb.location[0] += translation_vector[0]
+                        pb.location[1] -= translation_vector[1]
+                        pb.location[2] += translation_vector[2]
+                        ################
                         pb.keyframe_insert('location', frame=frame, group=name)
                     first = False
                 elif mode == Rotation:
@@ -288,7 +322,25 @@ def addFrame(words, frame, nodes, pbones, scale, flipMatrix):
                         angle = sign*float(words[m])*Deg2Rad
                         mats.append(Matrix.Rotation(angle, 3, axis))
                         m += 1
-                    mat = node.inverse * flipMatrix *mats[0] * mats[1] * mats[2] * flipInv * node.matrix
+                    mat = (node.inverse * flipMatrix *mats[0] * mats[1] * mats[2] * flipInv * node.matrix)
+                    #
+                    # if node.name == "Hips":
+                    #     mat = mat.to_euler()
+                    #     met = start_rotation.to_euler()
+                    #     mat.x= mat.x-met.x
+                    #     mat.y= mat.y-met.y
+                    #     mat.z= mat.z-met.z
+                    #
+                    #     mat = mat.to_matrix() # node.inverse * flipMatrix *mats[0] * mats[1] * mats[2] * flipInv * node.matrixç
+
+                    #############################################
+                    mat_rot = mathutils.Matrix.Rotation(math.radians(180.0), 3, 'Z')
+                    #print(mat_rot)
+                    #mat = mat * mat_rot
+                    #############################################
+
+                    #print("MAT")
+                    #print(mat)
                     setRotation(pb, mat, frame, name)
 
     return

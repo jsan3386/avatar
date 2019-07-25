@@ -29,8 +29,12 @@
 
 import bpy
 from bpy.props import *
+import math
 from math import sin, cos, atan, pi
+import mathutils
 from mathutils import *
+
+from mathutils import Vector, Quaternion, Matrix
 
 Deg2Rad = pi/180
 Rad2Deg = 180/pi
@@ -374,6 +378,15 @@ def setRotation(pb, rot, frame, group):
             quat = rot.to_quaternion()
         except:
             quat = rot
+        if pb.name == "Hips":
+            #print("HI SOC HI SOC") ################ EL PROGRAMA VA AQUIIII
+            mat_rot = mathutils.Matrix.Rotation(pi, 3, 'Z').to_4x4()
+            #print(rot.to_4x4())
+            #print(rot.to_4x4() * mat_rot)
+            #quat = mat_rot * rot.to_4x4()
+            #quat = quat.to_quaternion()
+
+
         pb.rotation_quaternion = quat
         pb.keyframe_insert('rotation_quaternion', frame=frame, group=group)
     else:
@@ -381,6 +394,10 @@ def setRotation(pb, rot, frame, group):
             euler = rot.to_euler(pb.rotation_mode)
         except:
             euler = rot
+        if pb.name == "Hips":
+            print("HI SOC A LA ROTACIÓ")
+            print(rot)
+            print(euler)
         pb.rotation_euler = euler
         pb.keyframe_insert('rotation_euler', frame=frame, group=group)
 
@@ -582,4 +599,3 @@ class ErrorOperator(bpy.types.Operator):
         global _errorLines
         for line in _errorLines:
             self.layout.label(line)
-
