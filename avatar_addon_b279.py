@@ -26,7 +26,7 @@ from numpy import *
 import mathutils 
 from bpy.props import * 
 
-
+import bpy.utils.previews
 
 
 # Set a file 'config.py' with variable avt_path that contains the
@@ -46,9 +46,10 @@ print(avt_path)
 import movement   # For the movement from frames
 #import read_bvh_custom # For the movement from BVH 
 sys.path.insert(0,"/home/aniol/avatar/my_makewalk/")
-import load
-import retarget
+#import load
+#import retarget
 
+preview_collections = {}
 
 
 ##########################################################################################################
@@ -195,6 +196,30 @@ def update_verts():
 		mesh_low_poly.vertices[i].co = vlp.matrix_world.inverted() * mesh_low_poly.vertices[i].co
 	#print(" Weights Updated ")
 	#print("*********")
+
+
+def generate_previews():
+    # We are accessing all of the information that we generated in the register function below
+    pcoll = preview_collections["thumbnail_previews"]
+    image_location = pcoll.images_location
+
+    enum_items = []
+
+    fixedgallery = ['tshirt.png', 'pants.png', 'dress.png']
+
+    a = 0
+    for i in fixedgallery:
+        a = a + 1
+        #print(i)
+        imagename = i.split(".")[0]
+        #print(imagename)
+        filepath = image_location + '/' + i
+        #print(filepath)
+        thumb = pcoll.load(filepath, filepath, 'IMAGE')
+        enum_items.append((i, i, imagename, thumb.icon_id, a))
+
+    return enum_items
+
 	
 
 class Avatar:
@@ -800,6 +825,8 @@ class Avatar_OT_PutTshirt (bpy.types.Operator):
 		scn = context.scene
 		obj = context.active_object
 		
+		print("Execute something??")
+		
 		#
 		tshirt_file = "%s/models/tshirt.obj" % avt_path
 		bpy.ops.import_scene.obj(filepath=tshirt_file)
@@ -1007,6 +1034,31 @@ class Avatar_PT_DressingPanel(bpy.types.Panel):
 		##props = row.operator("wm.context_set_value", text="Orgin")
 		##props.data_path = "object.location"
 		##props.value = "(0,0,0)"
+		row = layout.row()
+		#Presets
+		row.template_icon_view(context.scene, "my_thumbnails")
+		row = layout.row()
+
+		# Just a way to access which one is selected
+		iconname = bpy.context.scene.my_thumbnails
+		iconname = iconname.split(".")[0]
+		col = row.column()
+		cols = col.row(True)
+		# Activate item icons
+		if "tshirt" in bpy.context.scene.my_thumbnails:
+			print("TSHIRT!!!!!!!!")
+			#row = layout.row()
+			cols.operator('avt.tshirt', text="Load T-shirt")
+		elif "pants" in bpy.context.scene.my_thumbnails:
+			row = layout.row()
+			row.operator('avt.pants', text="Load Pants")	
+		elif "dress" in bpy.context.scene.my_thumbnails:
+			row = layout.row()
+			row.operator('avt.dress', text="Load Dress")			
+		else:
+			pass
+		row = layout.row()
+	
 		
 		
 class Avatar_PT_MotionPanel(bpy.types.Panel):
@@ -1281,12 +1333,33 @@ classes  = (
 )
 
 def register():
+	
+	# Create a new preview collection (only upon register)
+	pcoll = bpy.utils.previews.new()
+
+	pcoll.images_location = "%s/cloth_previews" % (avt_path)
+	print("%s/cloth_previews" % (avt_path))
+
+	# Enable access to our preview collection outside of this function
+	preview_collections["thumbnail_previews"] = pcoll
+
+	# This is an EnumProperty to hold all of the images
+	bpy.types.Scene.my_thumbnails = EnumProperty(
+		items=generate_previews(),
+		)	
+	
 	for clas in classes:
 		bpy.utils.register_class(clas)
 
 def unregister():
 	for clas in classes:
 		bpy.utils.unregister_class(clas)
+
+	for pcoll in preview_collections.values():
+		bpy.utils.previews.remove(pcoll)
+	preview_collections.clear()
+
+	del bpy.types.Scene.my_thumbnails
 
 
 if __name__ == '__main__':
