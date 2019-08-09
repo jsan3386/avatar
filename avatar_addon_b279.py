@@ -814,101 +814,134 @@ class Avatar_OT_LoadModel(bpy.types.Operator):
 		return {'FINISHED'}
 
 
-class Avatar_OT_PutTshirt (bpy.types.Operator):
+class Avatar_OT_WearCloth (bpy.types.Operator):
 	
-	bl_idname = "avt.tshirt"
-	bl_label = "Put T-shirt"
-	bl_description = "Put T-shirt on human"
+	bl_idname = "avt.wear_cloth"
+	bl_label = "Wear Cloth"
+	bl_description = "Dress human with selected cloth"
 	
 	def execute(self, context):
 		global mAvt
+		global iconname
 		scn = context.scene
 		obj = context.active_object
 		
-		print("Execute something??")
+		if iconname == "tshirt":					
+			#
+			tshirt_file = "%s/models/tshirt.obj" % avt_path
+			bpy.ops.import_scene.obj(filepath=tshirt_file)
 		
-		#
-		tshirt_file = "%s/models/tshirt.obj" % avt_path
-		bpy.ops.import_scene.obj(filepath=tshirt_file)
+			# change name to object
+			bpy.context.selected_objects[0].name = 'tshirt'
+			bpy.context.selected_objects[0].data.name = 'tshirt'
 		
-		# change name to object
-		bpy.context.selected_objects[0].name = 'tshirt'
-		bpy.context.selected_objects[0].data.name = 'tshirt'
+			b = bpy.data.objects["tshirt"]
+			b.select = True
+			bpy.context.scene.objects.active = b
+			bpy.ops.object.mode_set(mode='OBJECT')
+			bpy.ops.object.modifier_add(type='CLOTH')
 		
-		b = bpy.data.objects["tshirt"]
-		b.select = True
-		bpy.context.scene.objects.active = b
-		bpy.ops.object.mode_set(mode='OBJECT')
-		bpy.ops.object.modifier_add(type='CLOTH')
+			mAvt.tshirt_mesh = bpy.data.objects["tshirt"]
+			mAvt.has_tshirt = True
 		
-		mAvt.tshirt_mesh = bpy.data.objects["tshirt"]
-		mAvt.has_tshirt = True
+			for obj in bpy.data.objects:
+				obj.select = False
+			#bpy.context.scene.objects.active = b
+			#bpy.ops.object.modifier_add(type='CLOTH')
 		
-		for obj in bpy.data.objects:
-			obj.select = False
-		#bpy.context.scene.objects.active = b
-		#bpy.ops.object.modifier_add(type='CLOTH')
-		
-#		if bpy.data.objects.get("Standard") is not False:
+#			if bpy.data.objects.get("Standard") is not False:
 #		
-#			a = bpy.data.objects["Standard"]
-#			b = bpy.data.objects["tshirt"]
-#			a.select = True
-#			b.select = True
-#			bpy.context.scene.objects.active = a
-#			bpy.ops.object.parent_set(type='ARMATURE_AUTO')
+#				a = bpy.data.objects["Standard"]
+#				b = bpy.data.objects["tshirt"]
+#				a.select = True
+#				b.select = True
+#				bpy.context.scene.objects.active = a
+#				bpy.ops.object.parent_set(type='ARMATURE_AUTO')
+
+
+		elif iconname == "pants":
+			#
+			pants_file = "%s/models/pants.obj" % avt_path
+			bpy.ops.import_scene.obj(filepath=pants_file)
+		
+			# change name to object
+			bpy.context.selected_objects[0].name = 'pants'
+			bpy.context.selected_objects[0].data.name = 'pants'
+			b = bpy.data.objects["pants"]
+			b.select = True
+			bpy.context.scene.objects.active = b
+			bpy.ops.object.mode_set(mode='OBJECT')
+			bpy.ops.object.modifier_add(type='CLOTH')
+		
+			mAvt.pants_mesh = bpy.data.objects["pants"]
+		
+			mAvt.has_pants = True
+
+			# save it as kd tree data
+			size = len(mAvt.pants_mesh.data.vertices)
+			mAvt.kd_pants = mathutils.kdtree.KDTree(size)
+		
+			for i, v in enumerate (mAvt.pants_mesh.data.vertices):
+				mAvt.kd_pants.insert(v.co, i)
+			
+			mAvt.kd_pants.balance()
+			for obj in bpy.data.objects:
+				obj.select = False
+			
+#			if bpy.data.objects.get("Standard") is not False:
+#		
+#				a = bpy.data.objects["Standard"]
+#				b = bpy.data.objects["pants"]
+#				a.select = True
+#				b.select = True
+#				bpy.context.scene.objects.active = a
+#				bpy.ops.object.parent_set(type='ARMATURE_AUTO')
+
+		elif iconname == "dress":
+			#
+			dress_file = "%s/models/dress1.obj" % avt_path
+			bpy.ops.import_scene.obj(filepath=dress_file)
+			print("dress file") 
+			print(dress_file)
+
+	        # change name to object
+			bpy.context.selected_objects[0].name = 'dress'
+			bpy.context.selected_objects[0].data.name = 'dress'
+		
+			b = bpy.data.objects["dress"]
+			b.select = True
+			bpy.context.scene.objects.active = b
+			bpy.ops.object.mode_set(mode='OBJECT')
+			bpy.ops.object.modifier_add(type='CLOTH')
+		
+			mAvt.dress_mesh = bpy.data.objects["dress"]
+			mAvt.has_dress = True
+
+			# save it as kd tree data
+			size = len(mAvt.dress_mesh.data.vertices)
+			mAvt.kd_dress = mathutils.kdtree.KDTree(size)
+		
+			for i, v in enumerate (mAvt.dress_mesh.data.vertices):
+				mAvt.kd_dress.insert(v.co, i)
+
+			mAvt.kd_dress.balance()
+#			for obj in bpy.data.objects:
+#				obj.select = False
+			
+#			if bpy.data.objects.get("Standard") is not False:
+#		
+#				a = bpy.data.objects["Standard"]
+#				b = bpy.data.objects["dress"]
+#				a.select = True
+#				b.select = True
+#				bpy.context.scene.objects.active = a
+#				bpy.ops.object.parent_set(type='ARMATURE_AUTO')
+
+		else:
+			pass
 				
 		return {'FINISHED'}
 
-class Avatar_OT_PutPants (bpy.types.Operator):
-	
-	bl_idname = "avt.pants"
-	bl_label = "Put Pants"
-	bl_description = "Put Pants on human"
-	
-	def execute(self, context):
-		global mAvt
-		scn = context.scene
-		obj = context.active_object
-		
-		#
-		pants_file = "%s/models/pants.obj" % avt_path
-		bpy.ops.import_scene.obj(filepath=pants_file)
-		
-		# change name to object
-		bpy.context.selected_objects[0].name = 'pants'
-		bpy.context.selected_objects[0].data.name = 'pants'
-		b = bpy.data.objects["pants"]
-		b.select = True
-		bpy.context.scene.objects.active = b
-		bpy.ops.object.mode_set(mode='OBJECT')
-		bpy.ops.object.modifier_add(type='CLOTH')
-		
-		mAvt.pants_mesh = bpy.data.objects["pants"]
-		
-		mAvt.has_pants = True
-
-		# save it as kd tree data
-		size = len(mAvt.pants_mesh.data.vertices)
-		mAvt.kd_pants = mathutils.kdtree.KDTree(size)
-		
-		for i, v in enumerate (mAvt.pants_mesh.data.vertices):
-			mAvt.kd_pants.insert(v.co, i)
-			
-		mAvt.kd_pants.balance()
-		for obj in bpy.data.objects:
-			obj.select = False
-			
-#		if bpy.data.objects.get("Standard") is not False:
-#		
-#			a = bpy.data.objects["Standard"]
-#			b = bpy.data.objects["pants"]
-#			a.select = True
-#			b.select = True
-#			bpy.context.scene.objects.active = a
-#			bpy.ops.object.parent_set(type='ARMATURE_AUTO')
-			
-		return {'FINISHED'}
 	
 class Avatar_OT_PutDress (bpy.types.Operator):
 	
@@ -1017,15 +1050,16 @@ class Avatar_PT_DressingPanel(bpy.types.Panel):
 		layout = self.layout
 		obj = context.object
 		scn = context.scene
+		global iconname
 		
-		row = layout.row()
-		row.operator('avt.tshirt', text="Load T-shirt")
-		#layout.separator()
-		row = layout.row()
-		row.operator('avt.pants', text="Load Pants")
-		#layout.separator()
-		row = layout.row()
-		row.operator('avt.dress', text="Load Dress")
+#		row = layout.row()
+#		row.operator('avt.tshirt', text="Load T-shirt")
+#		#layout.separator()
+#		row = layout.row()
+#		row.operator('avt.pants', text="Load Pants")
+#		#layout.separator()
+#		row = layout.row()
+#		row.operator('avt.dress', text="Load Dress")
 		#layout.separator()
 		# ---- example to pass properties to operator
 		### Operator call
@@ -1042,23 +1076,12 @@ class Avatar_PT_DressingPanel(bpy.types.Panel):
 		# Just a way to access which one is selected
 		iconname = bpy.context.scene.my_thumbnails
 		iconname = iconname.split(".")[0]
+		print(iconname)
 		col = row.column()
 		cols = col.row(True)
 		# Activate item icons
-		if "tshirt" in bpy.context.scene.my_thumbnails:
-			print("TSHIRT!!!!!!!!")
-			#row = layout.row()
-			cols.operator('avt.tshirt', text="Load T-shirt")
-		elif "pants" in bpy.context.scene.my_thumbnails:
-			row = layout.row()
-			row.operator('avt.pants', text="Load Pants")	
-		elif "dress" in bpy.context.scene.my_thumbnails:
-			row = layout.row()
-			row.operator('avt.dress', text="Load Dress")			
-		else:
-			pass
 		row = layout.row()
-	
+		row.operator('avt.wear_cloth', text="Load selected cloth")	
 		
 		
 class Avatar_PT_MotionPanel(bpy.types.Panel):
@@ -1327,9 +1350,7 @@ classes  = (
 			Avatar_OT_Motion3DPoints,
 			Avatar_OT_MotionBVH,
 			Avatar_PT_DressingPanel,
-			Avatar_OT_PutTshirt,
-			Avatar_OT_PutPants,
-			Avatar_OT_PutDress
+			Avatar_OT_WearCloth
 )
 
 def register():
