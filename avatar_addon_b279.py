@@ -205,10 +205,19 @@ def generate_previews():
 
     enum_items = []
 
-    fixedgallery = ['tshirt.png', 'pants.png', 'dress.png']
+    gallery = ['dress01.png', 'dress02.png', 'dress03.png', 'dress04.png', 'dress05.png', 'dress06.png', 'dress07.png',
+ 			   'glasses01.png', 'glasses02.png',
+			   'hat01.png', 'hat02.png', 'hat03.png', 'hat04.png',
+			   'jacket01.png', 'jacket02.png',
+			   'pants01.png', 'pants02.png', 'pants03.png', 'pants04.png', 'pants05.png', 'pants06.png',
+			   'shirt01.png', 'shirt02.png', 'shirt03.png', 'shirt04.png', 'shirt05.png', 'shirt06.png', 'shirt07.png',
+			   'shoes01.png', 'shoes02.png', 'shoes03.png', 'shoes04.png',
+			   'skirt01.png', 'skirt02.png',
+			   'suit01.png',
+			   'swimming01.png', 'swimming02.png', 'swimming03.png', 'swimming04.png']
 
     a = 0
-    for i in fixedgallery:
+    for i in gallery:
         a = a + 1
         #print(i)
         imagename = i.split(".")[0]
@@ -813,6 +822,26 @@ class Avatar_OT_LoadModel(bpy.types.Operator):
 
 		return {'FINISHED'}
 
+def load_cloth (cloth_file, cloth_name):
+
+	bpy.ops.import_scene.obj(filepath=cloth_file)
+		
+	# change name to object
+	bpy.context.selected_objects[0].name = cloth_name
+	bpy.context.selected_objects[0].data.name = cloth_name
+		
+	b = bpy.data.objects[cloth_name]
+	b.select = True
+	bpy.context.scene.objects.active = b
+	bpy.ops.object.mode_set(mode='OBJECT')
+	bpy.ops.object.modifier_add(type='CLOTH')
+	
+	cloth = bpy.data.objects[cloth_name]
+
+	for obj in bpy.data.objects:
+		obj.select = False
+	
+	return cloth	
 
 class Avatar_OT_WearCloth (bpy.types.Operator):
 	
@@ -828,114 +857,36 @@ class Avatar_OT_WearCloth (bpy.types.Operator):
 		
 		if iconname == "tshirt":					
 			#
-			tshirt_file = "%s/models/tshirt.obj" % avt_path
-			bpy.ops.import_scene.obj(filepath=tshirt_file)
+			tshirt_file = "%s/models/clothes/tshirt.obj" % avt_path
+			tshirt = load_cloth(tshirt_file, iconname)
 		
-			# change name to object
-			bpy.context.selected_objects[0].name = 'tshirt'
-			bpy.context.selected_objects[0].data.name = 'tshirt'
-		
-			b = bpy.data.objects["tshirt"]
-			b.select = True
-			bpy.context.scene.objects.active = b
-			bpy.ops.object.mode_set(mode='OBJECT')
-			bpy.ops.object.modifier_add(type='CLOTH')
-		
-			mAvt.tshirt_mesh = bpy.data.objects["tshirt"]
+			mAvt.tshirt_mesh = tshirt
 			mAvt.has_tshirt = True
-		
-			for obj in bpy.data.objects:
-				obj.select = False
-			#bpy.context.scene.objects.active = b
-			#bpy.ops.object.modifier_add(type='CLOTH')
-		
-#			if bpy.data.objects.get("Standard") is not False:
-#		
-#				a = bpy.data.objects["Standard"]
-#				b = bpy.data.objects["tshirt"]
-#				a.select = True
-#				b.select = True
-#				bpy.context.scene.objects.active = a
-#				bpy.ops.object.parent_set(type='ARMATURE_AUTO')
-
 
 		elif iconname == "pants":
 			#
-			pants_file = "%s/models/pants.obj" % avt_path
-			bpy.ops.import_scene.obj(filepath=pants_file)
+			pants_file = "%s/models/clothes/pants.obj" % avt_path
+			pants = load_cloth(pants_file, iconname)
 		
-			# change name to object
-			bpy.context.selected_objects[0].name = 'pants'
-			bpy.context.selected_objects[0].data.name = 'pants'
-			b = bpy.data.objects["pants"]
-			b.select = True
-			bpy.context.scene.objects.active = b
-			bpy.ops.object.mode_set(mode='OBJECT')
-			bpy.ops.object.modifier_add(type='CLOTH')
-		
-			mAvt.pants_mesh = bpy.data.objects["pants"]
-		
+			mAvt.pants_mesh = pants
 			mAvt.has_pants = True
-
-			# save it as kd tree data
-			size = len(mAvt.pants_mesh.data.vertices)
-			mAvt.kd_pants = mathutils.kdtree.KDTree(size)
-		
-			for i, v in enumerate (mAvt.pants_mesh.data.vertices):
-				mAvt.kd_pants.insert(v.co, i)
-			
-			mAvt.kd_pants.balance()
-			for obj in bpy.data.objects:
-				obj.select = False
-			
-#			if bpy.data.objects.get("Standard") is not False:
-#		
-#				a = bpy.data.objects["Standard"]
-#				b = bpy.data.objects["pants"]
-#				a.select = True
-#				b.select = True
-#				bpy.context.scene.objects.active = a
-#				bpy.ops.object.parent_set(type='ARMATURE_AUTO')
 
 		elif iconname == "dress":
 			#
-			dress_file = "%s/models/dress1.obj" % avt_path
-			bpy.ops.import_scene.obj(filepath=dress_file)
-			print("dress file") 
-			print(dress_file)
-
-	        # change name to object
-			bpy.context.selected_objects[0].name = 'dress'
-			bpy.context.selected_objects[0].data.name = 'dress'
+			dress_file = "%s/models/clothes/dress1.obj" % avt_path
+			dress = load_cloth(dress_file, iconname)
 		
-			b = bpy.data.objects["dress"]
-			b.select = True
-			bpy.context.scene.objects.active = b
-			bpy.ops.object.mode_set(mode='OBJECT')
-			bpy.ops.object.modifier_add(type='CLOTH')
-		
-			mAvt.dress_mesh = bpy.data.objects["dress"]
+			mAvt.dress_mesh = dress
 			mAvt.has_dress = True
 
-			# save it as kd tree data
-			size = len(mAvt.dress_mesh.data.vertices)
-			mAvt.kd_dress = mathutils.kdtree.KDTree(size)
-		
-			for i, v in enumerate (mAvt.dress_mesh.data.vertices):
-				mAvt.kd_dress.insert(v.co, i)
-
-			mAvt.kd_dress.balance()
-#			for obj in bpy.data.objects:
-#				obj.select = False
-			
-#			if bpy.data.objects.get("Standard") is not False:
+#			# save it as kd tree data: why this???
+#			size = len(mAvt.dress_mesh.data.vertices)
+#			mAvt.kd_dress = mathutils.kdtree.KDTree(size)
 #		
-#				a = bpy.data.objects["Standard"]
-#				b = bpy.data.objects["dress"]
-#				a.select = True
-#				b.select = True
-#				bpy.context.scene.objects.active = a
-#				bpy.ops.object.parent_set(type='ARMATURE_AUTO')
+#			for i, v in enumerate (mAvt.dress_mesh.data.vertices):
+#				mAvt.kd_dress.insert(v.co, i)
+
+#			mAvt.kd_dress.balance()
 
 		else:
 			pass
