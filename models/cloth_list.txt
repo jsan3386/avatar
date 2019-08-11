@@ -8,12 +8,12 @@ Gown/Robe
 ----------
 F Dress 01  -- dress01.png
 F Dress 02  -- dress02.png
-F Dress 03  -- dress
+F Dress 03  -- dress06.png
 F Dress 06  -- dress03.png
 F Dress 08  -- dress04.png
 F Dress 11  -- dress05.png
 
-Other dress -- dress06.png
+Other dress -- dress07.png
 
 Pants
 ------

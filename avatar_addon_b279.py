@@ -855,7 +855,33 @@ class Avatar_OT_WearCloth (bpy.types.Operator):
 		scn = context.scene
 		obj = context.active_object
 		
-		if iconname == "tshirt":					
+		# after testing can use 2 lines for everything!!
+		if iconname == "dress01":
+			#
+			c_file = "%s/models/clothes/%s.obj" % (avt_path, iconname)
+			cloth = load_cloth(c_file, iconname)
+			
+		elif iconname == "dress02":
+			#
+			c_file = "%s/models/clothes/%s.obj" % (avt_path, iconname)
+			cloth = load_cloth(c_file, iconname)
+
+		elif iconname == "dress03":
+			#
+			c_file = "%s/models/clothes/%s.obj" % (avt_path, iconname)
+			cloth = load_cloth(c_file, iconname)
+
+		elif iconname == "dress04":
+			#
+			c_file = "%s/models/clothes/%s.obj" % (avt_path, iconname)
+			cloth = load_cloth(c_file, iconname)
+
+		elif iconname == "dress07":
+			#
+			c_file = "%s/models/clothes/%s.obj" % (avt_path, iconname)
+			cloth = load_cloth(c_file, iconname)
+			
+		elif iconname == "tshirt":					
 			#
 			tshirt_file = "%s/models/clothes/tshirt.obj" % avt_path
 			tshirt = load_cloth(tshirt_file, iconname)
