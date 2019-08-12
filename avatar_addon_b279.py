@@ -871,7 +871,7 @@ class Avatar_OT_WearCloth (bpy.types.Operator):
 			c_file = "%s/models/clothes/%s.obj" % (avt_path, iconname)
 			cloth = load_cloth(c_file, iconname)
 
-		elif iconname == "suit01":
+		elif iconname == "pants06":
 			#
 			c_file = "%s/models/clothes/%s.obj" % (avt_path, iconname)
 			cloth = load_cloth(c_file, iconname)
