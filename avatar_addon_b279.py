@@ -855,56 +855,10 @@ class Avatar_OT_WearCloth (bpy.types.Operator):
 		scn = context.scene
 		obj = context.active_object
 		
-		# after testing can use 2 lines for everything!!
-		if iconname == "dress01":
-			#
-			c_file = "%s/models/clothes/%s.obj" % (avt_path, iconname)
-			cloth = load_cloth(c_file, iconname)
+		#
+		c_file = "%s/models/clothes/%s.obj" % (avt_path, iconname)
+		cloth = load_cloth(c_file, iconname)
 			
-		elif iconname == "dress02":
-			#
-			c_file = "%s/models/clothes/%s.obj" % (avt_path, iconname)
-			cloth = load_cloth(c_file, iconname)
-
-		elif iconname == "dress03":
-			#
-			c_file = "%s/models/clothes/%s.obj" % (avt_path, iconname)
-			cloth = load_cloth(c_file, iconname)
-
-		elif iconname == "pants06":
-			#
-			c_file = "%s/models/clothes/%s.obj" % (avt_path, iconname)
-			cloth = load_cloth(c_file, iconname)
-
-		elif iconname == "dress07":
-			#
-			c_file = "%s/models/clothes/%s.obj" % (avt_path, iconname)
-			cloth = load_cloth(c_file, iconname)
-			
-		elif iconname == "tshirt":					
-			#
-			tshirt_file = "%s/models/clothes/tshirt.obj" % avt_path
-			tshirt = load_cloth(tshirt_file, iconname)
-		
-			mAvt.tshirt_mesh = tshirt
-			mAvt.has_tshirt = True
-
-		elif iconname == "pants":
-			#
-			pants_file = "%s/models/clothes/pants.obj" % avt_path
-			pants = load_cloth(pants_file, iconname)
-		
-			mAvt.pants_mesh = pants
-			mAvt.has_pants = True
-
-		elif iconname == "dress":
-			#
-			dress_file = "%s/models/clothes/dress1.obj" % avt_path
-			dress = load_cloth(dress_file, iconname)
-		
-			mAvt.dress_mesh = dress
-			mAvt.has_dress = True
-
 #			# save it as kd tree data: why this???
 #			size = len(mAvt.dress_mesh.data.vertices)
 #			mAvt.kd_dress = mathutils.kdtree.KDTree(size)
@@ -914,8 +868,6 @@ class Avatar_OT_WearCloth (bpy.types.Operator):
 
 #			mAvt.kd_dress.balance()
 
-		else:
-			pass
 				
 		return {'FINISHED'}
 

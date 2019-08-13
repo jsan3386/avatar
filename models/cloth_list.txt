@@ -35,6 +35,9 @@ Tank top 01                -- shirt03.png
 Spaghetti strap tank top   -- shirt04.png
 Lace up blouse             -- shirt05.png
 Camisole top               -- shirt06.png
+--
+tshirt (from somwhere)     -- shirt07.png
+
 
 Skirt
 -----
