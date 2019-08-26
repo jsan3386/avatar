@@ -6,69 +6,76 @@
 
 Gown/Robe
 ----------
-F Dress 01
-F Dress 02
-F Dress 03
-F Dress 06
-F Dress 08
-F Dress 11
+F Dress 01  -- dress01.png
+F Dress 02  -- dress02.png
+F Dress 03  -- dress06.png
+F Dress 06  -- dress03.png
+F Dress 08  -- dress04.png
+F Dress 11  -- dress05.png
+
+Other dress -- dress07.png
 
 Pants
 ------
-M trousers 01
-M trousers 02
-F trousers 01
-Custom leggings
-M swimming trunks 02
-M swimming trunks 01
-Male classic jeans
-Short jeans (female)
+M trousers 01             -- pants01.png
+M trousers 02             -- pants02.png
+F trousers 01             -- pants03.png
+Custom leggings           -- pants04.png
+M swimming trunks 01      -- swimming01.png
+M swimming trunks 02      -- swimming02.png
+Male classic jeans        -- pants05.png
+Short jeans (female)      -- pants06.png
 
 Shirt
 -----
-F lusekofta
-Kintted sweater 02
-Knitted sweater 01
-Tank top 01
-Spaghetti strap tank top
-Lace up blouse
-Camisole top
+F lusekofta                -- shirt01.png
+Knitted sweater 01         -- shirt02.png
+* * Knitted sweater 02         -- (same as knitted sweater01 only change texture)
+Tank top 01                -- shirt03.png
+Spaghetti strap tank top   -- shirt04.png
+Lace up blouse             -- shirt05.png
+Camisole top               -- shirt06.png
+--
+tshirt (from somwhere)     -- shirt07.png
+
 
 Skirt
 -----
-Jeans skirt
-black mini skirt
+Jeans skirt       -- skirt01.png
+black mini skirt  -- skirt02.png
 
 Helmet
 ------
-Patrol cap
-Ridding helmet
-Knitted hat 01
-Fishing hat 01
+Patrol cap                -- hat01.png  
+Ridding helmet            -- hat02.png
+Knitted hat 01            -- hat03.png
+Fishing hat 01            -- hat04.png
 
 Shoes
 -----
-Riding boots
-Medieval boots
-Female knee boots
-Female half boots
-heel sandals
-Martial arts shoes
-Tennis shoes
-shoes monk strap male
-shoes oxford male
-running shoes
+Riding boots               -- shoes01.png
+Martial arts shoes         -- shoes02.png
+shoes oxford female        -- shoes03.png
+running shoes              -- shoes04.png
+(optional for future)
+heel sandals               -- shoes05.png
+Medieval boots             -- shoes06.png
+Female knee boots          -- shoes07.png
+Female half boots          -- shoes08.png
+Tennis shoes               -- shoes09.png
+shoes monk strap male      -- shoes10.png
 
 Accessory
 ---------
-Ladies sunglass by Elv
-Glasses (modern form)
+Ladies sunglass by Elv   -- glasses01.png
+Glasses (modern form)    -- glasses02.png
 
 Others
 ------
-Frill bikini bottom
-Frill bikini top
-Denim jacket
-M suit 01
+Frill bikini bottom      -- swimming03.png
+Frill bikini top         -- swimming04.png
+Denim jacket             -- jacket01.png
+Cardigan long open front -- jacket02.png
+M suit 01                -- suit01.png
 
 

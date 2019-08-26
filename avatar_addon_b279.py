@@ -26,7 +26,7 @@ from numpy import *
 import mathutils 
 from bpy.props import * 
 
-
+import bpy.utils.previews
 
 
 # Set a file 'config.py' with variable avt_path that contains the
@@ -46,9 +46,10 @@ print(avt_path)
 import movement   # For the movement from frames
 #import read_bvh_custom # For the movement from BVH 
 sys.path.insert(0,"/home/aniol/avatar/my_makewalk/")
-import load
-import retarget
+#import load
+#import retarget
 
+preview_collections = {}
 
 
 ##########################################################################################################
@@ -195,6 +196,39 @@ def update_verts():
 		mesh_low_poly.vertices[i].co = vlp.matrix_world.inverted() * mesh_low_poly.vertices[i].co
 	#print(" Weights Updated ")
 	#print("*********")
+
+
+def generate_previews():
+    # We are accessing all of the information that we generated in the register function below
+    pcoll = preview_collections["thumbnail_previews"]
+    image_location = pcoll.images_location
+
+    enum_items = []
+
+    gallery = ['dress01.png', 'dress02.png', 'dress03.png', 'dress04.png', 'dress05.png', 'dress06.png', 'dress07.png',
+ 			   'glasses01.png', 'glasses02.png',
+			   'hat01.png', 'hat02.png', 'hat03.png', 'hat04.png',
+			   'jacket01.png', 'jacket02.png',
+			   'pants01.png', 'pants02.png', 'pants03.png', 'pants04.png', 'pants05.png', 'pants06.png',
+			   'shirt01.png', 'shirt02.png', 'shirt03.png', 'shirt04.png', 'shirt05.png', 'shirt06.png', 'shirt07.png',
+			   'shoes01.png', 'shoes02.png', 'shoes03.png', 'shoes04.png',
+			   'skirt01.png', 'skirt02.png',
+			   'suit01.png',
+			   'swimming01.png', 'swimming02.png', 'swimming03.png', 'swimming04.png']
+
+    a = 0
+    for i in gallery:
+        a = a + 1
+        #print(i)
+        imagename = i.split(".")[0]
+        #print(imagename)
+        filepath = image_location + '/' + i
+        #print(filepath)
+        thumb = pcoll.load(filepath, filepath, 'IMAGE')
+        enum_items.append((i, i, imagename, thumb.icon_id, a))
+
+    return enum_items
+
 	
 
 class Avatar:
@@ -788,100 +822,55 @@ class Avatar_OT_LoadModel(bpy.types.Operator):
 
 		return {'FINISHED'}
 
+def load_cloth (cloth_file, cloth_name):
 
-class Avatar_OT_PutTshirt (bpy.types.Operator):
+	bpy.ops.import_scene.obj(filepath=cloth_file)
+		
+	# change name to object
+	bpy.context.selected_objects[0].name = cloth_name
+	bpy.context.selected_objects[0].data.name = cloth_name
+		
+	b = bpy.data.objects[cloth_name]
+	b.select = True
+	bpy.context.scene.objects.active = b
+	bpy.ops.object.mode_set(mode='OBJECT')
+	bpy.ops.object.modifier_add(type='CLOTH')
 	
-	bl_idname = "avt.tshirt"
-	bl_label = "Put T-shirt"
-	bl_description = "Put T-shirt on human"
+	cloth = bpy.data.objects[cloth_name]
+
+	for obj in bpy.data.objects:
+		obj.select = False
+	
+	return cloth	
+
+class Avatar_OT_WearCloth (bpy.types.Operator):
+	
+	bl_idname = "avt.wear_cloth"
+	bl_label = "Wear Cloth"
+	bl_description = "Dress human with selected cloth"
 	
 	def execute(self, context):
 		global mAvt
+		global iconname
 		scn = context.scene
 		obj = context.active_object
 		
 		#
-		tshirt_file = "%s/models/tshirt.obj" % avt_path
-		bpy.ops.import_scene.obj(filepath=tshirt_file)
-		
-		# change name to object
-		bpy.context.selected_objects[0].name = 'tshirt'
-		bpy.context.selected_objects[0].data.name = 'tshirt'
-		
-		b = bpy.data.objects["tshirt"]
-		b.select = True
-		bpy.context.scene.objects.active = b
-		bpy.ops.object.mode_set(mode='OBJECT')
-		bpy.ops.object.modifier_add(type='CLOTH')
-		
-		mAvt.tshirt_mesh = bpy.data.objects["tshirt"]
-		mAvt.has_tshirt = True
-		
-		for obj in bpy.data.objects:
-			obj.select = False
-		#bpy.context.scene.objects.active = b
-		#bpy.ops.object.modifier_add(type='CLOTH')
-		
-#		if bpy.data.objects.get("Standard") is not False:
+		c_file = "%s/models/clothes/%s.obj" % (avt_path, iconname)
+		cloth = load_cloth(c_file, iconname)
+			
+#			# save it as kd tree data: why this???
+#			size = len(mAvt.dress_mesh.data.vertices)
+#			mAvt.kd_dress = mathutils.kdtree.KDTree(size)
 #		
-#			a = bpy.data.objects["Standard"]
-#			b = bpy.data.objects["tshirt"]
-#			a.select = True
-#			b.select = True
-#			bpy.context.scene.objects.active = a
-#			bpy.ops.object.parent_set(type='ARMATURE_AUTO')
+#			for i, v in enumerate (mAvt.dress_mesh.data.vertices):
+#				mAvt.kd_dress.insert(v.co, i)
+
+#			mAvt.kd_dress.balance()
+
 				
 		return {'FINISHED'}
 
-class Avatar_OT_PutPants (bpy.types.Operator):
-	
-	bl_idname = "avt.pants"
-	bl_label = "Put Pants"
-	bl_description = "Put Pants on human"
-	
-	def execute(self, context):
-		global mAvt
-		scn = context.scene
-		obj = context.active_object
-		
-		#
-		pants_file = "%s/models/pants.obj" % avt_path
-		bpy.ops.import_scene.obj(filepath=pants_file)
-		
-		# change name to object
-		bpy.context.selected_objects[0].name = 'pants'
-		bpy.context.selected_objects[0].data.name = 'pants'
-		b = bpy.data.objects["pants"]
-		b.select = True
-		bpy.context.scene.objects.active = b
-		bpy.ops.object.mode_set(mode='OBJECT')
-		bpy.ops.object.modifier_add(type='CLOTH')
-		
-		mAvt.pants_mesh = bpy.data.objects["pants"]
-		
-		mAvt.has_pants = True
-
-		# save it as kd tree data
-		size = len(mAvt.pants_mesh.data.vertices)
-		mAvt.kd_pants = mathutils.kdtree.KDTree(size)
-		
-		for i, v in enumerate (mAvt.pants_mesh.data.vertices):
-			mAvt.kd_pants.insert(v.co, i)
-			
-		mAvt.kd_pants.balance()
-		for obj in bpy.data.objects:
-			obj.select = False
-			
-#		if bpy.data.objects.get("Standard") is not False:
-#		
-#			a = bpy.data.objects["Standard"]
-#			b = bpy.data.objects["pants"]
-#			a.select = True
-#			b.select = True
-#			bpy.context.scene.objects.active = a
-#			bpy.ops.object.parent_set(type='ARMATURE_AUTO')
-			
-		return {'FINISHED'}
 	
 class Avatar_OT_PutDress (bpy.types.Operator):
 	
@@ -990,15 +979,16 @@ class Avatar_PT_DressingPanel(bpy.types.Panel):
 		layout = self.layout
 		obj = context.object
 		scn = context.scene
+		global iconname
 		
-		row = layout.row()
-		row.operator('avt.tshirt', text="Load T-shirt")
-		#layout.separator()
-		row = layout.row()
-		row.operator('avt.pants', text="Load Pants")
-		#layout.separator()
-		row = layout.row()
-		row.operator('avt.dress', text="Load Dress")
+#		row = layout.row()
+#		row.operator('avt.tshirt', text="Load T-shirt")
+#		#layout.separator()
+#		row = layout.row()
+#		row.operator('avt.pants', text="Load Pants")
+#		#layout.separator()
+#		row = layout.row()
+#		row.operator('avt.dress', text="Load Dress")
 		#layout.separator()
 		# ---- example to pass properties to operator
 		### Operator call
@@ -1007,6 +997,20 @@ class Avatar_PT_DressingPanel(bpy.types.Panel):
 		##props = row.operator("wm.context_set_value", text="Orgin")
 		##props.data_path = "object.location"
 		##props.value = "(0,0,0)"
+		row = layout.row()
+		#Presets
+		row.template_icon_view(context.scene, "my_thumbnails")
+		row = layout.row()
+
+		# Just a way to access which one is selected
+		iconname = bpy.context.scene.my_thumbnails
+		iconname = iconname.split(".")[0]
+		print(iconname)
+		col = row.column()
+		cols = col.row(True)
+		# Activate item icons
+		row = layout.row()
+		row.operator('avt.wear_cloth', text="Load selected cloth")	
 		
 		
 class Avatar_PT_MotionPanel(bpy.types.Panel):
@@ -1290,18 +1294,37 @@ classes  = (
 			Avatar_OT_Motion3DPoints,
 			Avatar_OT_MotionBVH,
 			Avatar_PT_DressingPanel,
-			Avatar_OT_PutTshirt,
-			Avatar_OT_PutPants,
-			Avatar_OT_PutDress
+			Avatar_OT_WearCloth
 )
 
 def register():
+	
+	# Create a new preview collection (only upon register)
+	pcoll = bpy.utils.previews.new()
+
+	pcoll.images_location = "%s/cloth_previews" % (avt_path)
+	print("%s/cloth_previews" % (avt_path))
+
+	# Enable access to our preview collection outside of this function
+	preview_collections["thumbnail_previews"] = pcoll
+
+	# This is an EnumProperty to hold all of the images
+	bpy.types.Scene.my_thumbnails = EnumProperty(
+		items=generate_previews(),
+		)	
+	
 	for clas in classes:
 		bpy.utils.register_class(clas)
 
 def unregister():
 	for clas in classes:
 		bpy.utils.unregister_class(clas)
+
+	for pcoll in preview_collections.values():
+		bpy.utils.previews.remove(pcoll)
+	preview_collections.clear()
+
+	del bpy.types.Scene.my_thumbnails
 
 
 if __name__ == '__main__':
