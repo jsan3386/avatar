@@ -750,7 +750,7 @@ class Avatar_OT_LoadModel(bpy.types.Operator):
 			#bpy.ops.rigidbody.objects_add(type='ACTIVE')
 			vp.hide = True
 			stb = bpy.data.objects['Standard']
-			#vp.location = stb.pose.bones['Hips'].head #- Vector((0,0,0.5)) # NO ESTA BE DEL TOT
+			
 			st = bpy.data.objects['Standard:Body']
 			global match_list 
 			match_list = []
@@ -776,7 +776,7 @@ class Avatar_OT_LoadModel(bpy.types.Operator):
 				
 			#print(len(match_list))
 			#print(len(match_list_lp))
-			# print(match_list_lp) IS AN ARRAY FROM 0 TO 411 LOGICALLY
+			#print(match_list_lp) IS AN ARRAY FROM 0 TO 411 LOGICALLY
 			#print(match_list)
 			
 			update_verts()
@@ -1065,7 +1065,7 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 			bone = bones[i]
 			poseBone = arm2.pose.bones[bone]
 			poseBone.rotation_mode = "QUATERNION"
-			poseBone.rotation_quaternion = Quaternion((1,0,0,0))###3ref[i]
+			poseBone.rotation_quaternion = Quaternion((1,0,0,0))###ref[i]
 			bpy.context.scene.update()
 			#bpy.ops.graph.keyframe_insert(type='ALL')
 			arm2.pose.bones[bone].keyframe_insert(data_path = "rotation_quaternion", frame = 0)
@@ -1084,8 +1084,23 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 		print(quat2)
 		if quat2_n != quat_n:
 			bone.rotation_mode = "QUATERNION"
-			bone.rotation_quaternion = Quaternion((0,0,0.91,0.41))
+			bone.rotation_quaternion = Quaternion((0,0,0.91,0.41))#Quaternion((0,0,0.91,0.41))
 			bone.keyframe_insert(data_path = "rotation_quaternion", frame = 0)
+			if "tshirt" in bpy.data.objects:
+				object = bpy.data.objects["tshirt"]
+				object.rotation_mode = "QUATERNION"
+				object.rotation_quaternion = Quaternion((0,0,1,1))
+				object.keyframe_insert(data_path = "rotation_quaternion", frame = 0)
+			if "dress" in bpy.data.objects:
+				objecst = bpy.data.objects["dress"]
+				object.rotation_mode = "QUATERNION"
+				object.rotation_quaternion = Quaternion((0,0,1,1))
+				object.keyframe_insert(data_path = "rotation_quaternion", frame = 0)
+			if "pants" in bpy.data.objects:
+				object = bpy.data.objects["pants"]
+				object.rotation_mode = "QUATERNION"
+				object.rotation_quaternion = Quaternion((0,0,1,1))
+				object.keyframe_insert(data_path = "rotation_quaternion", frame = 0)
 		
 
 		bpy.context.scene.update()
