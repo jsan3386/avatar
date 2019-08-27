@@ -46,8 +46,8 @@ print(avt_path)
 import movement   # For the movement from frames
 #import read_bvh_custom # For the movement from BVH 
 sys.path.insert(0,"/home/aniol/avatar/my_makewalk/")
-#import load
-#import retarget
+import load as load
+import retarget as retarget # funciona.
 
 preview_collections = {}
 
@@ -114,6 +114,15 @@ def update_weights (self, context):
 		mAvt.deform_cloth(cloth_name='pants')
 	if (mAvt.has_dress):
 		mAvt.deform_cloth(cloth_name='dress')
+		
+	## Aquest tros d'aquí sobre no cal :)
+		
+	for object in bpy.data.objects:
+		if object.name != "Standard" and object.name != "Standard:Body" and object.name != "verylowpoly" and object.name != "Camera" and object.name != "Lamp":
+			print(object.name + " Hola")
+			mAvt.deform_cloth(cloth_name=str(object.name))
+			print("deformant això: " + object.name)
+	
 	update_verts()
 
 def update_scale(self,context):
@@ -127,24 +136,31 @@ def update_scale(self,context):
 	# store as np data
 	mAvt.np_mesh_prev = mAvt.read_verts(cp_vals)
 	
+	
+	
 	# Scale size of the body
 	a = bpy.data.objects['Standard']
-	if "pants" in bpy.data.objects and "tshirt" in bpy.data.objects: 
-		clothes = True 
-		b = bpy.data.objects['pants']
-		c = bpy.data.objects['tshirt']
-	if "dress" in bpy.data.objects:
-		dress = True
-		d = bpy.data.objects['dress']
+#	if "pants" in bpy.data.objects and "tshirt" in bpy.data.objects: 
+#		clothes = True 
+#		b = bpy.data.objects['pants']
+#		c = bpy.data.objects['tshirt']
+#	if "dress" in bpy.data.objects:
+#		dress = True
+#		d = bpy.data.objects['dress']
 	w10 = 1 + (self.weight_k10-1)/5.0
 	mAvt.weight_k10 = w10
 	vector_scale = Vector((w10,w10,w10))
 	a.scale = vector_scale
-	if clothes:
-		b.scale = vector_scale
-		c.scale = vector_scale
-	if dress:
-		d.scale = vector_scale
+	for object in bpy.data.objects:
+		if object.name != "Standard" and object.name != "Standard:Body" and object.name != "verylowpoly" and object.name != "Camera" and object.name != "Lamp":
+			cloth = bpy.data.objects[object.name]
+			cloth.scale = vector_scale
+			
+#	if clothes:
+#		b.scale = vector_scale
+#		c.scale = vector_scale
+#	if dress:
+#		d.scale = vector_scale
 	
 	# Scale size of the limbs
 	w11 = self.weight_k11
@@ -181,6 +197,15 @@ def update_scale(self,context):
 	if (mAvt.has_dress):
 		mAvt.deform_cloth(cloth_name='dress')
 		print("he deformat el vestit")
+	
+	# en principi això de dalt no cal :)
+	
+	for object in bpy.data.objects:
+		if object.name != "Standard" and object.name != "Standard:Body" and object.name != "verylowpoly" and object.name != "Camera" and object.name != "Lamp":
+			print(object.name + " Hola")
+			mAvt.deform_cloth(cloth_name=str(object.name))
+			print("escalant això: " + object.name)
+	
 	update_verts()
 		
 		
@@ -305,7 +330,12 @@ class Avatar:
 			cloth_mat_world = self.dress_mesh.matrix_world
 			cloth_mat_world_inv = self.dress_mesh.matrix_world.inverted()
 		else:
-			print("ERROR")
+			print("ERROR, but:")
+			cloth_mesh = bpy.data.objects[cloth_name]
+			cloth_verts = bpy.data.objects[cloth_name].data.vertices
+			cloth_mat_world = bpy.data.objects[cloth_name].matrix_world
+			cloth_mat_world_inv  = bpy.data.objects[cloth_name].matrix_world.inverted()
+		##···················· SEGUIR AQUIIIIIIIIIIII
 			
 		total_vertices = len(cloth_verts)
 			
