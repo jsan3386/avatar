@@ -132,13 +132,7 @@ def update_scale(self,context):
 	
 	# Scale size of the body
 	a = bpy.data.objects['Standard']
-#	if "pants" in bpy.data.objects and "tshirt" in bpy.data.objects: 
-#		clothes = True 
-#		b = bpy.data.objects['pants']
-#		c = bpy.data.objects['tshirt']
-#	if "dress" in bpy.data.objects:
-#		dress = True
-#		d = bpy.data.objects['dress']
+
 	w10 = 1 + (self.weight_k10-1)/5.0
 	mAvt.weight_k10 = w10
 	vector_scale = Vector((w10,w10,w10))
@@ -148,11 +142,7 @@ def update_scale(self,context):
 			cloth = bpy.data.objects[object.name]
 			cloth.scale = vector_scale
 			
-#	if clothes:
-#		b.scale = vector_scale
-#		c.scale = vector_scale
-#	if dress:
-#		d.scale = vector_scale
+
 	
 	# Scale size of the limbs
 	w11 = self.weight_k11
@@ -849,7 +839,28 @@ def load_cloth (cloth_file, cloth_name):
 	b.select = True
 	bpy.context.scene.objects.active = b
 	bpy.ops.object.mode_set(mode='OBJECT')
-	bpy.ops.object.modifier_add(type='CLOTH')
+	
+	if bpy.data.objects.get("Standard") is not False:
+				a = bpy.data.objects["Standard"]
+				b = bpy.data.objects[cloth_name]
+				a.select = True
+				b.select = True
+				bpy.context.scene.objects.active = a
+				bpy.ops.object.parent_set(type='ARMATURE_AUTO')
+	for obj in bpy.data.objects:
+		obj.select = False
+	#########
+	#######
+	#####
+	## Aqui s'ha de posar que sigui cloth tot excepte sabates i gorres	
+	if "shoe" in cloth_name or "hat" in cloth_name or "glass" in cloth_name:
+		print(" ************* Objecte Rígid **************** ")
+	else:
+		b = bpy.data.objects[cloth_name]
+		b.select = True
+		bpy.context.scene.objects.active = b
+		
+		bpy.ops.object.modifier_add(type='CLOTH')
 	
 	cloth = bpy.data.objects[cloth_name]
 
@@ -1072,11 +1083,16 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 		### Start reading BVH file
 		bone_bvh = ["Hips","LeftUpLeg","LeftLowLeg","LeftFoot","RightUpLeg","RightLowLeg","RightFoot","Chest","LeftCollar","LeftUpArm","LeftLowArm","LeftHand","RightCollar","RightUpArm","RightLowArm","RightHand","Neck","Head"]
 		bone_conversion = ["Hips","LeftUpLeg","LeftLeg","LeftFoot","RightUpLeg","RightLeg","RightFoot","Spine1","LeftShoulder","LeftArm","LeftForeArm","LeftHand","RightShoulder","RightArm","RightForeArm","RightHand","Neck","Head"]
-		file_path = avt_path + "/sequences/" + "breakdance.bvh"
+		
+		### Sequence  "breakdance.bvh", "Destroy.bvh", "sexywalk.bvh" 
+		
+		file_path = avt_path + "/sequences/" + "Destroy.bvh" 
+	
+	
 		retarget.loadRetargetSimplify(context,file_path)
 		
 		
-		scn.frame_set(50)
+		scn.frame_set(50) ## Abans era 50
 		
 		
 		ref = original_position.copy()
@@ -1092,7 +1108,7 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 		bone.location = Vector((0,0,0))
 		arm2.pose.bones["Hips"].keyframe_insert(data_path = "location", frame = 0)
 		
-		scn.frame_set(50)
+		scn.frame_set(50)  ## Abans era 50
 		quat = bone.matrix.to_quaternion()
 		quat_n = Quaternion((round(quat.w),round(quat.x),round(quat.y),round(quat.z)))
 		print(quat)
@@ -1103,18 +1119,19 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 		print(quat2)
 		if quat2_n != quat_n:
 			bone.rotation_mode = "QUATERNION"
-			bone.rotation_quaternion = Quaternion((0,0,0.87,0.42)) #Quaternion((0,0,0.91,0.41))
+			bone.rotation_quaternion = Quaternion((0,0,0.87,0.42)) #Quaternion((0,0,0.91,0.41)), gir de 180 graus.
 			bone.keyframe_insert(data_path = "rotation_quaternion", frame = 0)
-			
-			for object in bpy.data.objects:
-				if object.name != "Standard" and object.name != "Standard:Body" and object.name != "verylowpoly" and object.name != "Camera" and object.name != "Lamp":
-					cloth = bpy.data.objects[object.name]
-					cloth.rotation_mode = "QUATERNION"
-					cloth.rotation_quaternion = Quaternion((0,0,1,1))
-					cloth.keyframe_insert(data_path = "rotation_quaternion", frame = 0)
-					cloth.location = Vector((0,-0.25,0)) ## Correct movement from rotation quaternion
-					cloth.keyframe_insert(data_path = "location", frame = 0)
-					
+
+# 			Això s'utilitzava abans de fer el parent.			
+#			for object in bpy.data.objects:
+#				if object.name != "Standard" and object.name != "Standard:Body" and object.name != "verylowpoly" and object.name != "Camera" and object.name != "Lamp":
+#					cloth = bpy.data.objects[object.name]
+#					cloth.rotation_mode = "QUATERNION"
+#					#cloth.rotation_quaternion = Quaternion((0,0,1,1))
+#					cloth.keyframe_insert(data_path = "rotation_quaternion", frame = 0)
+#					cloth.location = Vector((0,-0.25,0)) ## Correct movement from rotation quaternion
+#					cloth.keyframe_insert(data_path = "location", frame = 0)
+#					
 
 		
 
