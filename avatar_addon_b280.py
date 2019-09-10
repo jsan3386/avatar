@@ -56,8 +56,10 @@ vers = 0
 if '2.8' in bpy.app.version_string:
 	vers = 1
 
-
-import movement   # For the movement from frames
+if vers == 1:
+    import movement_280 as movement   # For the movement from frames
+else:
+    import movement
 
 #import read_bvh_custom # For the movement from BVH
 if vers == 1:
@@ -1129,7 +1131,7 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 			poseBone = arm2.pose.bones[bone]
 			poseBone.rotation_mode = "QUATERNION"
 			poseBone.rotation_quaternion = Quaternion((1,0,0,0))###ref[i]
-			bpy.context.scene.update()
+			bpy.context.view_layer.update()
 			#bpy.ops.graph.keyframe_insert(type='ALL')
 			arm2.pose.bones[bone].keyframe_insert(data_path = "rotation_quaternion", frame = 0)
 		bone = arm2.pose.bones["Hips"]
@@ -1163,7 +1165,7 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 
 		
 
-		bpy.context.scene.update()
+		bpy.context.view_layer.update()
 		
 				
 		return {'FINISHED'}
@@ -1235,9 +1237,9 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 					bone = bones[i]
 					poseBone = arm2.pose.bones[bone]
 					poseBone.matrix = ref[i]
-					bpy.context.scene.update()
-				print("RUNNING EXPERIMENT NUMBER: " + str(f))
-				bpy.context.scene.update()
+					bpy.context.view_layer.update()
+					print("RUNNING EXPERIMENT NUMBER: " + str(f))
+				bpy.context.view_layer.update()
 				fname = "frame_SA%02d_%05d.txt" % (2, f)
 				print(fname)
 				fpname = "%s/%s" % (path_input,fname)
@@ -1263,9 +1265,9 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 					bone = bones[i]
 					poseBone = arm2.pose.bones[bone]
 					poseBone.matrix = ref[i]
-					bpy.context.scene.update()
+					bpy.context.view_layer.update()
 				print("RUNNING EXPERIMENT NUMBER: " + str(f))
-				bpy.context.scene.update()
+				bpy.context.view_layer.update()
 				fname = "frame_SA%02d_%05d.txt" % (2, f)
 				print(fname)
 				fpname = "%s/%s" % (path_input,fname)
@@ -1284,7 +1286,7 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 					bone = bones[i]
 					poseBone = arm2.pose.bones[bone]
 					poseBone.matrix = ref[i]
-					bpy.context.scene.update()
+					bpy.context.view_layer.update()
 				update_verts()
 				correction_iterations = movement.transition_to_desired_motion(q_list,initial_rotation,arm2,correction_iteration,mesh_arm2)
 #				for i in range(len(bones)):
@@ -1305,9 +1307,9 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 					bone = bones[i]
 					poseBone = arm2.pose.bones[bone]
 					poseBone.matrix = ref[i]
-					bpy.context.scene.update()
+					bpy.context.view_layer.update()
 				print("RUNNING EXPERIMENT NUMBER: " + str(f))
-				bpy.context.scene.update()
+				bpy.context.view_layer.update()
 				fname = "frame_SA%02d_%05d.txt" % (2, f)
 				print(fname)
 				fpname = "%s/%s" % (path_input,fname)

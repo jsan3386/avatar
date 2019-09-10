@@ -474,7 +474,7 @@ def loadRetargetSimplify(context, filepath):
     print("\nLoad and retarget %s" % filepath)
     time1 = time.clock()
     scn = context.scene
-    trgRig = context.object
+    trgRig = bpy.data.objects["Standard"]#context.object
     data = changeTargetData(trgRig, scn)
     try:
         #clearMcpProps(trgRig)

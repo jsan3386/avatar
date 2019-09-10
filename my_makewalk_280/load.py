@@ -169,7 +169,7 @@ def readBvhFile(context, filepath, scn, scan):
             rig = bpy.data.objects.new("BvhRig", amt)
             coll.objects.link(rig)
             setActiveObject(context, rig)
-            context.scene.update()
+            context.view_layer.update()
             bpy.ops.object.mode_set(mode='EDIT')
             bpy.ops.object.mode_set(mode='EDIT')
             root.build(amt, Vector((0,0,0)), None)
@@ -248,7 +248,7 @@ def readBvhFile(context, filepath, scn, scan):
                                         angle = sign*float(words[0])*Deg2Rad
                                         mats.append(Matrix.Rotation(angle,3,axis))
                                     flipInv = flipMatrix.inverted()
-                                    mat = node.inverse * flipMatrix * mats[0] * mats[1] * mats[2] * flipInv * node.matrix
+                                    mat = node.inverse @ flipMatrix @ mats[0] @ mats[1] @ mats[2] @ flipInv @ node.matrix
                 start_rotation = mat
                 translation_vector = vec
                 addFrame(words, frameno, nodes, pbones, scale, flipMatrix, translation_vector,start_rotation)
