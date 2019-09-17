@@ -98,7 +98,7 @@ class CAnimation:
         scn = context.scene
         try:
             for frame in frames:
-                scn.frame_set(frame)#scn.frame_set(frame+50)
+                scn.frame_set(frame)#scn.frame_set(frame+50) Quan entres a aquest frame, hips ja te un location en aquest frame.
                 for banim in self.boneAnims.values():
                     banim.retarget(frame)#banim.retarget(frame+50)
         finally:
@@ -345,6 +345,12 @@ def retargetAnimation(context, srcRig, trgRig):
         setRigify2FKIK(trgRig, 1.0)
 
     try:
+        print("*******************")
+        print("M'he posat al frames[0]")
+        print(frames)
+        print(frames[0])
+        print("*******************")
+        #scn.frame_current = frames[2]
         scn.frame_current = frames[0]
     except:
         raise MocapError("No frames found.")
@@ -360,7 +366,7 @@ def retargetAnimation(context, srcRig, trgRig):
     anim.setTPose(context)
 
     setCategory("Retarget")
-    frameBlock = frames[0:100]
+    frameBlock = frames[0:100]#frames[0:100]
     index = 0
     try:
         while frameBlock:
@@ -368,7 +374,6 @@ def retargetAnimation(context, srcRig, trgRig):
             anim.retarget(frameBlock, context)
             index += 100
             frameBlock = frames[index:index+100]
-
         scn.frame_current = frames[0]
     finally:
         restoreTargetData(trgRig, oldData)
@@ -479,6 +484,9 @@ def loadRetargetSimplify(context, filepath, original_position):
     try:
         #clearMcpProps(trgRig)
         srcRig = load.readBvhFile(context, filepath, scn, False, original_position)
+        frames = getActiveFrames(srcRig)
+        print("FRAMESSSSSSSSSSSSSSSSSSS SRCCCCCCCRIG")
+        print(frames)
         try:
             load.renameAndRescaleBvh(context, srcRig, trgRig)
             retargetAnimation(context, srcRig, trgRig)

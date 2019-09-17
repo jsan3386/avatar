@@ -224,7 +224,7 @@ def readBvhFile(context, filepath, scn, scan, original_position):
                 startFrame *= ssFactor
                 endFrame *= ssFactor
                 status = Frames
-                frame = 10 ################# ABANS ERA 0 AIXOOOO
+                frame = 0 ################# ABANS ERA 0 AIXOOOO
                 frameno = 1
 
                 #source.findSrcArmature(context, rig)
@@ -259,6 +259,7 @@ def readBvhFile(context, filepath, scn, scan, original_position):
             frame += 1
 
     fp.close()
+
     if not rig:
         raise MocapError("Bvh file \n%s\n is corrupt: No rig defined" % filepath)
     setInterpolation(rig)

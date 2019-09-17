@@ -1118,7 +1118,7 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 		#retarget.loadRetargetSimplify(context,file_path)
 		
 		
-		scn.frame_set(12) ## Abans era 2 ## Abans era 50
+		scn.frame_set(22) ## Abans era 2 ## Abans era 50
 		
 		
 		ref = original_position.copy()
@@ -1133,7 +1133,7 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 		bone = arm2.pose.bones["Hips"]
 		
 		
-		scn.frame_set(12)  
+		scn.frame_set(22)  
 		quat = bone.matrix.to_quaternion()
 		quat_n = Quaternion((round(quat.w),round(quat.x),round(quat.y),round(quat.z)))
 		

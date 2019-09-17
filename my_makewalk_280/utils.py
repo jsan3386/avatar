@@ -540,7 +540,7 @@ def putInRestPose(rig, useSetKeys):
                 pb.keyframe_insert('rotation_quaternion')
             else:
                 pb.keyframe_insert('rotation_euler')
-            pb.keyframe_insert('location')
+            #pb.keyframe_insert('location')
 
 #
 #    setInterpolation(rig):
