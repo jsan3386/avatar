@@ -98,9 +98,9 @@ class CAnimation:
         scn = context.scene
         try:
             for frame in frames:
-                scn.frame_set(frame+50)
+                scn.frame_set(frame)#scn.frame_set(frame+50)
                 for banim in self.boneAnims.values():
-                    banim.retarget(frame+50)
+                    banim.retarget(frame)#banim.retarget(frame+50)
         finally:
             unhideObjects(objects)
 
@@ -467,18 +467,18 @@ def restoreTargetData(rig, data):
 #    loadRetargetSimplify(context, filepath):
 #
 
-def loadRetargetSimplify(context, filepath):
+def loadRetargetSimplify(context, filepath, original_position):
     import load
     from fkik import limbsBendPositive
 
     print("\nLoad and retarget %s" % filepath)
     time1 = time.clock()
     scn = context.scene
-    trgRig = bpy.data.objects["Standard"]#context.object
+    trgRig = bpy.data.objects["Standard"]
     data = changeTargetData(trgRig, scn)
     try:
         #clearMcpProps(trgRig)
-        srcRig = load.readBvhFile(context, filepath, scn, False)
+        srcRig = load.readBvhFile(context, filepath, scn, False, original_position)
         try:
             load.renameAndRescaleBvh(context, srcRig, trgRig)
             retargetAnimation(context, srcRig, trgRig)

@@ -134,8 +134,8 @@ def update_weights (self, context):
 	# calculate position of clothes if any
 		
 	for object in bpy.data.objects:
-		if object.name != "Standard" and object.name != "Standard:Body" and object.name != "verylowpoly" and object.name != "Camera" and object.name != "Lamp":
-			print(object.name + " Hola")
+		if object.name != "Standard" and object.name != "Standard:Body" and object.name != "verylowpoly" and object.name != "Camera" and object.name != "Light":
+			
 			mAvt.deform_cloth(cloth_name=str(object.name))
 			print("deformant això: " + object.name)
 	
@@ -162,7 +162,7 @@ def update_scale(self,context):
 	vector_scale = Vector((w10,w10,w10))
 	a.scale = vector_scale
 	for object in bpy.data.objects:
-		if object.name != "Standard" and object.name != "Standard:Body" and object.name != "verylowpoly" and object.name != "Camera" and object.name != "Lamp":
+		if object.name != "Standard" and object.name != "Standard:Body" and object.name != "verylowpoly" and object.name != "Camera" and object.name != "Light":
 			cloth = bpy.data.objects[object.name]
 			cloth.scale = vector_scale
 			
@@ -177,7 +177,7 @@ def update_scale(self,context):
 	a.pose.bones['RightUpLeg'].scale = vector_ext
 	a.pose.bones['LeftUpLeg'].scale = vector_ext
 	for object in bpy.data.objects:
-		if object.name != "Standard" and object.name != "Standard:Body" and object.name != "verylowpoly" and object.name != "Camera" and object.name != "Lamp":
+		if object.name != "Standard" and object.name != "Standard:Body" and object.name != "verylowpoly" and object.name != "Camera" and object.name != "Light":
 			cloth = bpy.data.objects[object.name]
 			cloth.scale = vector_ext
 	
@@ -186,7 +186,7 @@ def update_scale(self,context):
 	vector_tors = Vector((w12,w12,w12))
 	a.pose.bones['Neck'].scale = vector_tors
 	for object in bpy.data.objects:
-		if object.name != "Standard" and object.name != "Standard:Body" and object.name != "verylowpoly" and object.name != "Camera" and object.name != "Lamp":
+		if object.name != "Standard" and object.name != "Standard:Body" and object.name != "verylowpoly" and object.name != "Camera" and object.name != "Light":
 			cloth = bpy.data.objects[object.name]
 			cloth.scale = vector_tors
 	update_verts()
@@ -200,8 +200,8 @@ def update_scale(self,context):
 	# find which vertices are modified
 	
 	for object in bpy.data.objects:
-		if object.name != "Standard" and object.name != "Standard:Body" and object.name != "verylowpoly" and object.name != "Camera" and object.name != "Lamp":
-			print(object.name + " Hola")
+		if object.name != "Standard" and object.name != "Standard:Body" and object.name != "verylowpoly" and object.name != "Camera" and object.name != "Light":
+			
 			mAvt.deform_cloth(cloth_name=str(object.name))
 			print("escalant això: " + object.name)
 	
@@ -313,27 +313,14 @@ class Avatar:
 	def deform_cloth(self, cloth_name):
 		
 		cloth_verts = None
-		if cloth_name == 'tshirt':
-			cloth_mesh = self.tshirt_mesh
-			cloth_verts = self.tshirt_mesh.data.vertices
-			cloth_mat_world = self.tshirt_mesh.matrix_world
-			cloth_mat_world_inv = self.tshirt_mesh.matrix_world.inverted()
-		elif cloth_name == 'pants':
-			cloth_mesh = self.pants_mesh
-			cloth_verts = self.pants_mesh.data.vertices
-			cloth_mat_world = self.pants_mesh.matrix_world
-			cloth_mat_world_inv = self.pants_mesh.matrix_world.inverted()
-		elif cloth_name == 'dress':
-			cloth_mesh = self.dress_mesh
-			cloth_verts = self.dress_mesh.data.vertices
-			cloth_mat_world = self.dress_mesh.matrix_world
-			cloth_mat_world_inv = self.dress_mesh.matrix_world.inverted()
-		else:
-			print("DEFORMING CLOTH")
-			cloth_mesh = bpy.data.objects[cloth_name]
-			cloth_verts = bpy.data.objects[cloth_name].data.vertices
-			cloth_mat_world = bpy.data.objects[cloth_name].matrix_world
-			cloth_mat_world_inv  = bpy.data.objects[cloth_name].matrix_world.inverted()
+		
+		print("DEFORMING CLOTH")
+		print(cloth_name)
+		cloth_mesh = bpy.data.objects[cloth_name]
+		cloth_verts = cloth_mesh.data.vertices
+		cloth_mat_world = bpy.data.objects[cloth_name].matrix_world
+		cloth_mat_world_inv  = bpy.data.objects[cloth_name].matrix_world.inverted()
+		
 		##···················· SEGUIR AQUIIIIIIIIIIII
 			
 		total_vertices = len(cloth_verts)
@@ -1100,6 +1087,7 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 		arm2 = mAvt.skel
 		mesh_arm2 = mAvt.mesh
 		original_position = []
+		rest_pose_3D = []
 		
 		bones = ["Hips","LHipJoint","LeftUpLeg","LeftLeg","LeftFoot","LeftToeBase","LowerBack","Spine","Spine1","LeftShoulder","LeftArm","LeftForeArm","LeftHand","LThumb","LeftFingerBase","LeftHandFinger1","Neck","Neck1","Head","RightShoulder","RightArm","RightForeArm","RightHand","RThumb","RightFingerBase","RightHandFinger1","RHipJoint","RightUpLeg","RightLeg","RightFoot","RightToeBase"]
 		
@@ -1117,12 +1105,20 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 		### Sequence  "breakdance.bvh", "Destroy.bvh", "sexywalk.bvh" 
 		
 		file_path = avt_path + "/sequences/" + "Destroy.bvh" 
-	
-	
-		retarget.loadRetargetSimplify(context,file_path)
+		
+		#for bone in bone_bvh:
+			#poseBone = arm2.pose.bones[bone]
+			#rest_pose_3D.append(poseBone.head)
 		
 		
-		scn.frame_set(50) ## Abans era 50
+			
+	
+	
+		retarget.loadRetargetSimplify(context,file_path,original_position) #Segurament original_position no es fa servir
+		#retarget.loadRetargetSimplify(context,file_path)
+		
+		
+		scn.frame_set(12) ## Abans era 2 ## Abans era 50
 		
 		
 		ref = original_position.copy()
@@ -1135,33 +1131,28 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 			#bpy.ops.graph.keyframe_insert(type='ALL')
 			arm2.pose.bones[bone].keyframe_insert(data_path = "rotation_quaternion", frame = 0)
 		bone = arm2.pose.bones["Hips"]
-		bone.location = Vector((0,0,0))
-		arm2.pose.bones["Hips"].keyframe_insert(data_path = "location", frame = 0)
 		
-		scn.frame_set(50)  ## Abans era 50
+		
+		scn.frame_set(12)  
 		quat = bone.matrix.to_quaternion()
 		quat_n = Quaternion((round(quat.w),round(quat.x),round(quat.y),round(quat.z)))
-		#print(quat)
+		
 		
 		scn.frame_set(0)
 		quat2 = bone.matrix.to_quaternion()
 		quat2_n = Quaternion((round(quat2.w),round(quat2.x),round(quat2.y),round(quat2.z)))
-		#print(quat2)
+		
+		#Checking where the animation starts to select a correct orientation 
+		
 		if quat2_n != quat_n:
 			bone.rotation_mode = "QUATERNION"
 			bone.rotation_quaternion = Quaternion((0,0,0.87,0.42)) #Quaternion((0,0,0.91,0.41)), gir de 180 graus.
 			bone.keyframe_insert(data_path = "rotation_quaternion", frame = 0)
+			bone.location = Vector((0,0,0))
+			bone.keyframe_insert(data_path = "location", frame = 0)
 
-# 			Això s'utilitzava abans de fer el parent.			
-#			for object in bpy.data.objects:
-#				if object.name != "Standard" and object.name != "Standard:Body" and object.name != "verylowpoly" and object.name != "Camera" and object.name != "Lamp":
-#					cloth = bpy.data.objects[object.name]
-#					cloth.rotation_mode = "QUATERNION"
-#					#cloth.rotation_quaternion = Quaternion((0,0,1,1))
-#					cloth.keyframe_insert(data_path = "rotation_quaternion", frame = 0)
-#					cloth.location = Vector((0,-0.25,0)) ## Correct movement from rotation quaternion
-#					cloth.keyframe_insert(data_path = "location", frame = 0)
-#					
+
+					
 
 		
 

@@ -117,7 +117,7 @@ Frames = 3
 
 Epsilon = 1e-5
 
-def readBvhFile(context, filepath, scn, scan):
+def readBvhFile(context, filepath, scn, scan, original_position):
     props.ensureInited(context)
     setCategory("Load Bvh File")
     scale = scn.McpBvhScale
@@ -224,7 +224,7 @@ def readBvhFile(context, filepath, scn, scan):
                 startFrame *= ssFactor
                 endFrame *= ssFactor
                 status = Frames
-                frame = 0
+                frame = 10 ################# ABANS ERA 0 AIXOOOO
                 frameno = 1
 
                 #source.findSrcArmature(context, rig)
@@ -241,7 +241,8 @@ def readBvhFile(context, filepath, scn, scan):
                                 if mode == Location:
                                     vec = Vector((0,0,0))
                                     for (index,sign) in indices:
-                                        vec[index] = sign*float(words[0])
+
+                                        vec[index] = sign*float(words[index]) ## ABANS ERA WORDS[0]
                                 elif mode == Rotation:
                                     mats = []
                                     for (axis,sign) in indices:
@@ -251,7 +252,8 @@ def readBvhFile(context, filepath, scn, scan):
                                     mat = node.inverse @ flipMatrix @ mats[0] @ mats[1] @ mats[2] @ flipInv @ node.matrix
                 start_rotation = mat
                 translation_vector = vec
-                addFrame(words, frameno, nodes, pbones, scale, flipMatrix, translation_vector,start_rotation)
+                #addFrame(words, frameno, nodes, pbones, scale, flipMatrix, translation_vector,start_rotation)
+                addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector,start_rotation)
                 showProgress(frameno, frame, nFrames, step=200)
                 frameno += 1
             frame += 1
@@ -288,15 +290,32 @@ def addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector,
                 if mode == Location:
                     vec = Vector((0,0,0))
                     for (index, sign) in indices:
-                        vec[index] = sign*float(words[m])
+                        vec[index] = sign*float(words[index])# words[m]#vec[index] = sign*float(translation_vector[m])
                         m += 1
+                    # si no funciona: Descomentar if first i fisrst = false i tabular la resta
                     if first:
-                        pb.location = Mult2(node.inverse, scale * Mult2(flipMatrix, vec) - node.head)
-                        pb.location[0] += translation_vector[0]
-                        pb.location[1] -= translation_vector[1]
-                        pb.location[2] += translation_vector[2]
+
+                        pb.location = Mult2(node.inverse, scale * Mult2(flipMatrix, vec))#pb.head)#node.head)
+
+                        pb.location[0] -= translation_vector[0] * scale
+                        #pb.location[1] -= translation_vector[1] * scale    AIXÒ ÉS LA CORRECCIÓ TRANSLACIÓ EN DIRECCIÓ Z, NO ENS INTERESSA QUE HIPS ESTIGUI A L'ORIGEN.
+                        pb.location[2] -= translation_vector[2] * scale
+
                         pb.keyframe_insert('location', frame=frame, group=name)
-                    first = False
+                        print("PB.LOCATION")
+                        print(pb.location)
+                        print("FRAME")
+                        print(frame)
+                        first = False
+                    else: #mai entra al else perquè first és quan és HIPS que és l'únic amb location.
+                        pb.location = Mult2(node.inverse, scale * Mult2(flipMatrix, vec) - node.head)
+                        pb.location[0] += translation_vector[0] * scale
+                        pb.location[1] -= translation_vector[1] * scale
+                        pb.location[2] += translation_vector[2] * scale
+                        pb.keyframe_insert('location', frame=frame, group=name)
+                        print("He entrat aqui???")
+
+
                 elif mode == Rotation:
                     mats = []
                     for (axis, sign) in indices:
@@ -305,6 +324,8 @@ def addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector,
                         m += 1
                     mat = Mult3(Mult2(node.inverse, flipMatrix),  Mult3(mats[0], mats[1], mats[2]), Mult2(flipInv, node.matrix))
                     setRotation(pb, mat, frame, name)
+                else:
+                    pass
 
     return
 
