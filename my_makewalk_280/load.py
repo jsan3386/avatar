@@ -224,7 +224,7 @@ def readBvhFile(context, filepath, scn, scan, original_position):
                 startFrame *= ssFactor
                 endFrame *= ssFactor
                 status = Frames
-                frame = 0 ################# ABANS ERA 0 AIXOOOO
+                frame = 20 ################# ABANS ERA 0 AIXOOOO
                 frameno = 1
 
                 #source.findSrcArmature(context, rig)

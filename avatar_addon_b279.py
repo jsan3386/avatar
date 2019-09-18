@@ -4,7 +4,7 @@
 #	'name': "Avatar",
 #	'author': "Jordi Sanchez-Riera",
 #	'version': (0, 1, 0),
-#	"blender": (2, 7, 9),
+#	"blender": (2, 8, 0),
 #	'location': "View3D",
 #	'description': "Create and move a simple avatar",
 #	'warning': '',
@@ -35,9 +35,14 @@ import bpy.utils.previews
 for p in bpy.utils.script_paths():
 	sys.path.append(p)
 
+#filename = "/home/acivit/avatar/config.py"
+#exec(compile(open(filename).read(),filename,'exec'))
 from config import avt_path
+
+
 #avt_path = '/home/jsanchez/Software/github-projects/avatar'
 #avt_path = "/home/aniol/avatar"
+print("this is avt_path")
 print(avt_path)
 
 

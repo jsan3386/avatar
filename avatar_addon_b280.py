@@ -1102,9 +1102,9 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 		bone_bvh = ["Hips","LeftUpLeg","LeftLowLeg","LeftFoot","RightUpLeg","RightLowLeg","RightFoot","Chest","LeftCollar","LeftUpArm","LeftLowArm","LeftHand","RightCollar","RightUpArm","RightLowArm","RightHand","Neck","Head"]
 		bone_conversion = ["Hips","LeftUpLeg","LeftLeg","LeftFoot","RightUpLeg","RightLeg","RightFoot","Spine1","LeftShoulder","LeftArm","LeftForeArm","LeftHand","RightShoulder","RightArm","RightForeArm","RightHand","Neck","Head"]
 		
-		### Sequence  "breakdance.bvh", "Destroy.bvh", "sexywalk.bvh" 
+		### Sequence  "breakdance.bvh", "Destroy.bvh" 
 		
-		file_path = avt_path + "/sequences/" + "Destroy.bvh" 
+		file_path = avt_path + "/sequences/" + "breakdance.bvh" 
 		
 		#for bone in bone_bvh:
 			#poseBone = arm2.pose.bones[bone]
@@ -1118,7 +1118,7 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 		#retarget.loadRetargetSimplify(context,file_path)
 		
 		
-		scn.frame_set(22) ## Abans era 2 ## Abans era 50
+		scn.frame_set(20) ## Abans era 2 ## Abans era 50
 		
 		
 		ref = original_position.copy()
@@ -1126,35 +1126,52 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 			bone = bones[i]
 			poseBone = arm2.pose.bones[bone]
 			poseBone.rotation_mode = "QUATERNION"
-			poseBone.rotation_quaternion = Quaternion((1,0,0,0))###ref[i]
+			initial_quaternion = Quaternion((1,0,0,0))
+			poseBone.rotation_quaternion = initial_quaternion###ref[i]
 			bpy.context.view_layer.update()
-			#bpy.ops.graph.keyframe_insert(type='ALL')
+			
 			arm2.pose.bones[bone].keyframe_insert(data_path = "rotation_quaternion", frame = 0)
 		bone = arm2.pose.bones["Hips"]
 		
 		
-		scn.frame_set(22)  
+		scn.frame_set(20)  
 		quat = bone.matrix.to_quaternion()
 		quat_n = Quaternion((round(quat.w),round(quat.x),round(quat.y),round(quat.z)))
+		pts_skel = movement.get_skeleton_joints(arm2)
+		
 		
 		
 		scn.frame_set(0)
 		quat2 = bone.matrix.to_quaternion()
 		quat2_n = Quaternion((round(quat2.w),round(quat2.x),round(quat2.y),round(quat2.z)))
-		
-		#Checking where the animation starts to select a correct orientation 
+#		
+	#Checking where the animation starts to select a correct orientation 
 		
 		if quat2_n != quat_n:
 			bone.rotation_mode = "QUATERNION"
-			bone.rotation_quaternion = Quaternion((0,0,0.87,0.42)) #Quaternion((0,0,0.91,0.41)), gir de 180 graus.
+			initial_quaternion = Quaternion((0,0,0.87,0.42))
+			bone.rotation_quaternion = initial_quaternion #Quaternion((0,0,0.91,0.41)), gir de 180 graus.
 			bone.keyframe_insert(data_path = "rotation_quaternion", frame = 0)
 			bone.location = Vector((0,0,0))
 			bone.keyframe_insert(data_path = "location", frame = 0)
-
-
-					
-
 		
+		correction_params = np.zeros((14,3),dtype=np.float32)
+		q_list, initial_rotation = movement.get_skeleton_parameters_correction_BVH(arm2,pts_skel,correction_params)
+		
+		correction_iteration = 0
+		correction_iterations = 0
+		initial_quaternion = Quaternion((1,0,0,0)) #
+		correction_iterations = movement.transition_to_desired_motion_BVH(q_list,initial_rotation,arm2,correction_iteration,mesh_arm2,initial_quaternion)
+		
+		
+		print("Correction params")
+		print(correction_params)
+		
+		print("Resultats: Qlist")
+		print(q_list)
+		print("Resultats: initial_rotation")
+		print(initial_rotation)
+
 
 		bpy.context.view_layer.update()
 		
@@ -1213,6 +1230,8 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 			matrix = arm2.pose.bones[bone].matrix.copy()
 			original_position.append(matrix)
 			#print(matrix)
+		
+		
 			
 		correction_iteration = 0
 		correction_iterations = 0
