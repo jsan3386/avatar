@@ -22,6 +22,9 @@ import numpy as np
 
 from numpy import *
 
+from bpy.props import (BoolProperty,
+                       IntProperty,
+                       )
 
 import mathutils 
 from bpy.props import * 
@@ -51,8 +54,8 @@ print(avt_path)
 import movement   # For the movement from frames
 #import read_bvh_custom # For the movement from BVH 
 sys.path.insert(0,"/home/aniol/avatar/my_makewalk/")
-import load as load
-import retarget as retarget # funciona.
+#import load as load
+#import retarget as retarget # funciona.
 
 preview_collections = {}
 
@@ -77,6 +80,17 @@ def get_faces (obj):
 		for idx in f.vertices:
 			faces.append(obj.data.vertices[idx].co)
 	return faces
+
+def update_offset(self, context):
+	global mAvt
+	
+	print(self.start_offset)
+	
+def update_origin(self, context):
+	global mAvt
+	
+	print (self.start_origin)
+	
 
 def update_weights (self, context):
 	#obj = context.active_object
@@ -274,6 +288,10 @@ class Avatar:
 		
 		# Scale
 		self.weight_k10 = 1
+		
+		# motion
+		self.offset = 0
+		self.origin = False
 
 	def read_verts(self, mesh):
 		mverts_co = np.zeros((len(mesh.vertices)*3), dtype=np.float)
@@ -1052,6 +1070,10 @@ class Avatar_PT_MotionPanel(bpy.types.Panel):
 	bl_space_type = "VIEW_3D"
 	bl_region_type = "TOOLS"
 	
+	bpy.types.Object.start_offset = IntProperty(name = "Offset", description="Start motion offset", default = 0, min = 0, max = 250, update=update_offset)
+	bpy.types.Object.start_origin = BoolProperty(name = "Origin", description="Start at origin", default = False, update=update_origin)
+
+	
 	def draw(self, context):
 		layout = self.layout
 		obj = context.object
@@ -1061,13 +1083,22 @@ class Avatar_PT_MotionPanel(bpy.types.Panel):
 		row.operator('avt.motion_3d_points', text="Motion from 3D points")
 		row = layout.row()
 		row.operator('avt.motion_bvh', text="Motion from BVH file")
-		
+		row = layout.separator()
+		layout.prop(obj, "start_offset", text="Motion offset")
+		layout.prop(obj, "start_origin", text="Start at origin")
+			
 		
 class Avatar_OT_MotionBVH (bpy.types.Operator):
 	
 	bl_idname = "avt.motion_bvh"
 	bl_label = "Motion BVH"
 	bl_description = "Motion from BVH"
+
+	filepath = bpy.props.StringProperty(subtype="FILE_PATH") 
+
+	def invoke(self, context, event):
+		bpy.context.window_manager.fileselect_add(self)
+		return {'RUNNING_MODAL'}
 	
 	def execute(self, context):
 		global mAvt
@@ -1075,6 +1106,8 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 		arm2 = mAvt.skel
 		mesh_arm2 = mAvt.mesh
 		original_position = []
+		
+		print(self.filepath)
 		
 		bones = ["Hips","LHipJoint","LeftUpLeg","LeftLeg","LeftFoot","LeftToeBase","LowerBack","Spine","Spine1","LeftShoulder","LeftArm","LeftForeArm","LeftHand","LThumb","LeftFingerBase","LeftHandFinger1","Neck","Neck1","Head","RightShoulder","RightArm","RightForeArm","RightHand","RThumb","RightFingerBase","RightHandFinger1","RHipJoint","RightUpLeg","RightLeg","RightFoot","RightToeBase"]
 		
@@ -1151,10 +1184,19 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 	bl_idname = "avt.motion_3d_points"
 	bl_label = "Motion 3D points"
 	bl_description = "Motion from 3D points"
+
+	filepath = bpy.props.StringProperty(subtype="FILE_PATH") 
+
+	def invoke(self, context, event):
+		bpy.context.window_manager.fileselect_add(self)
+		return {'RUNNING_MODAL'}
 	
 	def execute(self, context):
 		global mAvt
 		obj = bpy.context.active_object
+				
+		print("********")
+		print(self.filepath)
 		
 		scn = bpy.context.scene
 		scn.frame_start = 1
@@ -1331,7 +1373,7 @@ classes  = (
 )
 
 def register():
-	
+		
 	# Create a new preview collection (only upon register)
 	pcoll = bpy.utils.previews.new()
 
