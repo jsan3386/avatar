@@ -303,17 +303,28 @@ def addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector,
                         pb.location[0] -= translation_vector[0] * scale
                         #pb.location[1] -= translation_vector[1] * scale    AIXÒ ÉS LA CORRECCIÓ TRANSLACIÓ EN DIRECCIÓ Z, NO ENS INTERESSA QUE HIPS ESTIGUI A L'ORIGEN.
                         pb.location[2] -= translation_vector[2] * scale
+                        if extra == 0:
+                            pass
+                        else: # Calculus of the relative rotation around center (0,0). if the center is another point it has to be corrected. 
+
+                            x = pb.location[0] * math.cos(extra * Deg2Rad) - pb.location[2] * math.sin(extra * Deg2Rad)
+                            y = pb.location[0] * math.sin(extra * Deg2Rad) + pb.location[2] * math.cos(extra * Deg2Rad)
+                            #print("I should be going to: ")
+                            #print(str(pb.location[0]) + "," +str(pb.location[2]))
+                            pb.location[0] = x
+                            pb.location[2] = y
+                            #print(str(x) + ","+str(y))
 
                         pb.keyframe_insert('location', frame=frame, group=name)
                         first = False
-                        quat = Quaternion((0.707,0,0,0.707))
-                        #quat = Quaternion((0.707,0,0.707,0))
-                        pb.rotation_mode = "QUATERNION"
-                        pb.rotation_quaternion = quat
+                        #quat = Quaternion((0.707,0,0,0.707))
+                        ##quat = Quaternion((0.707,0,0.707,0))
+                        #pb.rotation_mode = "QUATERNION"
+                        #pb.rotation_quaternion = quat
 
-                        #bpy.context.view_layer.update()
+                        bpy.context.view_layer.update()
 
-                        pb.keyframe_insert('rotation_quaternion', frame = frame, group= name)
+                        #pb.keyframe_insert('rotation_quaternion', frame = frame, group= name)
 
                     else: #mai entra al else perquè first és quan és HIPS que és l'únic amb location.
                         pb.location = Mult2(node.inverse, scale * Mult2(flipMatrix, vec) - node.head)
@@ -321,7 +332,7 @@ def addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector,
                         pb.location[1] -= translation_vector[1] * scale
                         pb.location[2] += translation_vector[2] * scale
                         pb.keyframe_insert('location', frame=frame, group=name)
-                        print("He entrat aqui???")
+
 
 
                 elif mode == Rotation:
@@ -330,18 +341,22 @@ def addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector,
                         angle = sign*float(words[m])*Deg2Rad
                         newangle = angle
                         if name == "Hips" and str(axis) == "Y":
-                            print("ROTATION INCOMING, frame: " +str(frame))
-                            print(name)
-                            print(angle)
-                            print(axis)
+                            #print("ROTATION INCOMING, frame: " +str(frame))
+                            #print(name)
+                            #print(angle)
+                            #print(axis)
                             # flipMatrix = flipMatrix @ Matrix.Rotation(90, 3, 'Y') això no ha funcionat gaire bé
-                            if angle + extra * Deg2Rad > pi:
-                                newangle = angle + extra * Deg2Rad - pi
-                                newangle = -pi + newangle
-                            else:
-                                newangle += extra * Deg2Rad
-                            print("NEW ANGLE IS: " +str(newangle))
+                            ##################################
+                            #if angle + extra * Deg2Rad > pi:
+                            #    newangle = angle + extra * Deg2Rad - pi
+                            #    newangle = -pi + newangle
+                            #else:
+                            #    newangle += extra * Deg2Rad
 
+                            #print("NEW ANGLE IS: " +str(newangle))
+                            body = bpy.data.objects["Standard"]
+                            body.rotation_mode = "XYZ"
+                            body.rotation_euler[2] = extra * Deg2Rad
                         mats.append(Matrix.Rotation(newangle, 3, axis))
                         m += 1
                     mat = Mult3(Mult2(node.inverse, flipMatrix),  Mult3(mats[0], mats[1], mats[2]), Mult2(flipInv, node.matrix))

@@ -1109,8 +1109,7 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 		#for bone in bone_bvh:
 			#poseBone = arm2.pose.bones[bone]
 			#rest_pose_3D.append(poseBone.head)
-		
-		
+		initial_quaternion = Quaternion((1,0,0,0))
 			
 	
 	
@@ -1118,7 +1117,7 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 		#retarget.loadRetargetSimplify(context,file_path)
 		
 		
-		scn.frame_set(20) ## Abans era 2 ## Abans era 50
+		scn.frame_set(20) ## AIXÒ ÉS EL FRAME ON ES DEFINEIX L'INICI DEL MOVIMENT, ES POT CANVIAR AL FITXER LOAD.PY A LA FUNCIÓ readBvhFile (FRAME = 20)
 		
 		
 		ref = original_position.copy()
@@ -1160,7 +1159,7 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 		
 		correction_iteration = 0
 		correction_iterations = 0
-		initial_quaternion = Quaternion((1,0,0,0)) #
+		initial_quaternion = Quaternion((1,0,0,0))#
 		correction_iterations = movement.transition_to_desired_motion_BVH(q_list,initial_rotation,arm2,correction_iteration,mesh_arm2,initial_quaternion)
 		
 		

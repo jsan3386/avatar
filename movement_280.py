@@ -437,9 +437,6 @@ def get_skeleton_parameters_correction_BVH(skel_basis, goal_pts, correction_para
 	ref_skel = np.array(ref_arm)
 	q_list = []
 	provisional_list=[]
-	print(goal_pts)
-	print(goal_pts[0])
-	print(goal_pts[0].x)
 
 	for vector in goal_pts:
 		provisional_list.append([vector.x,vector.y,vector.z])
