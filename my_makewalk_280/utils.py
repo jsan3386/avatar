@@ -691,4 +691,3 @@ class ErrorOperator(bpy.types.Operator):
         global _errorLines
         for line in _errorLines:
             self.layout.label(text=line)
-

@@ -280,6 +280,7 @@ def addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector,
     m = 0
     first = True
     flipInv = flipMatrix.inverted()
+    extra = 90
     for node in nodes:
         name = node.name
         try:
@@ -288,6 +289,7 @@ def addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector,
             pb = None
         if pb:
             for (mode, indices) in node.channels:
+
                 if mode == Location:
                     vec = Vector((0,0,0))
                     for (index, sign) in indices:
@@ -303,11 +305,16 @@ def addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector,
                         pb.location[2] -= translation_vector[2] * scale
 
                         pb.keyframe_insert('location', frame=frame, group=name)
-                        print("PB.LOCATION")
-                        print(pb.location)
-                        print("FRAME")
-                        print(frame)
                         first = False
+                        quat = Quaternion((0.707,0,0,0.707))
+                        #quat = Quaternion((0.707,0,0.707,0))
+                        pb.rotation_mode = "QUATERNION"
+                        pb.rotation_quaternion = quat
+
+                        #bpy.context.view_layer.update()
+
+                        pb.keyframe_insert('rotation_quaternion', frame = frame, group= name)
+
                     else: #mai entra al else perquè first és quan és HIPS que és l'únic amb location.
                         pb.location = Mult2(node.inverse, scale * Mult2(flipMatrix, vec) - node.head)
                         pb.location[0] += translation_vector[0] * scale
@@ -321,7 +328,21 @@ def addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector,
                     mats = []
                     for (axis, sign) in indices:
                         angle = sign*float(words[m])*Deg2Rad
-                        mats.append(Matrix.Rotation(angle, 3, axis))
+                        newangle = angle
+                        if name == "Hips" and str(axis) == "Y":
+                            print("ROTATION INCOMING, frame: " +str(frame))
+                            print(name)
+                            print(angle)
+                            print(axis)
+                            # flipMatrix = flipMatrix @ Matrix.Rotation(90, 3, 'Y') això no ha funcionat gaire bé
+                            if angle + extra * Deg2Rad > pi:
+                                newangle = angle + extra * Deg2Rad - pi
+                                newangle = -pi + newangle
+                            else:
+                                newangle += extra * Deg2Rad
+                            print("NEW ANGLE IS: " +str(newangle))
+
+                        mats.append(Matrix.Rotation(newangle, 3, axis))
                         m += 1
                     mat = Mult3(Mult2(node.inverse, flipMatrix),  Mult3(mats[0], mats[1], mats[2]), Mult2(flipInv, node.matrix))
                     setRotation(pb, mat, frame, name)
