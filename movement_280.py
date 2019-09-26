@@ -532,22 +532,21 @@ def get_skeleton_parameters_correction_BVH(skel_basis, goal_pts, correction_para
 
 	return q_list, initial_rotation
 
-def transition_to_desired_motion_BVH(q_list,initial_rotation,skel_basis,correction_iteration,mesh, initial_quaternion):
+def transition_to_desired_motion_BVH(q_list,initial_rotation,skel_basis,correction_iteration,mesh, initial_quaternion,offset):
 
 	list_of_rotations = []
 	initial_quaternion = Quaternion((1,0,0,0))
 	bone_name = ["Hips","Neck","LHipJoint","LeftUpLeg", "LeftLeg", "RHipJoint", "RightUpLeg", "RightLeg", "LeftShoulder", "LeftArm", "LeftForeArm", "RightShoulder", "RightArm", "RightForeArm"]
 
-	initial = slerp(initial_quaternion,initial_rotation,np.arange(0,1,0.05))
+	initial = slerp(initial_quaternion,initial_rotation,np.arange(0,1,1/(offset+1)))
 	list_of_rotations.append(initial)
 	for i in range(len(q_list)):
-		movements = slerp(initial_quaternion,q_list[i],np.arange(0,1,0.05))
+		movements = slerp(initial_quaternion,q_list[i],np.arange(0,1,1/(offset+1)))
 		list_of_rotations.append(movements)
 
 	scene = bpy.context.scene
 	bones = ["Hips","LHipJoint","LeftUpLeg","LeftLeg","LeftFoot","LeftToeBase","LowerBack","Spine","Spine1","LeftShoulder","LeftArm","LeftForeArm","LeftHand","LThumb","LeftFingerBase","LeftHandFinger1","Neck","Neck1","Head","RightShoulder","RightArm","RightForeArm","RightHand","RThumb","RightFingerBase","RightHandFinger1","RHipJoint","RightUpLeg","RightLeg","RightFoot","RightToeBase"]
 	for step in range(len(list_of_rotations[0])):
-		bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 		for i in range(len(bone_name)):
 			#bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 			poseBone = skel_basis.pose.bones[bone_name[i]]

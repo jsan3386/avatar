@@ -472,7 +472,7 @@ def restoreTargetData(rig, data):
 #    loadRetargetSimplify(context, filepath):
 #
 
-def loadRetargetSimplify(context, filepath, original_position):
+def loadRetargetSimplify(context, filepath, original_position,frame_start,extra):
     import load
     from fkik import limbsBendPositive
 
@@ -483,7 +483,7 @@ def loadRetargetSimplify(context, filepath, original_position):
     data = changeTargetData(trgRig, scn)
     try:
         #clearMcpProps(trgRig)
-        srcRig = load.readBvhFile(context, filepath, scn, False, original_position)
+        srcRig = load.readBvhFile(context, filepath, scn, False, original_position,frame_start,extra)
         frames = getActiveFrames(srcRig)
         print("FRAMESSSSSSSSSSSSSSSSSSS SRCCCCCCCRIG")
         print(frames)

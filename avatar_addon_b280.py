@@ -812,9 +812,9 @@ class Avatar_OT_LoadModel(bpy.types.Operator):
 			# importar low poly mavt.collision_mesh 
 			#vp = bpy.data.objects['verylowpoly']
 			#vp.select_set(True)
-			#bpy.context.view_layer.objects.active = vp
-			#bpy.ops.object.mode_set(mode='OBJECT')
-			#bpy.ops.object.modifier_add(type='COLLISION')
+			bpy.context.view_layer.objects.active = mAvt.mesh
+			bpy.ops.object.mode_set(mode='OBJECT')
+			bpy.ops.object.modifier_add(type='COLLISION')
 			#
 			#bpy.ops.rigidbody.objects_add(type='ACTIVE')
 			#vp.hide_set(True)
@@ -1142,10 +1142,9 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 			#poseBone = arm2.pose.bones[bone]
 			#rest_pose_3D.append(poseBone.head)
 		initial_quaternion = Quaternion((1,0,0,0))
-			
-	
-	
-		retarget.loadRetargetSimplify(context,file_path,original_position) #Segurament original_position no es fa servir
+		
+		extra = 0
+		retarget.loadRetargetSimplify(context,file_path,original_position,mAvt.offset,extra) #Segurament original_position no es fa servir
 		#retarget.loadRetargetSimplify(context,file_path)
 		
 		
@@ -1165,7 +1164,7 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 		bone = arm2.pose.bones["Hips"]
 		
 		
-		scn.frame_set(20)  
+		scn.frame_set(mAvt.offset)  
 		quat = bone.matrix.to_quaternion()
 		quat_n = Quaternion((round(quat.w),round(quat.x),round(quat.y),round(quat.z)))
 		pts_skel = movement.get_skeleton_joints(arm2)
@@ -1186,18 +1185,18 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 			bone.location = Vector((0,0,0))
 			bone.keyframe_insert(data_path = "location", frame = 0)
 		
+		
 		correction_params = np.zeros((14,3),dtype=np.float32)
 		q_list, initial_rotation = movement.get_skeleton_parameters_correction_BVH(arm2,pts_skel,correction_params)
 		
 		correction_iteration = 0
 		correction_iterations = 0
 		initial_quaternion = Quaternion((1,0,0,0))#
-		correction_iterations = movement.transition_to_desired_motion_BVH(q_list,initial_rotation,arm2,correction_iteration,mesh_arm2,initial_quaternion)
+		correction_iterations = movement.transition_to_desired_motion_BVH(q_list,initial_rotation,arm2,correction_iteration,mesh_arm2,initial_quaternion,mAvt.offset)
 		
 		
 		print("Correction params")
 		print(correction_params)
-		
 		print("Resultats: Qlist")
 		print(q_list)
 		print("Resultats: initial_rotation")

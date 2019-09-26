@@ -117,7 +117,7 @@ Frames = 3
 
 Epsilon = 1e-5
 
-def readBvhFile(context, filepath, scn, scan, original_position):
+def readBvhFile(context, filepath, scn, scan, original_position,frame_start,extra):
     props.ensureInited(context)
     setCategory("Load Bvh File")
     scale = scn.McpBvhScale
@@ -224,7 +224,7 @@ def readBvhFile(context, filepath, scn, scan, original_position):
                 startFrame *= ssFactor
                 endFrame *= ssFactor
                 status = Frames
-                frame = 20 ################# ABANS ERA 0 AIXOOOO
+                frame = frame_start ################# ABANS ERA 0 AIXOOOO
                 frameno = 1
 
                 #source.findSrcArmature(context, rig)
@@ -253,7 +253,7 @@ def readBvhFile(context, filepath, scn, scan, original_position):
                 start_rotation = mat
                 translation_vector = vec
                 #addFrame(words, frameno, nodes, pbones, scale, flipMatrix, translation_vector,start_rotation)
-                addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector,start_rotation)
+                addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector,start_rotation,extra)
                 showProgress(frameno, frame, nFrames, step=200)
                 frameno += 1
             frame += 1
@@ -276,11 +276,11 @@ def readBvhFile(context, filepath, scn, scan, original_position):
 #    addFrame(words, frame, nodes, pbones, scale, flipMatrix):
 #
 
-def addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector, start_rotation):
+def addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector, start_rotation,extra):
     m = 0
     first = True
     flipInv = flipMatrix.inverted()
-    extra = 90
+    extra = 0
     for node in nodes:
         name = node.name
         try:
@@ -305,7 +305,7 @@ def addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector,
                         pb.location[2] -= translation_vector[2] * scale
                         if extra == 0:
                             pass
-                        else: # Calculus of the relative rotation around center (0,0). if the center is another point it has to be corrected. 
+                        else: # Calculus of the relative rotation around center (0,0). if the center is another point it has to be corrected.
 
                             x = pb.location[0] * math.cos(extra * Deg2Rad) - pb.location[2] * math.sin(extra * Deg2Rad)
                             y = pb.location[0] * math.sin(extra * Deg2Rad) + pb.location[2] * math.cos(extra * Deg2Rad)
