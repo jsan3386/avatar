@@ -26,6 +26,9 @@ import numpy as np
 
 from numpy import *
 
+from bpy.props import (BoolProperty,
+                       IntProperty,
+                       )
 
 import mathutils 
 from bpy.props import * 
@@ -86,6 +89,16 @@ preview_collections = {}
 
 ##########################################################################################################
 
+def update_offset(self, context):
+	global mAvt
+	
+	mAvt.offset = self.start_offset
+	
+def update_origin(self, context):
+	global mAvt
+	
+	mAvt.origin = self.start_origin
+
 
 def get_vertices (obj):
 	return [(obj.matrix_world * v.co) for v in obj.data.vertices]
@@ -139,7 +152,7 @@ def update_weights (self, context):
 			mAvt.deform_cloth(cloth_name=str(object.name))
 			print("deformant això: " + object.name)
 	
-	update_verts()
+	#update_verts()
 
 def update_scale(self,context):
 	
@@ -189,7 +202,7 @@ def update_scale(self,context):
 		if object.name != "Standard" and object.name != "Standard:Body" and object.name != "verylowpoly" and object.name != "Camera" and object.name != "Light":
 			cloth = bpy.data.objects[object.name]
 			cloth.scale = vector_tors
-	update_verts()
+	#update_verts()
 	
 	
 	mAvt.np_mesh = mAvt.read_verts(obj.data)
@@ -205,21 +218,21 @@ def update_scale(self,context):
 			mAvt.deform_cloth(cloth_name=str(object.name))
 			print("escalant això: " + object.name)
 	
-	update_verts()
+	#update_verts()
 		
 		
-def update_verts():
-	#print("**************")
-	#print(" UPDATING VERTS ")
-	vlp = bpy.data.objects["verylowpoly"]
-	sp = bpy.data.objects["Standard:Body"]
-	mesh_low_poly = vlp.data
-	mesh = sp.data
-	for i in range(len(match_list)):
-		mesh_low_poly.vertices[i].co = sp.matrix_world @ mesh.vertices[match_list[i]].co 
-		mesh_low_poly.vertices[i].co = vlp.matrix_world.inverted() @ mesh_low_poly.vertices[i].co
-	#print(" Weights Updated ")
-	#print("*********")
+#def update_verts():
+#	#print("**************")
+#	#print(" UPDATING VERTS ")
+#	vlp = bpy.data.objects["verylowpoly"]
+#	sp = bpy.data.objects["Standard:Body"]
+#	mesh_low_poly = vlp.data
+#	mesh = sp.data
+#	for i in range(len(match_list)):
+#		mesh_low_poly.vertices[i].co = sp.matrix_world @ mesh.vertices[match_list[i]].co 
+#		mesh_low_poly.vertices[i].co = vlp.matrix_world.inverted() @ mesh_low_poly.vertices[i].co
+#	#print(" Weights Updated ")
+#	#print("*********")
 
 
 def generate_previews():
@@ -293,6 +306,10 @@ class Avatar:
 		
 		# Scale
 		self.weight_k10 = 1
+		
+		# Motion panel
+		self.origin = False
+		self.offset = 0
 
 	def read_verts(self, mesh):
 		mverts_co = np.zeros((len(mesh.vertices)*3), dtype=np.float)
@@ -771,65 +788,67 @@ class Avatar_OT_LoadModel(bpy.types.Operator):
 			
 			mAvt.body_kdtree.balance()
 			
-			low_poly_model_file = "%s/models/low_poly.obj" % avt_path
-			bpy.ops.import_scene.obj(filepath=low_poly_model_file)
+			#low_poly_model_file = "%s/models/low_poly.obj" % avt_path
+			#bpy.ops.import_scene.obj(filepath=low_poly_model_file)
 			
-			bpy.context.selected_objects[0].name = 'verylowpoly'
-			bpy.context.selected_objects[0].data.name = 'verylowpoly'
-			mAvt.collision_mesh = bpy.data.objects["verylowpoly"]
+			#bpy.context.selected_objects[0].name = 'verylowpoly'
+			#bpy.context.selected_objects[0].data.name = 'verylowpoly'
+			#mAvt.collision_mesh = bpy.data.objects["verylowpoly"]
+			mAvt.collision_mesh = mAvt.mesh
+
 			
-			for obj in bpy.data.objects:
-				obj.select_set(False)
+			#for obj in bpy.data.objects:
+			#	obj.select_set(False)
 		
-			if bpy.data.objects.get("Standard") is not False:
+			#if bpy.data.objects.get("Standard") is not False:
 		
-				a = bpy.data.objects["Standard"]
-				b = bpy.data.objects["verylowpoly"]
-				a.select_set(True)
-				b.select_set(True)
-				bpy.context.view_layer.objects.active = a
-				bpy.ops.object.parent_set(type='ARMATURE_AUTO')
+			#	a = bpy.data.objects["Standard"]
+			#	b = bpy.data.objects["verylowpoly"]
+			#	a.select_set(True)
+			#	b.select_set(True)
+			#	bpy.context.view_layer.objects.active = a
+			#	bpy.ops.object.parent_set(type='ARMATURE_AUTO')
 				
 			# importar low poly mavt.collision_mesh 
-			vp = bpy.data.objects['verylowpoly']
-			vp.select_set(True)
-			bpy.context.view_layer.objects.active = vp
-			bpy.ops.object.mode_set(mode='OBJECT')
-			bpy.ops.object.modifier_add(type='COLLISION')
+			#vp = bpy.data.objects['verylowpoly']
+			#vp.select_set(True)
+			#bpy.context.view_layer.objects.active = vp
+			#bpy.ops.object.mode_set(mode='OBJECT')
+			#bpy.ops.object.modifier_add(type='COLLISION')
 			#
 			#bpy.ops.rigidbody.objects_add(type='ACTIVE')
-			vp.hide_set(True)
-			stb = bpy.data.objects['Standard']
+			#vp.hide_set(True)
+			#stb = bpy.data.objects['Standard']
 			
-			st = bpy.data.objects['Standard:Body']
-			global match_list 
-			match_list = []
-			global match_list_lp 
-			match_list_lp= []
-			mesh = st.data
-			mesh_low_poly = vp.data
+			#st = bpy.data.objects['Standard:Body']
+			#global match_list 
+			#match_list = []
+			#global match_list_lp 
+			#match_list_lp= []
+			#mesh = st.data
+			#mesh_low_poly = vp.data
 			
-			for vert_lp in mesh_low_poly.vertices:
-				w_v_lp = vp.matrix_world @ vert_lp.co
-				d = 10000000
-				# now we have world position vertex, try to find match in other mesh
-				for vert in mesh.vertices:
-					w_v = st.matrix_world @ vert.co
-					# we have a match
-					if ((w_v_lp - w_v).length < d):
-						d = (w_v_lp - w_v).length
-						min_vert = vert.index
-						min_lp_vert = vert_lp.index
+			#for vert_lp in mesh_low_poly.vertices:
+			#	w_v_lp = vp.matrix_world @ vert_lp.co
+			#	d = 10000000
+			#	# now we have world position vertex, try to find match in other mesh
+			#	for vert in mesh.vertices:
+			#		w_v = st.matrix_world @ vert.co
+			#		# we have a match
+			#		if ((w_v_lp - w_v).length < d):
+			#			d = (w_v_lp - w_v).length
+			#			min_vert = vert.index
+			#			min_lp_vert = vert_lp.index
 				
-				match_list.append(min_vert)
-				match_list_lp.append(min_lp_vert)
+			#	match_list.append(min_vert)
+			#	match_list_lp.append(min_lp_vert)
 				
 			#print(len(match_list))
 			#print(len(match_list_lp))
 			#print(match_list_lp) IS AN ARRAY FROM 0 TO 411 LOGICALLY
 			#print(match_list)
 			
-			update_verts()
+			#update_verts()
 
 			
 			
@@ -1063,6 +1082,9 @@ class Avatar_PT_MotionPanel(bpy.types.Panel):
 	#bl_region_type = "TOOLS"
 	bl_region_type = "UI"
 	bl_category = "Avatar"
+
+	bpy.types.Object.start_offset = IntProperty(name = "Offset", description="Start motion offset", default = 0, min = 0, max = 250, update=update_offset)
+	bpy.types.Object.start_origin = BoolProperty(name = "Origin", description="Start at origin", default = False, update=update_origin)
 	
 	def draw(self, context):
 		layout = self.layout
@@ -1073,6 +1095,9 @@ class Avatar_PT_MotionPanel(bpy.types.Panel):
 		row.operator('avt.motion_3d_points', text="Motion from 3D points")
 		row = layout.row()
 		row.operator('avt.motion_bvh', text="Motion from BVH file")
+		row = layout.separator()
+		layout.prop(obj, "start_offset", text="Motion offset")
+		layout.prop(obj, "start_origin", text="Start at origin")
 		
 		
 class Avatar_OT_MotionBVH (bpy.types.Operator):
@@ -1081,6 +1106,12 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 	bl_label = "Motion BVH"
 	bl_description = "Motion from BVH"
 	
+	filepath = bpy.props.StringProperty(subtype="FILE_PATH") 
+
+	def invoke(self, context, event):
+		bpy.context.window_manager.fileselect_add(self)
+		return {'RUNNING_MODAL'}
+
 	def execute(self, context):
 		global mAvt
 		scn = bpy.context.scene
@@ -1104,7 +1135,8 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 		
 		### Sequence  "breakdance.bvh", "Destroy.bvh" 
 		
-		file_path = avt_path + "/sequences/" + "breakdance.bvh" 
+		#file_path = avt_path + "/sequences/" + "breakdance.bvh"
+		file_path = self.filepath 
 		
 		#for bone in bone_bvh:
 			#poseBone = arm2.pose.bones[bone]
@@ -1117,7 +1149,7 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 		#retarget.loadRetargetSimplify(context,file_path)
 		
 		
-		scn.frame_set(20) ## AIXÒ ÉS EL FRAME ON ES DEFINEIX L'INICI DEL MOVIMENT, ES POT CANVIAR AL FITXER LOAD.PY A LA FUNCIÓ readBvhFile (FRAME = 20)
+		scn.frame_set(mAvt.offset) ## AIXÒ ÉS EL FRAME ON ES DEFINEIX L'INICI DEL MOVIMENT, ES POT CANVIAR AL FITXER LOAD.PY A LA FUNCIÓ readBvhFile (FRAME = 20)
 		
 		
 		ref = original_position.copy()
@@ -1183,6 +1215,12 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 	bl_idname = "avt.motion_3d_points"
 	bl_label = "Motion 3D points"
 	bl_description = "Motion from 3D points"
+
+	filepath = bpy.props.StringProperty(subtype="FILE_PATH") 
+
+	def invoke(self, context, event):
+		bpy.context.window_manager.fileselect_add(self)
+		return {'RUNNING_MODAL'}
 	
 	def execute(self, context):
 		global mAvt
@@ -1194,7 +1232,10 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 		
 		# read file points and transfer motion: TODO
 		context = bpy.context
-		path_input = "%s/frames" % avt_path
+		#path_input = "%s/frames" % avt_path
+		path_input = self.filepath
+		print("hoilaksdflaskdjfoaisjdflaksdjf")
+		print(self.filepath)
 		
 		# Set rotation matrix to transform from Matlab coordinates to Blender coordinates
 		#
@@ -1263,7 +1304,7 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 		#            print([reference_skel_coords[x].x,reference_skel_coords[x].y,reference_skel_coords[x].z])
 		#        print("%%%%%%%%%% Coords at step 40 %%%%%%%%%%%%%%%%")
 				skel_coords = movement.get_skeleton_joints(arm2)
-				update_verts()
+				#update_verts()
 		#        for x in range(0,15):
 		#            print([skel_coords[x].x,skel_coords[x].y,skel_coords[x].z])
 		
@@ -1288,7 +1329,7 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 				#print("############### ORIGINAL skeleton params ################")
 				print(arm2)
 				q_list, initial_rotation = movement.get_skeleton_parameters_correction(arm2,pts_skel,correction_params)
-				update_verts()
+				#update_verts()
 				#print(q_list)
 				for i in range(len(bones)):
 					#print(bones[i])
@@ -1296,7 +1337,7 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 					poseBone = arm2.pose.bones[bone]
 					poseBone.matrix = ref[i]
 					bpy.context.view_layer.update()
-				update_verts()
+				#update_verts()
 				correction_iterations = movement.transition_to_desired_motion(q_list,initial_rotation,arm2,correction_iteration,mesh_arm2)
 #				for i in range(len(bones)):
 #					#print(bones[i])
@@ -1333,7 +1374,7 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 				#print("############### ORIGINAL skeleton params ################")
 				#print(arm2)
 				params = movement.get_skeleton_parameters(arm2,pts_skel,correction_params)
-				update_verts()
+				#update_verts()
 			
 			#scn.frame_set(f+correction_iterations)
 			
