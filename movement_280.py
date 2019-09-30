@@ -431,12 +431,13 @@ def get_skeleton_parameters_correction(skel_basis, goal_pts, correction_params):
 	return q_list, initial_rotation
 
 
-def get_skeleton_parameters_correction_BVH(skel_basis, goal_pts, correction_params):
+def get_skeleton_parameters_correction_BVH(skel_basis, goal_pts, correction_params,extra):
 	skel_params = []
 	ref_arm = get_skeleton_joints(skel_basis)
 	ref_skel = np.array(ref_arm)
 	q_list = []
 	provisional_list=[]
+	Deg2Rad = pi/180
 
 	for vector in goal_pts:
 		provisional_list.append([vector.x,vector.y,vector.z])
@@ -445,6 +446,19 @@ def get_skeleton_parameters_correction_BVH(skel_basis, goal_pts, correction_para
 
 	A = np.mat((ref_skel[14,:], ref_skel[8,:], ref_skel[11,:], ref_skel[1,:]))
 	B = np.mat((goal_pts[14,:], goal_pts[8,:], goal_pts[11,:], goal_pts[1,:]))
+	#print("THIS IS B ·$&&$·&·&%$&/)|##~½@½¬#¬")
+	#magic = np.array(B)
+	#print(magic)
+	#print(magic[0])
+	#print(magic[0][0])
+	#for point in B:
+	#	print("This is point [0]")
+	#	print(point[0])
+	#	print(point[0][0])
+	#	x = point[0] * math.cos(extra * Deg2Rad) - point[1] * math.sin(extra * Deg2Rad)
+	#	y = point[0] * math.sin(extra * Deg2Rad) + point[1] * math.sin(extra * Deg2Rad)
+	#	point[0] = x
+	#	point[1] = y
 	R, T = rigid_transform_3D(A,B)
 
 	mR = Matrix([[R[0,0],R[0,1],R[0,2]], [R[1,0],R[1,1],R[1,2]], [R[2,0],R[2,1],R[2,2]]])
@@ -535,7 +549,7 @@ def get_skeleton_parameters_correction_BVH(skel_basis, goal_pts, correction_para
 def transition_to_desired_motion_BVH(q_list,initial_rotation,skel_basis,correction_iteration,mesh, initial_quaternion,offset):
 
 	list_of_rotations = []
-	initial_quaternion = Quaternion((1,0,0,0))
+
 	bone_name = ["Hips","Neck","LHipJoint","LeftUpLeg", "LeftLeg", "RHipJoint", "RightUpLeg", "RightLeg", "LeftShoulder", "LeftArm", "LeftForeArm", "RightShoulder", "RightArm", "RightForeArm"]
 
 	initial = slerp(initial_quaternion,initial_rotation,np.arange(0,1,1/(offset+1)))

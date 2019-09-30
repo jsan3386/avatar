@@ -1144,6 +1144,7 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 		initial_quaternion = Quaternion((1,0,0,0))
 		
 		extra = 0
+
 		retarget.loadRetargetSimplify(context,file_path,original_position,mAvt.offset,extra) #Segurament original_position no es fa servir
 		#retarget.loadRetargetSimplify(context,file_path)
 		
@@ -1187,11 +1188,11 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 		
 		
 		correction_params = np.zeros((14,3),dtype=np.float32)
-		q_list, initial_rotation = movement.get_skeleton_parameters_correction_BVH(arm2,pts_skel,correction_params)
+		q_list, initial_rotation = movement.get_skeleton_parameters_correction_BVH(arm2,pts_skel,correction_params,extra)
 		
 		correction_iteration = 0
 		correction_iterations = 0
-		initial_quaternion = Quaternion((1,0,0,0))#
+		initial_quaternion = Quaternion((1,0,0,0))#mAvt.skel.matrix_local.to_quaternion()#
 		correction_iterations = movement.transition_to_desired_motion_BVH(q_list,initial_rotation,arm2,correction_iteration,mesh_arm2,initial_quaternion,mAvt.offset)
 		
 		
