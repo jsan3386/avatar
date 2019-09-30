@@ -1181,10 +1181,6 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 			original_position.append(matrix)
 			
 
-		### Start reading BVH file
-		bone_bvh = ["Hips","LeftUpLeg","LeftLowLeg","LeftFoot","RightUpLeg","RightLowLeg","RightFoot","Chest","LeftCollar","LeftUpArm","LeftLowArm","LeftHand","RightCollar","RightUpArm","RightLowArm","RightHand","Neck","Head"]
-		bone_conversion = ["Hips","LeftUpLeg","LeftLeg","LeftFoot","RightUpLeg","RightLeg","RightFoot","Spine1","LeftShoulder","LeftArm","LeftForeArm","LeftHand","RightShoulder","RightArm","RightForeArm","RightHand","Neck","Head"]
-		
 		### Sequence  "breakdance.bvh", "Destroy.bvh" 
 		
 		#file_path = avt_path + "/sequences/" + "breakdance.bvh"

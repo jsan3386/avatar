@@ -295,7 +295,7 @@ def addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector,
                         vec[index] = sign*float(words[index])# words[m]#vec[index] = sign*float(translation_vector[m])
                         m += 1
                     # si no funciona: Descomentar if first i fisrst = false i tabular la resta
-                    if first:
+                    if first: #Hips
 
                         pb.location = Mult2(node.inverse, scale * Mult2(flipMatrix, vec))#pb.head)#node.head)
 
