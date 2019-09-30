@@ -432,21 +432,22 @@ def changeTargetData(rig, scn):
             pass
 
     layers = list(rig.data.layers)
-    if rig.MhAlpha8:
-        rig.data.layers = MhxLayers
-    elif isRigify(rig):
-        rig.data.layers = RigifyLayers
+    #if rig.MhAlpha8:
+    #    rig.data.layers = MhxLayers
+    #elif isRigify(rig):
+    #    rig.data.layers = RigifyLayers
+    rig.data.layers = RigifyLayers
 
     locks = []
     for pb in rig.pose.bones:
         constraints = []
-        if not scn.McpUseLimits:
-            for cns in pb.constraints:
-                if cns.type == 'LIMIT_DISTANCE':
-                    cns.mute = True
-                elif cns.type[0:5] == 'LIMIT':
-                    constraints.append( (cns, cns.mute) )
-                    cns.mute = True
+#        if not scn.McpUseLimits:
+#            for cns in pb.constraints:
+#                if cns.type == 'LIMIT_DISTANCE':
+#                    cns.mute = True
+#                elif cns.type[0:5] == 'LIMIT':
+#                    constraints.append( (cns, cns.mute) )
+#                    cns.mute = True
         locks.append( (pb, constraints) )
 
     norotBones = []

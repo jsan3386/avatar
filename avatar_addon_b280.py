@@ -448,7 +448,55 @@ class Avatar:
 
 
 mAvt = Avatar()
+
+class Avatar_OT_ResetParams(bpy.types.Operator):
 	
+	bl_idname = "avt.reset_params"
+	bl_label = "Reset Parameters"
+	bl_description = "Reset original parameters of body shape"
+	
+	def execute(self, context):	
+		global mAvt
+
+		obj = mAvt.mesh
+	
+		# set previous mesh vertices values
+		cp_vals = obj.data.copy()
+		# store as np data
+		#mAvt.mesh_prev = cp_vals.vertices
+		mAvt.np_mesh_prev = mAvt.read_verts(cp_vals)
+
+		# calculate new shape with PCA shapes		
+		obj.weight_k3 = w3 = 0.0
+		obj.weight_k4 = w4 = 0.0
+		obj.weight_k5 = w5 = 0.0
+		obj.weight_k6 = w6 = 0.0
+		obj.weight_k8 = w8 = 0.0
+		obj.weight_k9 = w9 = 0.0
+		obj.weight_k11 = w11 = 1.0
+		obj.weight_k13 = w13 = 0.0
+
+		verts = obj.data.vertices
+		for i in range(0,len(verts)):
+			verts[i].co = Vector((vertexeigen2[i][0]*w3 + vertexeigen3[i][0]*w4 + vertexeigen4[i][0]*w5 + vertexeigen5[i][0]*w6  + vertexeigen7[i][0]*w8 + vertexeigen8[i][0]*w9 + vertexeigen12[i][0]*w13+ vertexmean[i][0], vertexeigen2[i][1]*w3 + vertexeigen3[i][1]*w4 + vertexeigen4[i][1]*w5 + vertexeigen5[i][1]*w6 + vertexeigen7[i][1]*w8 + vertexeigen8[i][1]*w9 + vertexeigen12[i][1]*w13 + vertexmean[i][1], vertexeigen2[i][2]*w3 + vertexeigen3[i][2]*w4 + vertexeigen4[i][2]*w5 + vertexeigen5[i][2]*w6 + vertexeigen7[i][2]*w8 + vertexeigen8[i][2]*w9 + vertexeigen12[i][1]*w13 + vertexmean[i][2]))
+
+		mAvt.np_mesh = mAvt.read_verts(obj.data)
+		mAvt.np_mesh_diff = mAvt.np_mesh - mAvt.np_mesh_prev
+
+		# move also collision mesh
+
+		# find which vertices are modified
+
+		# calculate position of clothes if any
+		
+		for object in bpy.data.objects:
+			if object.name != "Standard" and object.name != "Standard:Body" and object.name != "verylowpoly" and object.name != "Camera" and object.name != "Light":
+			
+				mAvt.deform_cloth(cloth_name=str(object.name))
+				print("deformant això: " + object.name)
+
+		return {'FINISHED'}
+		
 
 class Avatar_OT_LoadModel(bpy.types.Operator):
 
@@ -1022,6 +1070,9 @@ class Avatar_PT_LoadPanel(bpy.types.Panel):
 		layout.prop(obj, "weight_k11")
 		layout.prop(obj, "weight_k12")
 		layout.prop(obj, "weight_k13")
+		layout.separator()
+		row = layout.row()
+		row.operator('avt.reset_params', text="Reset parameters")		
 
 
 
@@ -1398,6 +1449,7 @@ class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 classes  = (
 			Avatar_PT_LoadPanel, 
 			Avatar_OT_LoadModel, 
+			Avatar_OT_ResetParams,
 			Avatar_PT_MotionPanel,
 			Avatar_OT_Motion3DPoints,
 			Avatar_OT_MotionBVH,
