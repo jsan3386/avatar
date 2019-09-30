@@ -138,8 +138,6 @@ def correct_pose(pts_skel,correction,scale):
 	pts_skel = pts_skel*scale
 	hips = pts_skel[14,:]
 	translation = hips - [correction[0],correction[1],correction[2]]
-	print("translation")
-	print(translation)
 	for i in pts_skel:
 		new_pts_skel.append([i[0]-translation[0],i[1]-translation[1],i[2]-translation[2]])
 
@@ -446,19 +444,6 @@ def get_skeleton_parameters_correction_BVH(skel_basis, goal_pts, correction_para
 
 	A = np.mat((ref_skel[14,:], ref_skel[8,:], ref_skel[11,:], ref_skel[1,:]))
 	B = np.mat((goal_pts[14,:], goal_pts[8,:], goal_pts[11,:], goal_pts[1,:]))
-	#print("THIS IS B ·$&&$·&·&%$&/)|##~½@½¬#¬")
-	#magic = np.array(B)
-	#print(magic)
-	#print(magic[0])
-	#print(magic[0][0])
-	#for point in B:
-	#	print("This is point [0]")
-	#	print(point[0])
-	#	print(point[0][0])
-	#	x = point[0] * math.cos(extra * Deg2Rad) - point[1] * math.sin(extra * Deg2Rad)
-	#	y = point[0] * math.sin(extra * Deg2Rad) + point[1] * math.sin(extra * Deg2Rad)
-	#	point[0] = x
-	#	point[1] = y
 	R, T = rigid_transform_3D(A,B)
 
 	mR = Matrix([[R[0,0],R[0,1],R[0,2]], [R[1,0],R[1,1],R[1,2]], [R[2,0],R[2,1],R[2,2]]])

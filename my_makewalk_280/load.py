@@ -117,7 +117,7 @@ Frames = 3
 
 Epsilon = 1e-5
 
-def readBvhFile(context, filepath, scn, scan, original_position,frame_start,extra):
+def readBvhFile(context, filepath, scn, scan, original_position,frame_start,extra,origin):
     props.ensureInited(context)
     setCategory("Load Bvh File")
     scale = scn.McpBvhScale
@@ -252,8 +252,7 @@ def readBvhFile(context, filepath, scn, scan, original_position,frame_start,extr
                                     mat = node.inverse @ flipMatrix @ mats[0] @ mats[1] @ mats[2] @ flipInv @ node.matrix
                 start_rotation = mat
                 translation_vector = vec
-                #addFrame(words, frameno, nodes, pbones, scale, flipMatrix, translation_vector,start_rotation)
-                addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector,start_rotation,extra)
+                addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector,start_rotation,extra,origin)
                 showProgress(frameno, frame, nFrames, step=200)
                 frameno += 1
             frame += 1
@@ -276,7 +275,7 @@ def readBvhFile(context, filepath, scn, scan, original_position,frame_start,extr
 #    addFrame(words, frame, nodes, pbones, scale, flipMatrix):
 #
 
-def addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector, start_rotation,extra):
+def addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector, start_rotation,extra,origin):
     m = 0
     first = True
     flipInv = flipMatrix.inverted()
@@ -300,20 +299,31 @@ def addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector,
 
                         pb.location = Mult2(node.inverse, scale * Mult2(flipMatrix, vec))#pb.head)#node.head)
 
-                        pb.location[0] -= translation_vector[0] * scale
-                        #pb.location[1] -= translation_vector[1] * scale    AIXÒ ÉS LA CORRECCIÓ TRANSLACIÓ EN DIRECCIÓ Z, NO ENS INTERESSA QUE HIPS ESTIGUI A L'ORIGEN.
-                        pb.location[2] -= translation_vector[2] * scale
-                        if extra == 0:
-                            pass
-                        else: # Calculus of the relative rotation around center (0,0). if the center is another point it has to be corrected.
+                        if origin:
+                            pb.location[0] -= translation_vector[0] * scale
+                            #pb.location[1] -= translation_vector[1] * scale    AIXÒ ÉS LA CORRECCIÓ TRANSLACIÓ EN DIRECCIÓ Z, NO ENS INTERESSA QUE HIPS ESTIGUI A L'ORIGEN.
+                            pb.location[2] -= translation_vector[2] * scale
+                            if extra == 0:
+                                pass
+                            else: # Calculus of the relative rotation around center (0,0)
+                                x = pb.location[0] * math.cos(extra * Deg2Rad) - pb.location[2] * math.sin(extra * Deg2Rad)
+                                y = pb.location[0] * math.sin(extra * Deg2Rad) + pb.location[2] * math.cos(extra * Deg2Rad)
+                                pb.location[0] = x
+                                pb.location[2] = y
+                                #print(str(x) + ","+str(y))
 
-                            x = pb.location[0] * math.cos(extra * Deg2Rad) - pb.location[2] * math.sin(extra * Deg2Rad)
-                            y = pb.location[0] * math.sin(extra * Deg2Rad) + pb.location[2] * math.cos(extra * Deg2Rad)
-                            #print("I should be going to: ")
-                            #print(str(pb.location[0]) + "," +str(pb.location[2]))
-                            pb.location[0] = x
-                            pb.location[2] = y
-                            #print(str(x) + ","+str(y))
+                        else:
+                            if extra == 0:
+                                pass
+                            else: # The relative position must be corrected, this function is made for rotations around the origin.
+
+                                x = pb.location[0] * math.cos(extra * Deg2Rad) - pb.location[2] * math.sin(extra * Deg2Rad)
+                                y = pb.location[0] * math.sin(extra * Deg2Rad) + pb.location[2] * math.cos(extra * Deg2Rad)
+
+                                pb.location[0] = x
+                                pb.location[2] = y
+
+                        #print(pb.location)
 
                         pb.keyframe_insert('location', frame=frame, group=name)
                         first = False
@@ -341,19 +351,7 @@ def addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector,
                         angle = sign*float(words[m])*Deg2Rad
                         newangle = angle
                         if name == "Hips" and str(axis) == "Y":
-                            #print("ROTATION INCOMING, frame: " +str(frame))
-                            #print(name)
-                            #print(angle)
-                            #print(axis)
-                            # flipMatrix = flipMatrix @ Matrix.Rotation(90, 3, 'Y') això no ha funcionat gaire bé
-                            ##################################
-                            #if angle + extra * Deg2Rad > pi:
-                            #    newangle = angle + extra * Deg2Rad - pi
-                            #    newangle = -pi + newangle
-                            #else:
-                            #    newangle += extra * Deg2Rad
 
-                            #print("NEW ANGLE IS: " +str(newangle))
                             body = bpy.data.objects["Standard"]
                             body.rotation_mode = "XYZ"
                             body.rotation_euler[2] = extra * Deg2Rad

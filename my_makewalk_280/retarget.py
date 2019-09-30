@@ -345,11 +345,11 @@ def retargetAnimation(context, srcRig, trgRig):
         setRigify2FKIK(trgRig, 1.0)
 
     try:
-        print("*******************")
-        print("M'he posat al frames[0]")
-        print(frames)
-        print(frames[0])
-        print("*******************")
+        #print("*******************")
+        #print("M'he posat al frames[0]")
+        #print(frames)
+        #print(frames[0])
+        #print("*******************")
         #scn.frame_current = frames[2]
         scn.frame_current = frames[0]
     except:
@@ -473,7 +473,7 @@ def restoreTargetData(rig, data):
 #    loadRetargetSimplify(context, filepath):
 #
 
-def loadRetargetSimplify(context, filepath, original_position,frame_start,extra):
+def loadRetargetSimplify(context, filepath, original_position,frame_start,extra,origin):
     import load
     from fkik import limbsBendPositive
 
@@ -484,10 +484,10 @@ def loadRetargetSimplify(context, filepath, original_position,frame_start,extra)
     data = changeTargetData(trgRig, scn)
     try:
         #clearMcpProps(trgRig)
-        srcRig = load.readBvhFile(context, filepath, scn, False, original_position,frame_start,extra)
+        srcRig = load.readBvhFile(context, filepath, scn, False, original_position,frame_start,extra,origin)
         frames = getActiveFrames(srcRig)
-        print("FRAMESSSSSSSSSSSSSSSSSSS SRCCCCCCCRIG")
-        print(frames)
+        #
+        #print(frames)
         try:
             load.renameAndRescaleBvh(context, srcRig, trgRig)
             retargetAnimation(context, srcRig, trgRig)

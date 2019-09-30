@@ -98,6 +98,7 @@ def update_origin(self, context):
 	global mAvt
 	
 	mAvt.origin = self.start_origin
+	print(mAvt.origin)
 
 
 def get_vertices (obj):
@@ -1194,9 +1195,9 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 			#rest_pose_3D.append(poseBone.head)
 		initial_quaternion = Quaternion((1,0,0,0))
 		
-		extra = 0
+		extra = 0 #This variable is the angle to change the orientation of the motion.
 
-		retarget.loadRetargetSimplify(context,file_path,original_position,mAvt.offset,extra) #Segurament original_position no es fa servir
+		retarget.loadRetargetSimplify(context,file_path,original_position,mAvt.offset,extra,mAvt.origin) #Segurament original_position no es fa servir
 		#retarget.loadRetargetSimplify(context,file_path)
 		
 		
