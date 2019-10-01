@@ -35,8 +35,6 @@ from bpy.props import *
 
 import bpy.utils.previews
 
-
-
 # Set a file 'config.py' with variable avt_path that contains the
 # path of the script
 # need to add the root path in the blender preferences panel
@@ -75,6 +73,10 @@ import load as load
 
 import retarget as retarget # funciona.
 
+from imp import reload
+
+import material_utils
+reload(material_utils)
 
 preview_collections = {}
 
@@ -868,7 +870,10 @@ class Avatar_OT_LoadModel(bpy.types.Operator):
 			#bpy.ops.rigidbody.objects_add(type='ACTIVE')
 			#vp.hide_set(True)
 			#stb = bpy.data.objects['Standard']
-			
+
+			# Create skin material
+			mAvt.skin_mat = material_utils.create_skin_material(0)
+						
 			#st = bpy.data.objects['Standard:Body']
 			#global match_list 
 			#match_list = []
@@ -947,6 +952,65 @@ def load_cloth (cloth_file, cloth_name):
 		obj.select_set(False)
 	
 	return cloth	
+
+class Avatar_OT_CreateStudio (bpy.types.Operator):
+
+	bl_idname = "avt.create_studio"
+	bl_label = "Create Studio"
+	bl_description = "Set up a lighting studio for high quality renderings"
+
+	def execute(self, context):
+
+		# Load studio plane
+		s_file = "%s/models/studio_plane.obj" % avt_path
+		bpy.ops.import_scene.obj(filepath=s_file)
+		
+		# change name to object
+		bpy.context.selected_objects[0].name = "studio_plane"
+		bpy.context.selected_objects[0].data.name = "studio_plane"
+
+		# remove lights and cameras
+		for o in bpy.context.scene.objects:
+			if o.type == 'CAMERA':
+				o.select_set(True)
+			elif o.type == 'LIGHT':
+				o.select_set(True)
+			else:
+				o.select_set(False)
+
+		# Call the operator only once
+		bpy.ops.object.delete()
+
+		# create camera and lights
+		cam_data = bpy.data.cameras.new("CameraData")
+		cam_object = bpy.data.objects.new(name="cam_2.80", object_data=cam_data)
+		bpy.data.cameras["Camera"].clip_end = 1000
+		cam_object.location = (0, -66.2, 9.28)
+
+		fill_data = bpy.data.lights.new(name="FillData", type='SUN')
+		fill_data.energy = 30
+		fill_object = bpy.data.objects.new(name="fill_2.80", object_data=fill_data)
+		bpy.context.collection.objects.link(fill_object)
+		bpy.context.view_layer.objects.active = fill_object
+		fill_object.location = (5, 5, 5)
+
+		back_data = bpy.data.lights.new(name="BackData", type='SUN')
+		back_data.energy = 30
+		back_object = bpy.data.objects.new(name="back_2.80", object_data=back_data)
+		bpy.context.collection.objects.link(back_object)
+		bpy.context.view_layer.objects.active = back_object
+		back_object.location = (5, 5, 5)
+
+		key_data = bpy.data.lights.new(name="KeyData", type='SUN')
+		key_data.energy = 30
+		key_object = bpy.data.objects.new(name="key_2.80", object_data=key_data)
+		bpy.context.collection.objects.link(key_object)
+		bpy.context.view_layer.objects.active = key_object
+		key_object.location = (5, 5, 5)
+
+		# update scene, if needed
+		dg = bpy.context.evaluated_depsgraph_get() 
+		dg.update()
 
 class Avatar_OT_WearCloth (bpy.types.Operator):
 	
@@ -1123,6 +1187,9 @@ class Avatar_PT_DressingPanel(bpy.types.Panel):
 		# Activate item icons
 		row = layout.row()
 		row.operator('avt.wear_cloth', text="Load selected cloth")	
+		layout.separator()
+		row = layout.row()
+		row.operator('avt.create_studio', text="Create studio")		
 		
 		
 class Avatar_PT_MotionPanel(bpy.types.Panel):
@@ -1451,7 +1518,8 @@ classes  = (
 			Avatar_OT_Motion3DPoints,
 			Avatar_OT_MotionBVH,
 			Avatar_PT_DressingPanel,
-			Avatar_OT_WearCloth
+			Avatar_OT_WearCloth,
+			Avatar_OT_CreateStudio
 )
 
 def register():
