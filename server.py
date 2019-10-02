@@ -35,25 +35,25 @@ def recv_array(socket, flags=0, copy=True, track=False):
 
 if __name__ == "__main__":
 
-	# option camera stream
-	if sys.argv[1] == '-camera':
-		pass
-	elif sys.argv[1] == '-frames':
-		frames_folder = sys.argv[2]
-		fps = int(sys.argv[3])
-		print(frames_folder)
-		#fname = "frame_SA%02d_%05d.txt" % (2, f)
-		# read frames in folder
-		point_files = [f for f in os.listdir(frames_folder) if f.endswith('.txt')]
-		point_files.sort()
-		
-		for f in point_files:
-			start = time.time()
-			fpname = "%s/%s" % (frames_folder,f)
-			pts_skel = np.loadtxt(fpname)
-			print(pts_skel)
-			send_array(socket, pts_skel)
-			time.sleep(max(1./fps - (time.time() - start), 0))
+    # option camera stream
+    if sys.argv[1] == '-camera':
+        pass
+    elif sys.argv[1] == '-frames':
+        frames_folder = sys.argv[2]
+        fps = int(sys.argv[3])
+        print(frames_folder)
+        #fname = "frame_SA%02d_%05d.txt" % (2, f)
+        # read frames in folder
+        point_files = [f for f in os.listdir(frames_folder) if f.endswith('.txt')]
+        point_files.sort()
+        
+        for f in point_files:
+            start = time.time()
+            fpname = "%s/%s" % (frames_folder,f)
+            pts_skel = np.loadtxt(fpname)
+            print(pts_skel)
+            send_array(socket, pts_skel)
+            time.sleep(max(1./fps - (time.time() - start), 0))
 
 
 
