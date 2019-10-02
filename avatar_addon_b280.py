@@ -1332,6 +1332,39 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
 		return {'FINISHED'}
 
 
+
+class Avatar_OT_UpdateStreaming(bpy.types.Operator):
+    """Operator which runs its self from a timer"""
+    bl_idname = "wm.modal_timer_operator"
+    bl_label = "Modal Timer Operator"
+
+    _timer = None
+
+    def modal(self, context, event):
+        if event.type in {'RIGHTMOUSE', 'ESC'}:
+            self.cancel(context)
+            return {'FINISHED'}
+
+        if event.type == 'TIMER':
+			# Here comes the code to execute every time timer interruption is executed
+			# Basically should be the new rotations of the body
+			# Someone needs to call the operator with
+			# bpy.ops.wm.modal_timer_operator()
+
+        return {'PASS_THROUGH'}
+
+    def execute(self, context):
+        wm = context.window_manager
+        self._timer = wm.event_timer_add(time_step=0.1, window=context.window)
+        wm.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def cancel(self, context):
+        wm = context.window_manager
+        wm.event_timer_remove(self._timer)
+
+
+
 class Avatar_OT_Motion3DPoints (bpy.types.Operator):
 	
 	bl_idname = "avt.motion_3d_points"
@@ -1523,6 +1556,7 @@ classes  = (
 			Avatar_OT_ResetParams,
 			Avatar_PT_MotionPanel,
 			Avatar_OT_Motion3DPoints,
+			Avatar_OT_UpdateStreaming,
 			Avatar_OT_MotionBVH,
 			Avatar_PT_DressingPanel,
 			Avatar_OT_WearCloth,
