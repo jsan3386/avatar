@@ -75,8 +75,8 @@ import retarget as retarget # funciona.
 
 from imp import reload
 
-import material_utils
-reload(material_utils)
+#import material_utils
+#reload()
 
 preview_collections = {}
 
@@ -872,7 +872,7 @@ class Avatar_OT_LoadModel(bpy.types.Operator):
 			#stb = bpy.data.objects['Standard']
 
 			# Create skin material
-			mAvt.skin_mat = material_utils.create_skin_material(0)
+			#mAvt.skin_mat = material_utils.create_skin_material(0)
 						
 			#st = bpy.data.objects['Standard:Body']
 			#global match_list 
@@ -983,34 +983,41 @@ class Avatar_OT_CreateStudio (bpy.types.Operator):
 
 		# create camera and lights
 		cam_data = bpy.data.cameras.new("CameraData")
-		cam_object = bpy.data.objects.new(name="cam_2.80", object_data=cam_data)
-		bpy.data.cameras["Camera"].clip_end = 1000
+		cam_object = bpy.data.objects.new(name="Camera", object_data=cam_data)
+		bpy.context.collection.objects.link(cam_object)
+		#bpy.data.cameras["Camera"].clip_end = 1000
 		cam_object.location = (0, -66.2, 9.28)
+		cam_object.rotation_euler = (math.radians(90), 0, 0)
 
 		fill_data = bpy.data.lights.new(name="FillData", type='SUN')
-		fill_data.energy = 30
-		fill_object = bpy.data.objects.new(name="fill_2.80", object_data=fill_data)
+		fill_data.energy = 1
+		fill_object = bpy.data.objects.new(name="fill", object_data=fill_data)
 		bpy.context.collection.objects.link(fill_object)
 		bpy.context.view_layer.objects.active = fill_object
-		fill_object.location = (5, 5, 5)
+		fill_object.location = (32.29, -25.6, 48.17)
+		fill_object.rotation_euler = (math.radians(-15), math.radians(30), math.radians(-14))
 
 		back_data = bpy.data.lights.new(name="BackData", type='SUN')
-		back_data.energy = 30
-		back_object = bpy.data.objects.new(name="back_2.80", object_data=back_data)
+		back_data.energy = 1
+		back_object = bpy.data.objects.new(name="back", object_data=back_data)
 		bpy.context.collection.objects.link(back_object)
 		bpy.context.view_layer.objects.active = back_object
-		back_object.location = (5, 5, 5)
+		back_object.location = (33.46, 46.93, 41.5)
+		back_object.rotation_euler = (math.radians(45), math.radians(-23), math.radians(31))
 
 		key_data = bpy.data.lights.new(name="KeyData", type='SUN')
-		key_data.energy = 30
-		key_object = bpy.data.objects.new(name="key_2.80", object_data=key_data)
+		key_data.energy = 1
+		key_object = bpy.data.objects.new(name="key", object_data=key_data)
 		bpy.context.collection.objects.link(key_object)
 		bpy.context.view_layer.objects.active = key_object
-		key_object.location = (5, 5, 5)
+		key_object.location = (-36.88, -30.55, 49.1)
+		key_object.rotation_euler = (math.radians(14), math.radians(-54), math.radians(11))
 
 		# update scene, if needed
 		dg = bpy.context.evaluated_depsgraph_get() 
 		dg.update()
+		
+		return {'FINISHED'}
 
 class Avatar_OT_WearCloth (bpy.types.Operator):
 	
