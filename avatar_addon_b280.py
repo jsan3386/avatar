@@ -80,6 +80,7 @@ reload(material_utils)
 
 preview_collections = {}
 
+import zmq
 
 ##########################################################################################################
 
@@ -112,6 +113,11 @@ def get_faces (obj):
         for idx in f.vertices:
             faces.append(obj.data.vertices[idx].co)
     return faces
+
+def update_streaming_pose (self, context):
+    if self.streaming_pose:
+        bpy.ops.avt.streaming_pose('INVOKE_DEFAULT')
+    return
 
 def update_weights (self, context):
     #obj = context.active_object
@@ -269,6 +275,22 @@ def generate_previews():
 
     return enum_items
 
+def send_array(socket, A, flags=0, copy=True, track=False):
+    """send a numpy array with metadata"""
+    md = dict(
+        dtype = str(A.dtype),
+        shape = A.shape,
+    )
+    socket.send_json(md, flags|zmq.SNDMORE)
+    return socket.send(A, flags, copy=copy, track=track)
+
+def recv_array(socket, flags=0, copy=True, track=False):
+    """recv a numpy array"""
+    md = socket.recv_json(flags=flags)
+    msg = socket.recv(flags=flags, copy=copy, track=track)
+    A = np.frombuffer(msg, dtype=md['dtype'])
+    return A.reshape(md['shape'])
+
     
 
 class Avatar:
@@ -301,7 +323,7 @@ class Avatar:
         self.dress_mesh = None
         
         # 
-        self.use_one_vertex = False
+        self.use_one_vertex = False 
         self.do_once_per_vertex = False
         self.mesh_chosen_vertices = []
         self.number_increments = 20
@@ -313,6 +335,11 @@ class Avatar:
         # Motion panel
         self.origin = False
         self.offset = 0
+
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.SUB)
+        self.socket.connect("tcp://127.0.0.1:5667")
+
 
     def read_verts(self, mesh):
         mverts_co = np.zeros((len(mesh.vertices)*3), dtype=np.float)
@@ -1212,14 +1239,20 @@ class Avatar_PT_MotionPanel(bpy.types.Panel):
 
     bpy.types.Object.start_offset = IntProperty(name = "Offset", description="Start motion offset", default = 0, min = 0, max = 250, update=update_offset)
     bpy.types.Object.start_origin = BoolProperty(name = "Origin", description="Start at origin", default = False, update=update_origin)
-    
+    bpy.types.WindowManager.streaming_pose = BoolProperty(name = "Streaming", description = "Streaming button", default = False, update = update_streaming_pose)
+
     def draw(self, context):
         layout = self.layout
         obj = context.object
+        wm = context.window_manager
+
         #scn = context.scene
         
         row = layout.row()
         row.operator('avt.motion_3d_points', text="Motion from 3D points")
+        row = layout.row()
+        label = "Streaming ON" if wm.streaming_pose else "Streaming OFF"
+        layout.prop(wm, 'streaming_pose', text=label, toggle=True)
         row = layout.row()
         row.operator('avt.motion_bvh', text="Motion from BVH file")
         row = layout.separator()
@@ -1332,6 +1365,26 @@ class Avatar_OT_MotionBVH (bpy.types.Operator):
                 
         return {'FINISHED'}
 
+class Avatar_OT_StreamingPose(bpy.types.Operator):
+    bl_idname = "avt.streaming_pose"
+    bl_label = "Streaming pose"
+
+    _timer = None
+
+    def modal(self, context, event):
+        global mAvt
+        print("running")
+        #points3d = recv_array(mAvt.socket)
+        #print(points3d)
+        if not context.window_manager.streaming_pose:
+            context.window_manager.event_timer_remove(self._timer)
+            return {'FINISHED'}
+        return {'PASS_THROUGH'}
+
+    def invoke(self, context, event):
+        self._timer = context.window_manager.event_timer_add(time_step=0.01, window=context.window)
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
 
 
 class Avatar_OT_UpdateStreaming(bpy.types.Operator):
@@ -1559,6 +1612,7 @@ classes  = (
             Avatar_PT_MotionPanel,
             Avatar_OT_Motion3DPoints,
             Avatar_OT_UpdateStreaming,
+            Avatar_OT_StreamingPose,
             Avatar_OT_MotionBVH,
             Avatar_PT_DressingPanel,
             Avatar_OT_WearCloth,

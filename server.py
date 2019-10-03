@@ -13,7 +13,7 @@ import time
 
 context = zmq.Context()
 socket = context.socket(zmq.PUB)
-socket.bind("tcp://*:5667")
+socket.bind("tcp://127.0.0.1:5667")
 
 def send_array(socket, A, flags=0, copy=True, track=False):
     """send a numpy array with metadata"""
