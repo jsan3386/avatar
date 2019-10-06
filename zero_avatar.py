@@ -4,7 +4,7 @@
 #	'name': "Avatar",
 #	'author': "Jordi Sanchez-Riera",
 #	'version': (0, 1, 0),
-#	"blender": (2, 8, 0),
+#	"blender": (2, 80, 0),
 #	'location': "View3D",
 #	'description': "Create and move a simple avatar",
 #	'warning': '',
@@ -32,7 +32,7 @@ import numpy as np
 
 import mathutils 
 from bpy.props import * 
-
+import bpy.utils.previews 
 
 for p in bpy.utils.script_paths():
     sys.path.append(p)
@@ -44,22 +44,60 @@ from config import avt_path
 
 # add extra paths
 sys.path.append(avt_path + "/body")
+sys.path.append(avt_path + "/dressing")
+sys.path.append(avt_path + "/dressing/materials")
 
 
 #import load as load
 
-from imp import reload
+import importlib
 
 from iAvatar import Avatar
 
 import iAvatar
-reload(iAvatar)
+importlib.reload(iAvatar)
 
 import shape_utils
-reload(shape_utils)
+importlib.reload(shape_utils)
+
+import dressing
+importlib.reload(dressing)
 
 mAvt = iAvatar.Avatar(addon_path=avt_path)
 
+preview_collections = {}
+
+def generate_previews():
+
+    # We are accessing all of the information that we generated in the register function below
+    pcoll = preview_collections["thumbnail_previews"]
+    image_location = pcoll.images_location
+
+    enum_items = []
+
+    gallery = ['dress01.png', 'dress02.png', 'dress03.png', 'dress04.png', 'dress05.png', 'dress06.png', 'dress07.png',
+                'glasses01.png', 'glasses02.png',
+               'hat01.png', 'hat02.png', 'hat03.png', 'hat04.png',
+               'jacket01.png', 'jacket02.png',
+               'pants01.png', 'pants02.png', 'pants03.png', 'pants04.png', 'pants05.png', 'pants06.png',
+               'shirt01.png', 'shirt02.png', 'shirt03.png', 'shirt04.png', 'shirt05.png', 'shirt06.png', 'shirt07.png',
+               'shoes01.png', 'shoes02.png', 'shoes03.png', 'shoes04.png',
+               'skirt01.png', 'skirt02.png',
+               'suit01.png',
+               'swimming01.png', 'swimming02.png', 'swimming03.png', 'swimming04.png']
+
+    a = 0
+    for i in gallery:
+        a = a + 1
+        #print(i)
+        imagename = i.split(".")[0]
+        #print(imagename)
+        filepath = image_location + '/' + i
+        #print(filepath)
+        thumb = pcoll.load(filepath, filepath, 'IMAGE')
+        enum_items.append((i, i, imagename, thumb.icon_id, a))
+
+    return enum_items
 
 def update_weights (self, context):
     #obj = context.active_object
@@ -68,31 +106,28 @@ def update_weights (self, context):
     obj = mAvt.body
     
     # calculate new shape with PCA shapes
-    w3 = self.weights_belly
-    w4 = self.weights_breast
-    w5 = self.weights_torso
-    w6 = - self.weights_hips
-    w8 = - self.weights_gender
-    w9 = self.weights_weight
-    w11 = - self.weights_muscle
-    w13 = self.weights_strength
+    mAvt.val_breast = self.val_breast
+    mAvt.val_torso = self.val_torso
+    mAvt.val_hips = - self.val_hips
+    mAvt.val_armslegs = self.val_limbs
+    mAvt.val_weight = - self.val_weight
+    mAvt.val_muscle = - self.val_muscle
+    mAvt.val_strength = self.val_strength
 
-    verts = obj.data.vertices
-    for i in range(0,len(verts)):
-        verts[i].co = Vector((vertexeigen2[i][0]*w3 + vertexeigen3[i][0]*w4 + vertexeigen4[i][0]*w5 + vertexeigen5[i][0]*w6  + vertexeigen7[i][0]*w8 + vertexeigen8[i][0]*w9 + vertexeigen12[i][0]*w13+ vertexmean[i][0], vertexeigen2[i][1]*w3 + vertexeigen3[i][1]*w4 + vertexeigen4[i][1]*w5 + vertexeigen5[i][1]*w6 + vertexeigen7[i][1]*w8 + vertexeigen8[i][1]*w9 + vertexeigen12[i][1]*w13 + vertexmean[i][1], vertexeigen2[i][2]*w3 + vertexeigen3[i][2]*w4 + vertexeigen4[i][2]*w5 + vertexeigen5[i][2]*w6 + vertexeigen7[i][2]*w8 + vertexeigen8[i][2]*w9 + vertexeigen12[i][1]*w13 + vertexmean[i][2]))
+    mAvt.refresh_shape()
 
 
 
-class Avatar_OT_LoadModel(bpy.types.Operator):
+class AVATAR_OT_LoadModel(bpy.types.Operator):
 
     bl_idname = "avt.load_model"
     bl_label = "Load human model"
     bl_description = "Loads a parametric naked human model"
     global avt_path
 
-
     def execute(self, context):
         global mAvt
+        global avt_path
         scn = context.scene
         obj = context.active_object
         
@@ -103,29 +138,60 @@ class Avatar_OT_LoadModel(bpy.types.Operator):
         mAvt.load_shape_model()
         mAvt.body = bpy.data.objects["Standard:Body"]
 
+        # Create skin material
+        skin_material = importlib.import_module('skin_material')
+        skin_mat = skin_material.create_material(0)
+        path_tex_img = "%s/dressing/textures/skin/tex00.png" % (avt_path)
+        path_tex_norm = "%s/dressing/textures/skin/norm00.jpg" % (avt_path)
+        path_tex_spec = "%s/dressing/textures/skin/spec00.jpg" % (avt_path)
+        skin_material.assign_textures(mAvt.body, skin_mat, path_tex_img, path_tex_norm, path_tex_spec)
 
         return {'FINISHED'}
 
+class AVATAR_OT_ResetParams(bpy.types.Operator):
+    
+    bl_idname = "avt.reset_params"
+    bl_label = "Reset Parameters"
+    bl_description = "Reset original parameters of body shape"
+    
+    def execute(self, context):	
+        global mAvt
 
+        obj = mAvt.body
+    
+        # calculate new shape with PCA shapes
+        mAvt.val_breast = self.val_breast = 0.0
+        mAvt.val_torso = self.val_torso = 0.0
+        mAvt.val_hips = self.val_hips = 0.0
+        mAvt.val_armslegs = self.val_limbs = 0.0
+        mAvt.val_weight = self.val_weight = 0.0
+        mAvt.val_muscle = self.val_muscle = 0.0
+        mAvt.val_strength = self.val_strength = 0.0
 
-class Avatar_PT_LoadPanel(bpy.types.Panel):
+        mAvt.refresh_shape()
 
-    bl_idname = "Avatar_PT_LoadPanel"
+        for object in bpy.data.objects:
+            if object.name != "Standard" and object.name != "Standard:Body" and object.name != "Camera" and object.name != "Light":
+            
+                mAvt.deform_cloth(cloth_name=str(object.name))
+
+        return {'FINISHED'}
+
+class AVATAR_PT_LoadPanel(bpy.types.Panel):
+
+    bl_idname = "AVATAR_PT_LoadPanel"
     bl_label = "Load model"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "Avatar"
 
-    bpy.types.Object.weight_k3 = FloatProperty(name="Breast Size", description="Weight 3", default=0, min=-0.2, max=1.0, precision=2, update=update_weights)
-    bpy.types.Object.weight_k4 = FloatProperty(name="**Shoulders", description="Weight 4", default=0, min=-0.3, max=0.3, precision=2, update=update_weights)
-    bpy.types.Object.weight_k5 = FloatProperty(name="Limbs Fat", description="Weight 5", default=0, min=-0.8, max=1.0, precision=2, update=update_weights)
-    bpy.types.Object.weight_k6 = FloatProperty(name="Hip Fat", description="Weight 6", default=0, min=-0.5, max=1.0, precision=2, update=update_weights)
-    bpy.types.Object.weight_k8 = FloatProperty(name="Weight", description="Weight 8", default=0, min=-1.0, max=1.0, precision=2, update=update_weights)
-    bpy.types.Object.weight_k9 = FloatProperty(name="Musculature", description="Weight 9", default=0, min=-1.0, max=0.3, precision=2, update=update_weights)
-    #bpy.types.Object.weight_k10 = FloatProperty(name="Scale", description="Weight 10", default=1, min=0, max=2.0, precision=2, update=update_scale)
-    #bpy.types.Object.weight_k11 = FloatProperty(name="**Limbs Length", description="Weight 11", default=1, min=0.8, max=1.2, precision=2, update=update_scale)
-    #bpy.types.Object.weight_k12 = FloatProperty(name="Head Size", description="Weight 12", default=1, min=0.9, max=1.1, precision=2, update=update_scale)
-    bpy.types.Object.weight_k13 = FloatProperty(name="Strength", description="Weight 13", default=0, min=-0.5, max=0.5, precision=2, update=update_weights)
+    bpy.types.Object.val_breast = FloatProperty(name="Breast Size", description="Breasts Size", default=0, min=-0.2, max=1.0, precision=2, update=update_weights)
+    bpy.types.Object.val_torso = FloatProperty(name="Shoulders Fat", description="Shoulders Fat", default=0, min=-0.3, max=0.3, precision=2, update=update_weights)
+    bpy.types.Object.val_limbs = FloatProperty(name="Limbs Fat", description="Limbs Fat", default=0, min=-0.8, max=1.0, precision=2, update=update_weights)
+    bpy.types.Object.val_hips = FloatProperty(name="Hip Fat", description="Hips Fat", default=0, min=-0.5, max=1.0, precision=2, update=update_weights)
+    bpy.types.Object.val_weight = FloatProperty(name="Weight", description="Overall Weight", default=0, min=-1.0, max=1.0, precision=2, update=update_weights)
+    bpy.types.Object.val_muscle = FloatProperty(name="Musculature", description="Musculature", default=0, min=-1.0, max=0.3, precision=2, update=update_weights)
+    bpy.types.Object.val_strength = FloatProperty(name="Strength", description="Body Strength", default=0, min=-0.5, max=0.5, precision=2, update=update_weights)
     
 
     def draw(self, context):
@@ -135,32 +201,121 @@ class Avatar_PT_LoadPanel(bpy.types.Panel):
 
         row = layout.row()
         row.operator('avt.load_model', text="Load human")
+
+        if (obj is None or (obj.type not in ['MESH', 'ARMATURE'])):
+            return
+
         layout.separator()
-        #layout.prop(obj, "weight_k1", slider=True)		
-        layout.prop(obj, "weight_k3")
-        layout.prop(obj, "weight_k4")
-        layout.prop(obj, "weight_k5")
-        layout.prop(obj, "weight_k6")
-        layout.prop(obj, "weight_k8")
-        layout.prop(obj, "weight_k9")
-        #layout.prop(obj, "weight_k10")
-        #layout.prop(obj, "weight_k11")
-        #layout.prop(obj, "weight_k12")
-        layout.prop(obj, "weight_k13")
+        layout.prop(obj, "val_breast")
+        layout.prop(obj, "val_torso")
+        layout.prop(obj, "val_limbs")
+        layout.prop(obj, "val_hips")
+        layout.prop(obj, "val_weight")
+        layout.prop(obj, "val_muscle")
+        layout.prop(obj, "val_strength")
         layout.separator()
-#        row = layout.row()
-#        row.operator('avt.reset_params', text="Reset parameters")		
+        row = layout.row()
+        row.operator('avt.reset_params', text="Reset parameters")		
+
+class AVATAR_OT_CreateStudio (bpy.types.Operator):
+
+    bl_idname = "avt.create_studio"
+    bl_label = "Create Studio"
+    bl_description = "Set up a lighting studio for high quality renderings"
+
+    def execute(self, context):
+        global avt_path
+
+        dressing.load_studio(avt_path)
+        
+        return {'FINISHED'}
+
+class AVATAR_OT_WearCloth (bpy.types.Operator):
+    
+    bl_idname = "avt.wear_cloth"
+    bl_label = "Wear Cloth"
+    bl_description = "Dress human with selected cloth"
+    
+    def execute(self, context):
+        global iconname
+        global avt_path
+        scn = context.scene
+        obj = context.active_object
+        #
+        # Unselect everything to make sure changes are applied to iconname object
+        for o in bpy.context.scene.objects:
+            o.select_set(False)
+        c_file = "%s/dressing/models/clothes/%s.obj" % (avt_path, iconname)
+        dressing.load_cloth(c_file, iconname)
+        cloth = bpy.data.objects[iconname]
+        cloth.select_set(True)
+
+        # Create skin material
+        cloth_material = importlib.import_module(iconname)
+        importlib.reload(cloth_material)
+        cloth_mat = cloth_material.create_material(iconname, 0)
+        tex_img, tex_norm, tex_spec = dressing.read_file_textures(avt_path, iconname)
+        cloth_material.assign_textures(cloth, cloth_mat, tex_img, tex_norm, tex_spec)
+                            
+        return {'FINISHED'}
 
 
+class AVATAR_PT_DressingPanel(bpy.types.Panel):
+    
+    bl_idname = "AVATAR_PT_DressingPanel"
+    bl_label = "Dress Human"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "Avatar"
+    
+    def draw(self, context):
+        layout = self.layout
+        obj = context.object
+        scn = context.scene
+        global iconname
+
+        row = layout.row()
+        #Presets
+        row.template_icon_view(context.scene, "my_thumbnails")
+        row = layout.row()
+
+        # Just a way to access which one is selected
+        iconname = bpy.context.scene.my_thumbnails
+        iconname = iconname.split(".")[0]
+        #print(iconname)
+        col = row.column()
+        cols = col.row()  #True
+        # Activate item icons
+        row = layout.row()
+        row.operator('avt.wear_cloth', text="Load selected cloth")	
+        layout.separator()
+        row = layout.row()
+        row.operator('avt.create_studio', text="Create studio")	
 
 
 classes  = (
-            Avatar_PT_LoadPanel, 
-            Avatar_OT_LoadModel
+            AVATAR_PT_LoadPanel, 
+            AVATAR_OT_LoadModel,
+            AVATAR_OT_ResetParams,
+            AVATAR_PT_DressingPanel,
+            AVATAR_OT_WearCloth,
+            AVATAR_OT_CreateStudio,
 )
 
 def register():
-    
+
+    # Create a new preview collection (only upon register)
+    pcoll = bpy.utils.previews.new()
+    pcoll.images_location = "%s/dressing/cloth_previews" % (avt_path)
+
+    # Enable access to our preview collection outside of this function
+    preview_collections["thumbnail_previews"] = pcoll
+
+    # This is an EnumProperty to hold all of the images
+    bpy.types.Scene.my_thumbnails = EnumProperty(
+        items=generate_previews(),
+        )
+
     from bpy.utils import register_class  
     for clas in classes:
         register_class(clas)
@@ -169,6 +324,12 @@ def unregister():
     from bpy.utils import unregister_class  
     for clas in classes:
         unregister_class(clas)
+
+    for pcoll in preview_collections.values():
+        bpy.utils.previews.remove(pcoll)
+    preview_collections.clear()
+
+    del bpy.types.Scene.my_thumbnails
 
 
 

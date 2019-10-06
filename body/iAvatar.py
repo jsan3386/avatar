@@ -4,6 +4,7 @@
 #
 
 import shape_utils
+from mathutils import Vector
 
 class Avatar:
     """
@@ -25,123 +26,96 @@ class Avatar:
 #        self.increment_radius = 0.2
 
         # weights and means to control shape
-        self.weights_belly, self.weights_height, self.weights_breast, self.weights_torso = [], [], [], []
-        self.weights_armslegs, self.weights_hips, self.weights_gender, self.weights_weight = [], [], [], []
-        self.weights_muscle, self.weights_strength = [], []
+        self.val_breast = self.val_torso = self.val_hips = 0.0
+        self.val_armslegs = self.val_weight = self.val_muscle = self.val_strength = 0.0
 
-        self.mean_belly, self.mean_height, self.mean_breast, self.mean_torso = [], [], [], []
-        self.mean_armslegs, self.mean_hips, self.mean_gender, self.mean_weight = [], [], [], []
-        self.mean_muscle, self.mean_strength = [], []
-
-        self.vertices_belly, self.vertices_height, self.vertices_breast, self.vertices_torso = [], [], [], []
-        self.vertices_armslegs, self.vertices_hips, self.vertices_gender, self.vertices_weight = [], [], [], []
+        self.vertices_breast, self.vertices_torso = [], []
+        self.vertices_armslegs, self.vertices_hips, self.vertices_weight = [], [], []
         self.vertices_muscle, self.vertices_strength = [], []
 
-        self.mean_model = []
         self.vertices_model = []
         
     def load_shape_model (self):
 
-        # load weights/mean belly
-        file_eigen_weights = "%s/body/PCA/Eigenbodies/parts/belly/eigenbody0.txt" % (self.addon_path)
-        self.weights_belly = shape_utils.read_eigenbody(file_eigen_weights)
-        file_eigen_mean = "%s/body/PCA/Eigenbodies/parts/belly/StandardModel.txt" % (self.addon_path)
-        self.mean_belly = shape_utils.read_eigenbody(file_eigen_mean)
-        pca_vec = self.weights_belly - self.mean_belly
-        self.vertices_belly = shape_utils.compose_vertices_eigenmat(pca_vec)
-
-        # load weights/mean height
-        file_eigen_weights = "%s/body/PCA/Eigenbodies/parts/height/eigenbody0.txt" % (self.addon_path)
-        self.weights_height = shape_utils.read_eigenbody(file_eigen_weights)
-        file_eigen_mean = "%s/body/PCA/Eigenbodies/parts/height/StandardModel.txt" % (self.addon_path)
-        self.mean_height = shape_utils.read_eigenbody(file_eigen_mean)
-        pca_vec = self.weights_height - self.mean_height
-        self.vertices_height = shape_utils.compose_vertices_eigenmat(pca_vec)
+        # mean model
+        file_eigen_mean = "%s/body/PCA/Eigenbodies/StandardModel.txt" % (self.addon_path)
+        mean_model = shape_utils.read_eigenbody(file_eigen_mean)
+        self.vertices_model = shape_utils.compose_vertices_eigenmat(mean_model)
 
         # load weights/mean breast
         file_eigen_weights = "%s/body/PCA/Eigenbodies/parts/breast/eigenbody0.txt" % (self.addon_path)
-        self.weights_breast = shape_utils.read_eigenbody(file_eigen_weights)
-        file_eigen_mean = "%s/body/PCA/Eigenbodies/parts/breast/StandardModel.txt" % (self.addon_path)
-        self.mean_breast = shape_utils.read_eigenbody(file_eigen_mean)
-        pca_vec = self.weights_breast - self.mean_breast
+        weights = shape_utils.read_eigenbody(file_eigen_weights)
+        pca_vec = weights - mean_model
         self.vertices_breast = shape_utils.compose_vertices_eigenmat(pca_vec)
 
         # load weights/mean torso
         file_eigen_weights = "%s/body/PCA/Eigenbodies/parts/torso/eigenbody0.txt" % (self.addon_path)
-        self.weights_torso = shape_utils.read_eigenbody(file_eigen_weights)
-        file_eigen_mean = "%s/body/PCA/Eigenbodies/parts/torso/StandardModel.txt" % (self.addon_path)
-        self.mean_torso = shape_utils.read_eigenbody(file_eigen_mean)
-        pca_vec = self.weights_torso - self.mean_torso
+        weights = shape_utils.read_eigenbody(file_eigen_weights)
+        pca_vec = weights - mean_model
         self.vertices_torso = shape_utils.compose_vertices_eigenmat(pca_vec)
 
         # load weights/mean armslegs
         file_eigen_weights = "%s/body/PCA/Eigenbodies/parts/armslegs/eigenbody0.txt" % (self.addon_path)
-        self.weights_armslegs = shape_utils.read_eigenbody(file_eigen_weights)
-        file_eigen_mean = "%s/body/PCA/Eigenbodies/parts/armslegs/StandardModel.txt" % (self.addon_path)
-        self.mean_armslegs = shape_utils.read_eigenbody(file_eigen_mean)
-        pca_vec = self.weights_armslegs - self.mean_armslegs
+        weights = shape_utils.read_eigenbody(file_eigen_weights)
+        pca_vec = weights - mean_model
         self.vertices_armslegs = shape_utils.compose_vertices_eigenmat(pca_vec)
 
         # load weights/mean hip
         file_eigen_weights = "%s/body/PCA/Eigenbodies/parts/hip/eigenbody0.txt" % (self.addon_path)
-        self.weights_hip = shape_utils.read_eigenbody(file_eigen_weights)
-        file_eigen_mean = "%s/body/PCA/Eigenbodies/parts/hip/StandardModel.txt" % (self.addon_path)
-        self.mean_hip = shape_utils.read_eigenbody(file_eigen_mean)
-        pca_vec = self.weights_hip - self.mean_hip
-        self.vertices_hip = shape_utils.compose_vertices_eigenmat(pca_vec)
-
-        # load weights/mean gender
-        file_eigen_weights = "%s/body/PCA/Eigenbodies/parts/gender/eigenbody0.txt" % (self.addon_path)
-        self.weights_gender = shape_utils.read_eigenbody(file_eigen_weights)
-        file_eigen_mean = "%s/body/PCA/Eigenbodies/parts/gender/StandardModel.txt" % (self.addon_path)
-        self.mean_gender = shape_utils.read_eigenbody(file_eigen_mean)
-        pca_vec = self.weights_gender - self.mean_gender
-        self.vertices_gender = shape_utils.compose_vertices_eigenmat(pca_vec)
+        weights = shape_utils.read_eigenbody(file_eigen_weights)
+        pca_vec = weights - mean_model
+        self.vertices_hips = shape_utils.compose_vertices_eigenmat(pca_vec)
 
         # load weights/mean weight
         file_eigen_weights = "%s/body/PCA/Eigenbodies/parts/weight/eigenbody0.txt" % (self.addon_path)
-        self.weights_weight = shape_utils.read_eigenbody(file_eigen_weights)
-        file_eigen_mean = "%s/body/PCA/Eigenbodies/parts/weight/StandardModel.txt" % (self.addon_path)
-        self.mean_weight = shape_utils.read_eigenbody(file_eigen_mean)
-        pca_vec = self.weights_weight - self.mean_weight
+        weights = shape_utils.read_eigenbody(file_eigen_weights)
+        pca_vec = weights - mean_model
         self.vertices_weight = shape_utils.compose_vertices_eigenmat(pca_vec)
 
         # load weights/mean muscle
         file_eigen_weights = "%s/body/PCA/Eigenbodies/parts/muscle/eigenbody0.txt" % (self.addon_path)
-        self.weights_muscle = shape_utils.read_eigenbody(file_eigen_weights)
-        file_eigen_mean = "%s/body/PCA/Eigenbodies/parts/muscle/StandardModel.txt" % (self.addon_path)
-        self.mean_muscle = shape_utils.read_eigenbody(file_eigen_mean)
-        pca_vec = self.weights_muscle - self.mean_muscle
+        weights = shape_utils.read_eigenbody(file_eigen_weights)
+        pca_vec = weights - mean_model
         self.vertices_muscle = shape_utils.compose_vertices_eigenmat(pca_vec)
 
         # load weights/mean strenght
         file_eigen_weights = "%s/body/PCA/Eigenbodies/parts/strength/eigenbody0.txt" % (self.addon_path)
-        self.weights_strength = shape_utils.read_eigenbody(file_eigen_weights)
-        file_eigen_mean = "%s/body/PCA/Eigenbodies/parts/strength/StandardModel.txt" % (self.addon_path)
-        self.mean_strength = shape_utils.read_eigenbody(file_eigen_mean)
-        pca_vec = self.weights_strength - self.mean_strength
+        weights = shape_utils.read_eigenbody(file_eigen_weights)
+        pca_vec = weights - mean_model
         self.vertices_strength = shape_utils.compose_vertices_eigenmat(pca_vec)
 
-        # mean model
-        file_eigen_mean = "%s/body/PCA/Eigenbodies/StandardModel.txt" % (self.addon_path)
-        self.mean_model = shape_utils.read_eigenbody(file_eigen_mean)
-        self.vertices_model = shape_utils.compose_vertices_eigenmat(self.mean_model)
 
-    def config_shape (self):
-
+    def refresh_shape(self):
         verts = self.body.data.vertices
         for i in range(0,len(verts)):
-            verts[i].co = Vector((vertexeigen2[i][0]*w3 + vertexeigen3[i][0]*w4 + vertexeigen4[i][0]*w5 +
-                                  vertexeigen5[i][0]*w6  + vertexeigen7[i][0]*w8 + vertexeigen8[i][0]*w9 + 
-                                  vertexeigen12[i][0]*w13+ vertexmean[i][0], 
-                                  vertexeigen2[i][1]*w3 + vertexeigen3[i][1]*w4 + vertexeigen4[i][1]*w5 + 
-                                  vertexeigen5[i][1]*w6 + vertexeigen7[i][1]*w8 + vertexeigen8[i][1]*w9 + 
-                                  vertexeigen12[i][1]*w13 + vertexmean[i][1], 
-                                  vertexeigen2[i][2]*w3 + vertexeigen3[i][2]*w4 + vertexeigen4[i][2]*w5 + 
-                                  vertexeigen5[i][2]*w6 + vertexeigen7[i][2]*w8 + vertexeigen8[i][2]*w9 + 
-                                  vertexeigen12[i][1]*w13 + vertexmean[i][2]))
-
-
+            verts[i].co = Vector((# X
+                                  self.vertices_weight[i][0] * self.val_weight + 
+                                  self.vertices_breast[i][0] * self.val_breast + 
+                                  self.vertices_armslegs[i][0] * self.val_armslegs + 
+                                  self.vertices_hips[i][0] * self.val_hips + 
+                                  self.vertices_muscle[i][0] * self.val_muscle + 
+                                  self.vertices_strength[i][0] * self.val_strength + 
+                                  self.vertices_torso[i][0] * self.val_torso + 
+                                  self.vertices_model[i][0],
+                                  # Y 
+                                  self.vertices_weight[i][1] * self.val_weight + 
+                                  self.vertices_breast[i][1] * self.val_breast +
+                                  self.vertices_armslegs[i][1] * self.val_armslegs + 
+                                  self.vertices_hips[i][1] * self.val_hips + 
+                                  self.vertices_muscle[i][1] * self.val_muscle + 
+                                  self.vertices_strength[i][1] * self.val_strength + 
+                                  self.vertices_torso[i][1] * self.val_torso + 
+                                  self.vertices_model[i][1],
+                                  # Z 
+                                  self.vertices_weight[i][2] * self.val_weight + 
+                                  self.vertices_breast[i][2] * self.val_breast + 
+                                  self.vertices_armslegs[i][2] * self.val_armslegs + 
+                                  self.vertices_hips[i][2] * self.val_hips + 
+                                  self.vertices_muscle[i][2] * self.val_muscle + 
+                                  self.vertices_strength[i][2] * self.val_strength + 
+                                  self.vertices_torso[i][2] * self.val_torso + 
+                                  self.vertices_model[i][2]
+                                  ))
 
     def read_verts(self, mesh):
         mverts_co = np.zeros((len(mesh.vertices)*3), dtype=np.float)

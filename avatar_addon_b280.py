@@ -80,7 +80,7 @@ reload(material_utils)
 
 preview_collections = {}
 
-import zmq
+#import zmq
 
 ##########################################################################################################
 
@@ -1279,9 +1279,7 @@ def register():
     
     # Create a new preview collection (only upon register)
     pcoll = bpy.utils.previews.new()
-
-    pcoll.images_location = "%s/cloth_previews" % (avt_path)
-    #print("%s/cloth_previews" % (avt_path))
+    pcoll.images_location = "%s/dressing/cloth_previews" % (avt_path)
 
     # Enable access to our preview collection outside of this function
     preview_collections["thumbnail_previews"] = pcoll

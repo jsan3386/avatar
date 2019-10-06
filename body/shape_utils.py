@@ -16,3 +16,4 @@ def compose_vertices_eigenmat (eigenmat):
     for i in range(0,len(eigenmat),3):
         eigenvertices.append([eigenmat[i],-eigenmat[i+2],eigenmat[i+1]])
 
+    return np.array(eigenvertices)
