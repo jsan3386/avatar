@@ -47,12 +47,16 @@ if __name__ == "__main__":
         point_files = [f for f in os.listdir(frames_folder) if f.endswith('.txt')]
         point_files.sort()
         
+        num_packg = 0
+
         for f in point_files:
             start = time.time()
             fpname = "%s/%s" % (frames_folder,f)
             pts_skel = np.loadtxt(fpname)
             print(pts_skel)
             send_array(socket, pts_skel)
+            print("Packages sent: ", num_packg)
+            num_packg += 1
             time.sleep(max(1./fps - (time.time() - start), 0))
 
 

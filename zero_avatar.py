@@ -46,9 +46,11 @@ from config import avt_path
 sys.path.append(avt_path + "/body")
 sys.path.append(avt_path + "/dressing")
 sys.path.append(avt_path + "/dressing/materials")
+sys.path.append(avt_path + "/motion")
 
 
 #import load as load
+import zmq
 
 import importlib
 
@@ -62,6 +64,9 @@ importlib.reload(shape_utils)
 
 import dressing
 importlib.reload(dressing)
+
+import movement_280
+importlib.reload(movement_280)
 
 mAvt = iAvatar.Avatar(addon_path=avt_path)
 
@@ -123,7 +128,6 @@ class AVATAR_OT_LoadModel(bpy.types.Operator):
     bl_idname = "avt.load_model"
     bl_label = "Load human model"
     bl_description = "Loads a parametric naked human model"
-    global avt_path
 
     def execute(self, context):
         global mAvt
@@ -137,6 +141,7 @@ class AVATAR_OT_LoadModel(bpy.types.Operator):
 
         mAvt.load_shape_model()
         mAvt.body = bpy.data.objects["Standard:Body"]
+        mAvt.skel = bpy.data.objects["Standard"]
 
         # Create skin material
         skin_material = importlib.import_module('skin_material')
@@ -292,6 +297,102 @@ class AVATAR_PT_DressingPanel(bpy.types.Panel):
         row = layout.row()
         row.operator('avt.create_studio', text="Create studio")	
 
+def recv_array(socket, flags=0, copy=True, track=False):
+    """recv a numpy array"""
+    md = socket.recv_json(flags=flags)
+    msg = socket.recv(flags=flags, copy=copy, track=track)
+    #buf = memoryview(msg)
+    A = np.frombuffer(msg, dtype=md['dtype'])
+    return A.reshape(md['shape'])
+
+
+class AVATAR_OT_StreamingPose(bpy.types.Operator):
+    bl_idname = "avt.streaming_pose"
+    bl_label = "Connect socket"  # Display name in the interface.
+    bl_options = {'REGISTER', 'UNDO'} 
+
+    socket = None 
+
+    def execute(self, context):  # execute() is called when running the operator.
+
+        if not context.window_manager.socket_connected:
+            self.zmq_ctx = zmq.Context().instance()  # zmq.Context().instance()  # Context
+            self.socket = self.zmq_ctx.socket(zmq.SUB)
+            self.socket.connect(f"tcp://127.0.0.1:5667")  # publisher connects to this (subscriber)
+            self.socket.setsockopt(zmq.SUBSCRIBE, ''.encode('ascii'))
+            print("Waiting for data...")
+
+            # poller socket for checking server replies (synchronous)
+            self.poller = zmq.Poller()
+            self.poller.register(self.socket, zmq.POLLIN)
+
+            # let Blender know our socket is connected
+            context.window_manager.socket_connected = True
+
+            bpy.app.timers.register(self.timed_msg_poller)
+
+        # stop ZMQ poller timer and disconnect ZMQ socket
+        else:
+            # cancel timer function with poller if active
+            if bpy.app.timers.is_registered(self.timed_msg_poller):
+                bpy.app.timers.unregister(self.timed_msg_poller())
+
+            try:
+                # close connection
+                self.socket.close()
+                print("Subscriber socket closed")
+                # remove reference
+            except AttributeError:
+                print("Subscriber socket was not active")
+
+            # let Blender know our socket is disconnected
+            self.socket = None
+            context.window_manager.socket_connected = False
+
+        return {'FINISHED'}  # Lets Blender know the operator finished successfully.
+
+    def timed_msg_poller(self):  # context
+        global mAvt
+        socket_sub = self.socket
+        # only keep running if socket reference exist (not None)
+        if socket_sub:
+            # get sockets with messages (0: don't wait for msgs)
+            sockets = dict(self.poller.poll(0))
+            # check if our sub socket has a message
+            if socket_sub in sockets:
+                # get the message
+                points3d = recv_array(socket_sub)
+                print(points3d)
+                M_mb = movement_280.get_trans_mat_blend_to_matlab()
+                pts_skel = np.matmul(points3d, M_mb)
+                #pts_skel = movement.correct_pose(pts_skel,trans_correction,w10)
+                correction_params = np.zeros((14,3),dtype=np.float32)
+                params = movement_280.get_skeleton_parameters(mAvt.skel, pts_skel, correction_params)
+
+        # keep running
+        return 0.001
+
+class AVATAR_PT_MotionPanel(bpy.types.Panel):
+    
+    bl_idname = "AVATAR_PT_MotionPanel"
+    bl_label = "Motion"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "Avatar"
+
+    bpy.types.WindowManager.socket_connected = BoolProperty(name="Connect status", description="Boolean", default=False)
+
+    def draw(self, context):
+        layout = self.layout
+        obj = context.object
+        wm = context.window_manager
+        
+        row = layout.row()
+        if not wm.socket_connected:
+            layout.operator("avt.streaming_pose")  # , text="Connect Socket"
+        else:
+            layout.operator("avt.streaming_pose", text="Disconnect Socket")
+
 
 classes  = (
             AVATAR_PT_LoadPanel, 
@@ -300,6 +401,8 @@ classes  = (
             AVATAR_PT_DressingPanel,
             AVATAR_OT_WearCloth,
             AVATAR_OT_CreateStudio,
+            AVATAR_PT_MotionPanel,
+            AVATAR_OT_StreamingPose,
 )
 
 def register():

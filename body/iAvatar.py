@@ -17,6 +17,7 @@ class Avatar:
         self.addon_path = addon_path
 
         self.body = None
+        self.skel = None
 
         # 
 #        self.use_one_vertex = False 
