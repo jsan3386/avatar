@@ -145,11 +145,10 @@ class AVATAR_OT_LoadModel(bpy.types.Operator):
 
         # Create skin material
         skin_material = importlib.import_module('skin_material')
-        skin_mat = skin_material.create_material(0)
-        path_tex_img = "%s/dressing/textures/skin/tex00.png" % (avt_path)
-        path_tex_norm = "%s/dressing/textures/skin/norm00.jpg" % (avt_path)
-        path_tex_spec = "%s/dressing/textures/skin/spec00.jpg" % (avt_path)
-        skin_material.assign_textures(mAvt.body, skin_mat, path_tex_img, path_tex_norm, path_tex_spec)
+        importlib.reload(skin_material)
+        skin_mat = skin_material.create_material('skin', 0)
+        tex_img, tex_norm, tex_spec = dressing.read_file_textures(avt_path, 'skin')
+        skin_material.assign_textures(mAvt.body, skin_mat, tex_img, tex_norm, tex_spec)
 
         return {'FINISHED'}
 
@@ -260,6 +259,9 @@ class AVATAR_OT_WearCloth (bpy.types.Operator):
         importlib.reload(cloth_material)
         cloth_mat = cloth_material.create_material(iconname, 0)
         tex_img, tex_norm, tex_spec = dressing.read_file_textures(avt_path, iconname)
+        print(tex_img)
+        print(tex_norm)
+        print(tex_spec)
         cloth_material.assign_textures(cloth, cloth_mat, tex_img, tex_norm, tex_spec)
                             
         return {'FINISHED'}
