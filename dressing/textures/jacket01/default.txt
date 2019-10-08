@@ -1,0 +1,2 @@
+denim_jacket.png
+denim_jacket_normals.png

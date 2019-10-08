@@ -1,0 +1,2 @@
+lace_up_blouse.png
+lace_up_blouse_norm.png

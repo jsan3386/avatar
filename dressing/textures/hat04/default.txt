@@ -1,0 +1,3 @@
+Fishing_Hat_01.png
+Fishing_Hat_01_NRM.png
+Fishing_Hat_01_SPEC.png

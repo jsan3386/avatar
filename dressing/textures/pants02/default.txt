@@ -1,0 +1,3 @@
+M_Trousers_02.png
+M_Trousers_02_NRM.png
+M_Trousers_02_SPEC.png

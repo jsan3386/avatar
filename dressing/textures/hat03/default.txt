@@ -1,0 +1,3 @@
+Knitted_Hat_01.png
+Knitted_Hat_01_NRM.png
+Knitted_Hat_01_SPEC.png

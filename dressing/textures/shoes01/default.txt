@@ -1,0 +1,2 @@
+riding_boots.png
+riding_boots_norm.png

@@ -1,0 +1,2 @@
+spaghetti_top.png
+spaghetti_top_normals.png

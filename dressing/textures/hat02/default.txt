@@ -1,0 +1,2 @@
+riding_helmet.png
+riding_helmet_norm.png

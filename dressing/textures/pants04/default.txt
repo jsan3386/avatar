@@ -1,0 +1,2 @@
+costume_leggins.png
+costume_leggins_norm.png

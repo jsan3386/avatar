@@ -1,0 +1,3 @@
+M_Swimming_trunks_01.png
+M_Swimming_trunks_01_NRM.png
+M_Swimming_trunks_01_SPEC.png

@@ -1,0 +1,2 @@
+martialartshoes.png
+martialartshoes_normals.png

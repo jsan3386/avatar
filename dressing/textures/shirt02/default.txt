@@ -1,0 +1,3 @@
+Knitted_Sweater_01.png
+Knitted_Sweater_01_NRM.png
+Knitted_Sweater_01_SPEC.png

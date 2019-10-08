@@ -1,0 +1,2 @@
+frill_bikini_bottom.png
+frill_bikini_bottom_norm.png
