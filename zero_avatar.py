@@ -24,6 +24,9 @@ from mathutils import Vector, Quaternion, Matrix
 
 import numpy as np
 
+import subprocess
+import signal
+
 #from numpy import *
 
 #from bpy.props import (BoolProperty,
@@ -142,6 +145,10 @@ class AVATAR_OT_LoadModel(bpy.types.Operator):
         mAvt.load_shape_model()
         mAvt.body = bpy.data.objects["Standard:Body"]
         mAvt.skel = bpy.data.objects["Standard"]
+        #mAvt.skel_ref = bpy.data.objects["Standard"].copy()
+        ref_arm = movement_280.get_skeleton_joints(mAvt.skel)
+        mAvt.skel_ref = np.array(ref_arm)
+
 
         # Create skin material
         skin_material = importlib.import_module('skin_material')
@@ -307,26 +314,33 @@ def recv_array(socket, flags=0, copy=True, track=False):
     A = np.frombuffer(msg, dtype=md['dtype'])
     return A.reshape(md['shape'])
 
+def send_array(socket, A, flags=0, copy=True, track=False):
+    """send a numpy array with metadata"""
+    md = dict(
+        dtype = str(A.dtype),
+        shape = A.shape,
+    )
+    socket.send_json(md, flags|zmq.SNDMORE)
+    return socket.send(A, flags, copy=copy, track=track)
 
 class AVATAR_OT_StreamingPose(bpy.types.Operator):
     bl_idname = "avt.streaming_pose"
     bl_label = "Connect socket"  # Display name in the interface.
-    bl_options = {'REGISTER', 'UNDO'} 
-
-    socket = None 
+#    bl_options = {'REGISTER', 'UNDO'} 
+    bl_options = {'REGISTER'} 
 
     def execute(self, context):  # execute() is called when running the operator.
 
         if not context.window_manager.socket_connected:
             self.zmq_ctx = zmq.Context().instance()  # zmq.Context().instance()  # Context
-            self.socket = self.zmq_ctx.socket(zmq.SUB)
-            self.socket.connect(f"tcp://127.0.0.1:5667")  # publisher connects to this (subscriber)
-            self.socket.setsockopt(zmq.SUBSCRIBE, ''.encode('ascii'))
+            bpy.types.WindowManager.socket = self.zmq_ctx.socket(zmq.SUB)
+            bpy.types.WindowManager.socket.connect(f"tcp://127.0.0.1:5667")  # publisher connects to this (subscriber)
+            bpy.types.WindowManager.socket.setsockopt(zmq.SUBSCRIBE, ''.encode('ascii'))
             print("Waiting for data...")
 
             # poller socket for checking server replies (synchronous)
             self.poller = zmq.Poller()
-            self.poller.register(self.socket, zmq.POLLIN)
+            self.poller.register(bpy.types.WindowManager.socket, zmq.POLLIN)
 
             # let Blender know our socket is connected
             context.window_manager.socket_connected = True
@@ -341,21 +355,22 @@ class AVATAR_OT_StreamingPose(bpy.types.Operator):
 
             try:
                 # close connection
-                self.socket.close()
+                bpy.types.WindowManager.socket.close()
                 print("Subscriber socket closed")
                 # remove reference
             except AttributeError:
                 print("Subscriber socket was not active")
 
             # let Blender know our socket is disconnected
-            self.socket = None
+            bpy.types.WindowManager.socket = None
             context.window_manager.socket_connected = False
+            context.window_manager.pid = 0
 
         return {'FINISHED'}  # Lets Blender know the operator finished successfully.
 
     def timed_msg_poller(self):  # context
         global mAvt
-        socket_sub = self.socket
+        socket_sub = bpy.types.WindowManager.socket
         # only keep running if socket reference exist (not None)
         if socket_sub:
             # get sockets with messages (0: don't wait for msgs)
@@ -364,15 +379,44 @@ class AVATAR_OT_StreamingPose(bpy.types.Operator):
             if socket_sub in sockets:
                 # get the message
                 points3d = recv_array(socket_sub)
-                print(points3d)
+                #print(points3d)
                 M_mb = movement_280.get_trans_mat_blend_to_matlab()
                 pts_skel = np.matmul(points3d, M_mb)
                 #pts_skel = movement.correct_pose(pts_skel,trans_correction,w10)
                 correction_params = np.zeros((14,3),dtype=np.float32)
-                params = movement_280.get_skeleton_parameters(mAvt.skel, pts_skel, correction_params)
+                params = movement_280.get_skeleton_parameters(mAvt.skel, mAvt.skel_ref, pts_skel, correction_params)
+
 
         # keep running
         return 0.001
+
+
+class AVATAR_OT_StreamingPublisher(bpy.types.Operator):
+    bl_idname = "avt.streaming_publisher"
+    bl_label = "Start streaming"  # Display name in the interface.
+#    bl_options = {'REGISTER', 'UNDO'} 
+    bl_options = {'REGISTER'} 
+
+    bpy.types.WindowManager.pid = IntProperty(default=0)
+
+    def execute(self, context):  # execute() is called when running the operator.
+        global avt_path
+
+        if not context.window_manager.streaming:
+            print(context.window_manager.fps)
+            str_fps = str(context.window_manager.fps)
+            path_frames = "%s/motion/frames" % avt_path
+            prog = "%s/motion/server.py" % avt_path
+            proc = subprocess.Popen(["python", prog, "-frames", path_frames, str_fps]) 
+            context.window_manager.pid = proc.pid
+            context.window_manager.streaming = True
+        else:
+            if context.window_manager.pid != 0:
+                os.kill(context.window_manager.pid, signal.SIGTERM)
+            context.window_manager.streaming = False
+
+        return {'FINISHED'}
+
 
 class AVATAR_PT_MotionPanel(bpy.types.Panel):
     
@@ -383,6 +427,8 @@ class AVATAR_PT_MotionPanel(bpy.types.Panel):
     bl_category = "Avatar"
 
     bpy.types.WindowManager.socket_connected = BoolProperty(name="Connect status", description="Boolean", default=False)
+    bpy.types.WindowManager.streaming = BoolProperty(name="Streaming status", description="Boolean", default=False)
+    bpy.types.WindowManager.fps = IntProperty(name="FPS", description="Streaming frame rate", default=30, min=1, max=60)
 
     def draw(self, context):
         layout = self.layout
@@ -395,6 +441,21 @@ class AVATAR_PT_MotionPanel(bpy.types.Panel):
         else:
             layout.operator("avt.streaming_pose", text="Disconnect Socket")
 
+        if not wm.socket_connected:
+            return
+
+        # row = layout.row()
+        # layout.operator("avt.streaming_publisher")  # , text="Connect Socket"
+
+        row = layout.row()
+        if not wm.streaming:
+            layout.operator("avt.streaming_publisher")  # , text="Start streaming"
+        else:
+            layout.operator("avt.streaming_publisher", text="Stop streaming")
+
+        layout.prop(wm, "fps")
+
+
 
 classes  = (
             AVATAR_PT_LoadPanel, 
@@ -405,6 +466,7 @@ classes  = (
             AVATAR_OT_CreateStudio,
             AVATAR_PT_MotionPanel,
             AVATAR_OT_StreamingPose,
+            AVATAR_OT_StreamingPublisher,
 )
 
 def register():

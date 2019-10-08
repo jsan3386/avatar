@@ -18,6 +18,7 @@ class Avatar:
 
         self.body = None
         self.skel = None
+        self.skel_ref = None  # Initial position of skeleton: this should be always the same
 
         # 
 #        self.use_one_vertex = False 
