@@ -145,9 +145,8 @@ class AVATAR_OT_LoadModel(bpy.types.Operator):
         mAvt.load_shape_model()
         mAvt.body = bpy.data.objects["Standard:Body"]
         mAvt.skel = bpy.data.objects["Standard"]
-        #mAvt.skel_ref = bpy.data.objects["Standard"].copy()
-        ref_arm = movement_280.get_skeleton_joints(mAvt.skel)
-        mAvt.skel_ref = np.array(ref_arm)
+        mAvt.skel_ref = movement_280.get_rest_pose(mAvt.skel, mAvt.list_bones)
+        mAvt.hips_pos = (mAvt.skel.matrix_world @ Matrix.Translation(mAvt.skel.pose.bones["Hips"].head)).to_translation()
 
 
         # Create skin material
@@ -323,6 +322,21 @@ def send_array(socket, A, flags=0, copy=True, track=False):
     socket.send_json(md, flags|zmq.SNDMORE)
     return socket.send(A, flags, copy=copy, track=track)
 
+class AVATAR_OT_SetRestPose(bpy.types.Operator):
+    bl_idname = "avt.set_rest_pose"
+    bl_label = "Connect socket"  # Display name in the interface.
+#    bl_options = {'REGISTER', 'UNDO'} 
+    bl_options = {'REGISTER'} 
+
+    def execute(self, context):  # execute() is called when running the operator.
+        global mAvt
+
+        movement_280.set_rest_pose(mAvt.skel, mAvt.skel_ref, mAvt.list_bones)
+        mAvt.frame = 1
+
+        return {'FINISHED'}
+
+
 class AVATAR_OT_StreamingPose(bpy.types.Operator):
     bl_idname = "avt.streaming_pose"
     bl_label = "Connect socket"  # Display name in the interface.
@@ -330,6 +344,7 @@ class AVATAR_OT_StreamingPose(bpy.types.Operator):
     bl_options = {'REGISTER'} 
 
     def execute(self, context):  # execute() is called when running the operator.
+        global mAvt
 
         if not context.window_manager.socket_connected:
             self.zmq_ctx = zmq.Context().instance()  # zmq.Context().instance()  # Context
@@ -344,6 +359,9 @@ class AVATAR_OT_StreamingPose(bpy.types.Operator):
 
             # let Blender know our socket is connected
             context.window_manager.socket_connected = True
+            mAvt.frame = 1
+            mAvt.start_origin = context.window_manager.start_origin
+            mAvt.write_timeline = context.window_manager.write_timeline
 
             bpy.app.timers.register(self.timed_msg_poller)
 
@@ -371,6 +389,8 @@ class AVATAR_OT_StreamingPose(bpy.types.Operator):
     def timed_msg_poller(self):  # context
         global mAvt
         socket_sub = bpy.types.WindowManager.socket
+#        write_timeline = bpy.types.WindowManager.write_timeline
+#        start_origin = bpy.types.WindowManager.start_origin
         # only keep running if socket reference exist (not None)
         if socket_sub:
             # get sockets with messages (0: don't wait for msgs)
@@ -382,10 +402,33 @@ class AVATAR_OT_StreamingPose(bpy.types.Operator):
                 #print(points3d)
                 M_mb = movement_280.get_trans_mat_blend_to_matlab()
                 pts_skel = np.matmul(points3d, M_mb)
-                #pts_skel = movement.correct_pose(pts_skel,trans_correction,w10)
-                correction_params = np.zeros((14,3),dtype=np.float32)
-                params = movement_280.get_skeleton_parameters(mAvt.skel, mAvt.skel_ref, pts_skel, correction_params)
+                print(pts_skel)
+                if mAvt.start_origin:
+                    # translate points
+                    trans = [0,0,0]
+                    new_pts_skel = []
+                    if mAvt.frame == 1:
+                        hips = pts_skel[14,:]
+                        trans = hips - np.array(mAvt.hips_pos)
+                        print(trans)
+                        print(hips)
+                        print(mAvt.hips_pos)
+                    for pt in pts_skel:
+                        new_pts_skel.append( [pt[0]-trans[0], pt[1]-trans[1], pt[2]-trans[2]])
+                    pts_skel = np.array(new_pts_skel)
+                    print(pts_skel)
 
+                # set skeleton rest position
+                movement_280.set_rest_pose(mAvt.skel, mAvt.skel_ref, mAvt.list_bones)
+                movement_280.calculate_rotations(mAvt.skel, pts_skel)
+
+                if mAvt.write_timeline:
+                    mAvt.skel.keyframe_insert(data_path = "location", index = -1, frame = mAvt.frame)
+            
+                    for bone in mAvt.list_bones:
+                        mAvt.skel.pose.bones[bone].keyframe_insert(data_path = "rotation_quaternion", index = -1, frame = mAvt.frame)
+
+                    mAvt.frame += 1
 
         # keep running
         return 0.001
@@ -403,7 +446,6 @@ class AVATAR_OT_StreamingPublisher(bpy.types.Operator):
         global avt_path
 
         if not context.window_manager.streaming:
-            print(context.window_manager.fps)
             str_fps = str(context.window_manager.fps)
             path_frames = "%s/motion/frames" % avt_path
             prog = "%s/motion/server.py" % avt_path
@@ -426,9 +468,16 @@ class AVATAR_PT_MotionPanel(bpy.types.Panel):
     bl_region_type = "UI"
     bl_category = "Avatar"
 
+    # NOTE:
+    # For the moment we don't implement write_bvh. This can be done registering motin to timeline and the export to bvh
+
     bpy.types.WindowManager.socket_connected = BoolProperty(name="Connect status", description="Boolean", default=False)
     bpy.types.WindowManager.streaming = BoolProperty(name="Streaming status", description="Boolean", default=False)
     bpy.types.WindowManager.fps = IntProperty(name="FPS", description="Streaming frame rate", default=30, min=1, max=60)
+#    bpy.types.WindowManager.write_bvh = BoolProperty(name = "wBvh", description="Start at origin", default = False)
+    bpy.types.WindowManager.write_timeline = BoolProperty(name = "wTimeline", description="Start at origin", default = False)
+    bpy.types.WindowManager.start_origin = BoolProperty(name = "sOrigin", description="Start at origin", default = False)
+
 
     def draw(self, context):
         layout = self.layout
@@ -440,6 +489,12 @@ class AVATAR_PT_MotionPanel(bpy.types.Panel):
             layout.operator("avt.streaming_pose")  # , text="Connect Socket"
         else:
             layout.operator("avt.streaming_pose", text="Disconnect Socket")
+
+        row = layout.row()
+        layout.operator("avt.set_rest_pose", text="Reset pose")
+#        layout.prop(wm, "write_bvh", text="Write BVH file")
+        layout.prop(wm, "write_timeline", text="Write timeline keypoints")
+        layout.prop(wm, "start_origin", text="Start at origin")
 
         if not wm.socket_connected:
             return
@@ -457,6 +512,7 @@ class AVATAR_PT_MotionPanel(bpy.types.Panel):
 
 
 
+
 classes  = (
             AVATAR_PT_LoadPanel, 
             AVATAR_OT_LoadModel,
@@ -467,6 +523,7 @@ classes  = (
             AVATAR_PT_MotionPanel,
             AVATAR_OT_StreamingPose,
             AVATAR_OT_StreamingPublisher,
+            AVATAR_OT_SetRestPose,
 )
 
 def register():

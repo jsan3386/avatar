@@ -41,7 +41,7 @@ if __name__ == "__main__":
     elif sys.argv[1] == '-frames':
         frames_folder = sys.argv[2]
         fps = int(sys.argv[3])
-        print(frames_folder)
+        #print(frames_folder)
         #fname = "frame_SA%02d_%05d.txt" % (2, f)
         # read frames in folder
         point_files = [f for f in os.listdir(frames_folder) if f.endswith('.txt')]

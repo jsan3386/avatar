@@ -16,9 +16,19 @@ class Avatar:
         # root_path
         self.addon_path = addon_path
 
+        self.list_bones = ["Hips", "LHipJoint", "LeftUpLeg", "LeftLeg", "LeftFoot", "LeftToeBase", "LowerBack",
+                           "Spine", "Spine1", "LeftShoulder", "LeftArm", "LeftForeArm", "LeftHand", "LThumb", 
+                           "LeftFingerBase", "LeftHandFinger1", "Neck", "Neck1", "Head", "RightShoulder", "RightArm",
+                           "RightForeArm", "RightHand", "RThumb", "RightFingerBase", "RightHandFinger1", "RHipJoint",
+                           "RightUpLeg", "RightLeg", "RightFoot", "RightToeBase"]
+
         self.body = None
         self.skel = None
-        self.skel_ref = None  # Initial position of skeleton: this should be always the same
+        self.skel_ref = []  # Initial position of skeleton: will contain pose bone matrices for rest position
+        self.frame = 1
+        self.hips_pos = Vector((0,0,0))
+        self.write_timeline = False
+        self.start_origin = False
 
         # 
 #        self.use_one_vertex = False 
