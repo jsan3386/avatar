@@ -124,6 +124,10 @@ def update_weights (self, context):
 
     mAvt.refresh_shape()
 
+    for object in bpy.data.objects:
+        if ((object.type == 'MESH') and (object.name != "Standard:Body")):
+            mAvt.deform_cloth(cloth_name=str(object.name))
+
 
 
 class AVATAR_OT_LoadModel(bpy.types.Operator):
@@ -148,6 +152,17 @@ class AVATAR_OT_LoadModel(bpy.types.Operator):
         mAvt.skel_ref = movement_280.get_rest_pose(mAvt.skel, mAvt.list_bones)
         mAvt.hips_pos = (mAvt.skel.matrix_world @ Matrix.Translation(mAvt.skel.pose.bones["Hips"].head)).to_translation()
 
+        # Info to compute deformation of clothes in fast manner
+        size = len(mAvt.body.data.vertices)
+        mAvt.body_kdtree = mathutils.kdtree.KDTree(size)
+        for i, v in enumerate (mAvt.body.data.vertices):
+            mAvt.body_kdtree.insert(v.co, i)
+        mAvt.body_kdtree.balance()
+
+        # Set collision body
+        bpy.context.view_layer.objects.active = mAvt.body
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.modifier_add(type='COLLISION')
 
         # Create skin material
         skin_material = importlib.import_module('skin_material')
@@ -181,8 +196,7 @@ class AVATAR_OT_ResetParams(bpy.types.Operator):
         mAvt.refresh_shape()
 
         for object in bpy.data.objects:
-            if object.name != "Standard" and object.name != "Standard:Body" and object.name != "Camera" and object.name != "Light":
-            
+            if ((object.type == 'MESH') and (object.name != "Standard:Body")):
                 mAvt.deform_cloth(cloth_name=str(object.name))
 
         return {'FINISHED'}

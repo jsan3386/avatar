@@ -2,7 +2,7 @@
 #
 # Class avatar
 #
-
+import bpy
 import shape_utils
 from mathutils import Vector
 
@@ -30,6 +30,7 @@ class Avatar:
         self.write_timeline = False
         self.start_origin = False
 
+        self.body_kdtree = None
         # 
 #        self.use_one_vertex = False 
 #        self.do_once_per_vertex = False
