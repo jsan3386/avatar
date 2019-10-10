@@ -26,6 +26,7 @@ class Avatar:
 
         self.body = None
         self.skel = None
+        self.armature = None
         self.skel_ref = []  # Initial position of skeleton: will contain pose bone matrices for rest position
         self.frame = 1
         self.hips_pos = Vector((0,0,0))

@@ -71,6 +71,11 @@ importlib.reload(dressing)
 import movement_280
 importlib.reload(movement_280)
 
+import bvh_utils
+importlib.reload(bvh_utils)
+
+from bpy_extras.io_utils import axis_conversion
+
 mAvt = iAvatar.Avatar(addon_path=avt_path)
 
 preview_collections = {}
@@ -156,6 +161,7 @@ class AVATAR_OT_LoadModel(bpy.types.Operator):
         mAvt.load_shape_model()
         mAvt.body = bpy.data.objects["Standard:Body"]
         mAvt.skel = bpy.data.objects["Standard"]
+        mAvt.armature = bpy.data.armatures["Standard"]
         mAvt.skel_ref = movement_280.get_rest_pose(mAvt.skel, mAvt.list_bones)
         mAvt.hips_pos = (mAvt.skel.matrix_world @ Matrix.Translation(mAvt.skel.pose.bones["Hips"].head)).to_translation()
 
@@ -486,6 +492,36 @@ class AVATAR_OT_StreamingPublisher(bpy.types.Operator):
 
         return {'FINISHED'}
 
+class AVATAR_OT_LoadBVH (bpy.types.Operator):
+    
+    bl_idname = "avt.load_bvh"
+    bl_label = "Load BVH"
+    bl_description = "Transfer motion to human model"
+
+    filepath = bpy.props.StringProperty(subtype="FILE_PATH") 
+
+    def invoke(self, context, event):
+        bpy.context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+
+    def execute(self, context):
+        global avt_path
+        global mAvt
+        scn = context.scene
+        obj = context.active_object
+        #
+        file_path = self.filepath 
+        bvh_nodes, bvh_frame_time, bvh_frame_count = bvh_utils.read_bvh(context, file_path) 
+        bvh_name = bpy.path.display_name_from_filepath(file_path)
+        print(bvh_name)
+        global_matrix = axis_conversion(from_forward='-Z', from_up='Y').to_4x4()
+        bvh_utils.bvh_node_dict2armature(context, bvh_name, bvh_nodes, bvh_frame_time, mAvt.armature, mAvt.skel, 
+                                         global_matrix=global_matrix)
+        print(bvh_nodes)
+        print(bvh_frame_time)
+        print(bvh_frame_count)
+
+        return {'FINISHED'}
 
 class AVATAR_PT_MotionPanel(bpy.types.Panel):
     
@@ -517,11 +553,11 @@ class AVATAR_PT_MotionPanel(bpy.types.Panel):
         else:
             layout.operator("avt.streaming_pose", text="Disconnect Socket")
 
-        row = layout.row()
+#        row = layout.row()
         layout.operator("avt.set_rest_pose", text="Reset pose")
 #        layout.prop(wm, "write_bvh", text="Write BVH file")
-        layout.prop(wm, "write_timeline", text="Write timeline keypoints")
-        layout.prop(wm, "start_origin", text="Start at origin")
+        layout.operator("avt.load_bvh", text="Load BVH")
+
 
         if not wm.socket_connected:
             return
@@ -529,13 +565,15 @@ class AVATAR_PT_MotionPanel(bpy.types.Panel):
         # row = layout.row()
         # layout.operator("avt.streaming_publisher")  # , text="Connect Socket"
 
-        row = layout.row()
+#        row = layout.row()
         if not wm.streaming:
             layout.operator("avt.streaming_publisher")  # , text="Start streaming"
         else:
             layout.operator("avt.streaming_publisher", text="Stop streaming")
 
         layout.prop(wm, "fps")
+        layout.prop(wm, "write_timeline", text="Write timeline keypoints")
+        layout.prop(wm, "start_origin", text="Start at origin")
 
 
 
@@ -551,6 +589,7 @@ classes  = (
             AVATAR_OT_StreamingPose,
             AVATAR_OT_StreamingPublisher,
             AVATAR_OT_SetRestPose,
+            AVATAR_OT_LoadBVH,
 )
 
 def register():
