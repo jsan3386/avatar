@@ -4,6 +4,7 @@
 #
 import bpy
 import shape_utils
+import numpy as np
 from mathutils import Vector
 
 class Avatar:
@@ -30,13 +31,17 @@ class Avatar:
         self.write_timeline = False
         self.start_origin = False
 
+        # Parameters needed to deform clothes 
         self.body_kdtree = None
+        self.np_mesh = None
+        self.np_mesh_diff = None
+        self.np_mesh_prev = None
         # 
-#        self.use_one_vertex = False 
-#        self.do_once_per_vertex = False
-#        self.mesh_chosen_vertices = []
-#        self.number_increments = 20
-#        self.increment_radius = 0.2
+        self.use_one_vertex = False 
+        self.do_once_per_vertex = False
+        self.mesh_chosen_vertices = []
+        self.number_increments = 20
+        self.increment_radius = 0.2
 
         # weights and means to control shape
         self.val_breast = self.val_torso = self.val_hips = 0.0

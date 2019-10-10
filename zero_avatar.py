@@ -112,6 +112,10 @@ def update_weights (self, context):
     global mAvt
 
     obj = mAvt.body
+
+    # set previous mesh vertices values
+    cp_vals = obj.data.copy()
+    mAvt.np_mesh_prev = mAvt.read_verts(cp_vals)
     
     # calculate new shape with PCA shapes
     mAvt.val_breast = self.val_breast
@@ -123,6 +127,9 @@ def update_weights (self, context):
     mAvt.val_strength = self.val_strength
 
     mAvt.refresh_shape()
+
+    mAvt.np_mesh = mAvt.read_verts(obj.data)
+    mAvt.np_mesh_diff = mAvt.np_mesh - mAvt.np_mesh_prev
 
     for object in bpy.data.objects:
         if ((object.type == 'MESH') and (object.name != "Standard:Body")):
@@ -183,6 +190,11 @@ class AVATAR_OT_ResetParams(bpy.types.Operator):
         global mAvt
 
         obj = mAvt.body
+
+        # set previous mesh vertices values
+        cp_vals = obj.data.copy()
+        mAvt.np_mesh_prev = mAvt.read_verts(cp_vals)
+
     
         # calculate new shape with PCA shapes
         mAvt.val_breast = self.val_breast = 0.0
@@ -194,6 +206,9 @@ class AVATAR_OT_ResetParams(bpy.types.Operator):
         mAvt.val_strength = self.val_strength = 0.0
 
         mAvt.refresh_shape()
+
+        mAvt.np_mesh = mAvt.read_verts(obj.data)
+        mAvt.np_mesh_diff = mAvt.np_mesh - mAvt.np_mesh_prev
 
         for object in bpy.data.objects:
             if ((object.type == 'MESH') and (object.name != "Standard:Body")):
