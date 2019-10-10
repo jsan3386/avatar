@@ -11,6 +11,7 @@ import os
 import numpy as np 
 import time
 import cv2
+import tensorflow as tf
 
 context = zmq.Context()
 socket = context.socket(zmq.PUB)
@@ -21,6 +22,8 @@ input_size = 368
 hmap_size = 46
 joints = 14
 cmap_radius = 21
+#model_path = "%s/motion/net_models/cpm_pose" % avt_path
+model_path = "/home/jsanchez/Software/gitprojects/avatar/motion/net_models/cpm_pose/cpm_body.pkl"
 
 # Set color for each finger
 joint_color_code = [[139, 53, 255],
@@ -63,7 +66,7 @@ def visualize_result(test_img, stage_heatmap_np, hmap_size, joints):
     demo_stage_heatmaps = []
 
     last_heatmap = stage_heatmap_np[-1][0, :, :, 0:joints].reshape((hmap_size, hmap_size, joints))
-        last_heatmap = cv2.resize(last_heatmap, (test_img.shape[1], test_img.shape[0]))
+    last_heatmap = cv2.resize(last_heatmap, (test_img.shape[1], test_img.shape[0]))
 
     joint_coord_set = np.zeros((joints, 2))
 
@@ -130,10 +133,11 @@ if __name__ == "__main__":
     if sys.argv[1] == '-camera':
 
         # Init CPM network
-        if FLAGS.color_channel == 'RGB':
-            input_data = tf.placeholder(dtype=tf.float32, shape=[None, input_size, input_size, 3], name='input_image')
-        else:
-            input_data = tf.placeholder(dtype=tf.float32, shape=[None, input_size, input_size, 1], name='input_image')
+        # if FLAGS.color_channel == 'RGB':
+        #     input_data = tf.placeholder(dtype=tf.float32, shape=[None, input_size, input_size, 3], name='input_image')
+        # else:
+        #     input_data = tf.placeholder(dtype=tf.float32, shape=[None, input_size, input_size, 1], name='input_image')
+        input_data = tf.placeholder(dtype=tf.float32, shape=[None, input_size, input_size, 3], name='input_image')
 
         center_map = tf.placeholder(dtype=tf.float32, shape=[None, input_size, input_size, 1], name='center_map')
 
@@ -145,10 +149,7 @@ if __name__ == "__main__":
         sess = tf.Session()
 
         sess.run(tf.global_variables_initializer())
-        if FLAGS.model_path.endswith('pkl'):
-            model.load_weights_from_file(FLAGS.model_path, sess, False)
-        else:
-            saver.restore(sess, FLAGS.model_path)
+        model.load_weights_from_file(model_path, sess, False)
 
         test_center_map = cpm_utils.gaussian_img(input_size,
                                                  input_size,
