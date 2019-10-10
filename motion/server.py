@@ -12,6 +12,7 @@ import numpy as np
 import time
 import cv2
 import tensorflow as tf
+from net_models.cpm_pose import cpm_body_slim
 
 context = zmq.Context()
 socket = context.socket(zmq.PUB)
