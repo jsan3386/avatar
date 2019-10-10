@@ -23,6 +23,7 @@ class Avatar:
                            "RightForeArm", "RightHand", "RThumb", "RightFingerBase", "RightHandFinger1", "RHipJoint",
                            "RightUpLeg", "RightLeg", "RightFoot", "RightToeBase"]
 
+
         self.body = None
         self.skel = None
         self.skel_ref = []  # Initial position of skeleton: will contain pose bone matrices for rest position
@@ -30,6 +31,7 @@ class Avatar:
         self.hips_pos = Vector((0,0,0))
         self.write_timeline = False
         self.start_origin = False
+        self.trans = [0, 0, 0] # translation vector to start avatar in origin
 
         # Parameters needed to deform clothes 
         self.body_kdtree = None

@@ -431,27 +431,22 @@ class AVATAR_OT_StreamingPose(bpy.types.Operator):
                 #print(points3d)
                 M_mb = movement_280.get_trans_mat_blend_to_matlab()
                 pts_skel = np.matmul(points3d, M_mb)
-                print(pts_skel)
                 if mAvt.start_origin:
                     # translate points
-                    trans = [0,0,0]
                     new_pts_skel = []
                     if mAvt.frame == 1:
                         hips = pts_skel[14,:]
-                        trans = hips - np.array(mAvt.hips_pos)
-                        print(trans)
-                        print(hips)
-                        print(mAvt.hips_pos)
+                        mAvt.trans = hips - np.array(mAvt.hips_pos)
                     for pt in pts_skel:
-                        new_pts_skel.append( [pt[0]-trans[0], pt[1]-trans[1], pt[2]-trans[2]])
+                        new_pts_skel.append( [pt[0]-mAvt.trans[0], pt[1]-mAvt.trans[1], pt[2]-mAvt.trans[2]])
                     pts_skel = np.array(new_pts_skel)
-                    print(pts_skel)
 
-                # set skeleton rest position
+                # set skeleton rest position: MAYBE MOVE ALL THIS TO SERVER.PY IN ORDER TO MAKE FASTER UPDATES
                 movement_280.set_rest_pose(mAvt.skel, mAvt.skel_ref, mAvt.list_bones)
                 movement_280.calculate_rotations(mAvt.skel, pts_skel)
 
                 if mAvt.write_timeline:
+                    bpy.context.view_layer.update()
                     mAvt.skel.keyframe_insert(data_path = "location", index = -1, frame = mAvt.frame)
             
                     for bone in mAvt.list_bones:
@@ -481,6 +476,9 @@ class AVATAR_OT_StreamingPublisher(bpy.types.Operator):
             proc = subprocess.Popen(["python", prog, "-frames", path_frames, str_fps]) 
             context.window_manager.pid = proc.pid
             context.window_manager.streaming = True
+            mAvt.start_origin = context.window_manager.start_origin
+            mAvt.write_timeline = context.window_manager.write_timeline
+
         else:
             if context.window_manager.pid != 0:
                 os.kill(context.window_manager.pid, signal.SIGTERM)
