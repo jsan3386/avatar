@@ -510,14 +510,21 @@ class AVATAR_OT_LoadBVH (bpy.types.Operator):
         scn = context.scene
         obj = context.active_object
         #
+        reference_body = "%s/body/Reference.bvh" % avt_path
+        file_bone_corresp = "%s/motion/bones/avt_corrsp_01.txt" % avt_path
         file_path = self.filepath 
+
         bvh_nodes, bvh_frame_time, bvh_frame_count = bvh_utils.read_bvh(context, file_path) 
+        avt_nodes, _, _ = bvh_utils.read_bvh(context, reference_body)
+
         bvh_name = bpy.path.display_name_from_filepath(file_path)
-        print(bvh_name)
-        global_matrix = axis_conversion(from_forward='-Z', from_up='Y').to_4x4()
-        bvh_utils.bvh_node_dict2armature(context, bvh_name, bvh_nodes, bvh_frame_time, mAvt.armature, mAvt.skel, 
-                                         global_matrix=global_matrix)
-        print(bvh_nodes)
+        global_matrix = axis_conversion(from_forward='-Z', from_up='Y').to_4x4()        
+        bones_eq = bvh_utils.bone_equivalence(file_bone_corresp)
+
+        bvh_utils.transfer_motion(avt_nodes, bvh_nodes, mAvt.skel, mAvt.armature, bones_eq)
+#        bvh_utils.bvh_node_dict2armature(context, bvh_name, bvh_nodes, bvh_frame_time, mAvt.armature, mAvt.skel, 
+#                                         global_matrix=global_matrix)
+#        print(bvh_nodes)
         print(bvh_frame_time)
         print(bvh_frame_count)
 

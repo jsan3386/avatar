@@ -318,6 +318,110 @@ def read_bvh(context, file_path, rotate_mode='XYZ', global_scale=1.0):
 
     return bvh_nodes, bvh_frame_time, bvh_frame_count
 
+def bone_equivalence(filename):
+
+    fp = open(filename, 'r')
+    file_lines = fp.readlines()
+
+    slines = []
+    for line in file_lines:
+        lst = line.strip()
+        lsp = lst.split()
+        if not 'None' in lsp:
+            slines.append(lsp)
+
+    fp.close()
+    return slines
+
+def get_bvh_node(bvh_nodes, bone_bvh):
+
+    rnode = None
+    for node in bvh_nodes:
+        print(node.name)
+        print(bone_bvh)
+        if node.name == bone_bvh:
+            rnode = node
+
+    return rnode
+
+def transfer_motion (avt_nodes, bvh_nodes, skel, armature, bone_eq):
+
+
+    skel.animation_data_create()
+    action = bpy.data.actions.new(name="test")
+    skel.animation_data.action = action
+
+    # go through bones that have equivalence
+    for bone in bone_eq:
+        bone_avatar = bone[0]
+        print(bone_avatar)
+        bone_bvh = bone[1]
+        print(bone_bvh)
+
+        # find bvh_node for given bone
+        list_bvh_nodes = sorted_nodes(bvh_nodes)
+        bvh_node = get_bvh_node(list_bvh_nodes, bone_bvh)
+
+        num_frame = len(bvh_node.anim_data)
+
+        # Create a shared time axis for all animation curves.
+        time = [float(1)] * num_frame
+        for frame_i in range(1, num_frame):
+            time[frame_i] += float(frame_i)
+
+
+        # find rest pose matrices avatar
+        rest_bone = armature.bones[bone_avatar]
+        bone_rest_matrix = rest_bone.matrix_local.to_3x3()
+
+        bone_rest_matrix_inv = Matrix(bone_rest_matrix)
+        bone_rest_matrix_inv.invert()
+
+        bone_rest_matrix_inv.resize_4x4()
+        bone_rest_matrix.resize_4x4()
+
+        list_avt_nodes = sorted_nodes(avt_nodes)
+        avt_node = get_bvh_node(list_avt_nodes, bone_avatar)
+        print(avt_node)
+        print(avt_node.rest_head_local)
+
+
+        if bvh_node.has_loc:
+            # Not sure if there is a way to query this or access it in the
+            # PoseBone structure.
+            data_path = 'pose.bones["%s"].location' % bone_avatar
+
+            location = [(0.0, 0.0, 0.0)] * num_frame
+            for frame_i in range(num_frame):
+                bvh_loc = bvh_node.anim_data[frame_i][:3]
+
+                bone_translate_matrix = Matrix.Translation(
+                    Vector(bvh_loc) - avt_node.rest_head_local)
+                location[frame_i] = (bone_rest_matrix_inv @
+                                     bone_translate_matrix).to_translation()
+
+            # For each location x, y, z.
+            for axis_i in range(3):
+                curve = action.fcurves.new(data_path=data_path, index=axis_i)
+                keyframe_points = curve.keyframe_points
+                keyframe_points.add(num_frame)
+
+                for frame_i in range(num_frame):
+                    keyframe_points[frame_i].co = (
+                        time[frame_i],
+                        location[frame_i][axis_i],
+                    )
+
+
+    # bvh_nodes_list = sorted_nodes(bvh_nodes)
+
+    # # All information is in bvh_nodes_list: Maybe we don't even need to sort
+    # for bvh_node in bvh_nodes_list:
+    #     print(bvh_node.name)
+    #     for f in range(len(bvh_node.anim_data)):
+    #         print(bvh_node.anim_data[f])
+   
+
 def bvh_node_dict2armature(
         context,
         bvh_name,
@@ -355,7 +459,13 @@ def bvh_node_dict2armature(
 #    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
 #    bpy.ops.object.mode_set(mode='EDIT', toggle=False)
 
-#     bvh_nodes_list = sorted_nodes(bvh_nodes)
+    bvh_nodes_list = sorted_nodes(bvh_nodes)
+
+    # what information we have here ??
+    for bvh_node in bvh_nodes_list:
+        print(bvh_node.name)
+        for f in range(len(bvh_node.anim_data)):
+            print(bvh_node.anim_data[f])
 
 #     # Get the average bone length for zero length bones, we may not use this.
 #     average_bone_length = 0.0
@@ -425,8 +535,6 @@ def bvh_node_dict2armature(
     # Get armature animation data
     bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
 
-    print(arm_ob)
-    print(arm_data)
     pose = arm_ob.pose
     pose_bones = pose.bones
 
@@ -453,7 +561,10 @@ def bvh_node_dict2armature(
     # With a tuple  (pose_bone, armature_bone, bone_rest_matrix, bone_rest_matrix_inv)
     num_frame = 0
     for bvh_node in bvh_nodes_list:
-        bone_name = bvh_node.temp  # may not be the same name as the bvh_node, could have been shortened.
+        print(bvh_node)
+        print(bvh_node.name)
+#        bone_name = bvh_node.temp  # may not be the same name as the bvh_node, could have been shortened.
+        bone_name = bvh_node.name  # may not be the same name as the bvh_node, could have been shortened.
         pose_bone = pose_bones[bone_name]
         rest_bone = arm_data.bones[bone_name]
         bone_rest_matrix = rest_bone.matrix_local.to_3x3()
@@ -463,7 +574,8 @@ def bvh_node_dict2armature(
 
         bone_rest_matrix_inv.resize_4x4()
         bone_rest_matrix.resize_4x4()
-        bvh_node.temp = (pose_bone, bone, bone_rest_matrix, bone_rest_matrix_inv)
+#        bvh_node.temp = (pose_bone, bone, bone_rest_matrix, bone_rest_matrix_inv)
+        bvh_node.temp = (pose_bone, bone_rest_matrix, bone_rest_matrix_inv)
 
         if 0 == num_frame:
             num_frame = len(bvh_node.anim_data)
@@ -489,7 +601,8 @@ def bvh_node_dict2armature(
     #      % (bvh_frame_time, dt, num_frame]))
 
     for i, bvh_node in enumerate(bvh_nodes_list):
-        pose_bone, bone, bone_rest_matrix, bone_rest_matrix_inv = bvh_node.temp
+#        pose_bone, bone, bone_rest_matrix, bone_rest_matrix_inv = bvh_node.temp
+        pose_bone, bone_rest_matrix, bone_rest_matrix_inv = bvh_node.temp
 
         if bvh_node.has_loc:
             # Not sure if there is a way to query this or access it in the
@@ -533,6 +646,7 @@ def bvh_node_dict2armature(
             prev_euler = Euler((0.0, 0.0, 0.0))
             for frame_i in range(num_frame):
                 bvh_rot = bvh_node.anim_data[frame_i + skip_frame][3:]
+                print(bvh_rot)
 
                 # apply rotation order and convert to XYZ
                 # note that the rot_order_str is reversed.
