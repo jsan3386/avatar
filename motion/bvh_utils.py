@@ -344,7 +344,7 @@ def get_bvh_node(bvh_nodes, bone_bvh):
 
     return rnode
 
-def transfer_motion (avt_nodes, bvh_nodes, skel, armature, bone_eq):
+def transfer_motion (avt_nodes, bvh_nodes, skel, armature, bone_eq, global_matrix):
 
 
     skel.animation_data_create()
@@ -385,6 +385,7 @@ def transfer_motion (avt_nodes, bvh_nodes, skel, armature, bone_eq):
         print(avt_node)
         print(avt_node.rest_head_local)
 
+        rotate_mode = 'QUATERNION'
 
         if bvh_node.has_loc:
             # Not sure if there is a way to query this or access it in the
@@ -411,6 +412,60 @@ def transfer_motion (avt_nodes, bvh_nodes, skel, armature, bone_eq):
                         time[frame_i],
                         location[frame_i][axis_i],
                     )
+
+        if bvh_node.has_rot:
+            data_path = None
+            rotate = None
+
+            if 'QUATERNION' == rotate_mode:
+                rotate = [(1.0, 0.0, 0.0, 0.0)] * num_frame
+                data_path = ('pose.bones["%s"].rotation_quaternion'
+                             % bone_avatar)
+            else:
+                rotate = [(0.0, 0.0, 0.0)] * num_frame
+                data_path = ('pose.bones["%s"].rotation_euler' %
+                             bone_avatar)
+
+            prev_euler = Euler((0.0, 0.0, 0.0))
+            for frame_i in range(num_frame):
+                bvh_rot = bvh_node.anim_data[frame_i][3:]
+                print(bvh_rot)
+
+                # apply rotation order and convert to XYZ
+                # note that the rot_order_str is reversed.
+                euler = Euler(bvh_rot, bvh_node.rot_order_str[::-1])
+                bone_rotation_matrix = euler.to_matrix().to_4x4()
+                bone_rotation_matrix = (
+                    bone_rest_matrix_inv @
+                    bone_rotation_matrix @
+                    bone_rest_matrix
+                )
+
+                if len(rotate[frame_i]) == 4:
+                    rotate[frame_i] = bone_rotation_matrix.to_quaternion()
+                else:
+                    rotate[frame_i] = bone_rotation_matrix.to_euler(
+                        pose_bone.rotation_mode, prev_euler)
+                    prev_euler = rotate[frame_i]
+
+            # For each euler angle x, y, z (or quaternion w, x, y, z).
+            for axis_i in range(len(rotate[0])):
+                curve = action.fcurves.new(data_path=data_path, index=axis_i)
+                keyframe_points = curve.keyframe_points
+                keyframe_points.add(num_frame)
+
+                for frame_i in range(num_frame):
+                    keyframe_points[frame_i].co = (
+                        time[frame_i],
+                        rotate[frame_i][axis_i],
+                    )
+    for cu in action.fcurves:
+        for bez in cu.keyframe_points:
+            bez.interpolation = 'LINEAR'
+
+    # finally apply matrix
+    skel.matrix_world = global_matrix
+    bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
 
 
     # bvh_nodes_list = sorted_nodes(bvh_nodes)

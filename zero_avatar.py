@@ -521,7 +521,7 @@ class AVATAR_OT_LoadBVH (bpy.types.Operator):
         global_matrix = axis_conversion(from_forward='-Z', from_up='Y').to_4x4()        
         bones_eq = bvh_utils.bone_equivalence(file_bone_corresp)
 
-        bvh_utils.transfer_motion(avt_nodes, bvh_nodes, mAvt.skel, mAvt.armature, bones_eq)
+        bvh_utils.transfer_motion(avt_nodes, bvh_nodes, mAvt.skel, mAvt.armature, bones_eq, global_matrix)
 #        bvh_utils.bvh_node_dict2armature(context, bvh_name, bvh_nodes, bvh_frame_time, mAvt.armature, mAvt.skel, 
 #                                         global_matrix=global_matrix)
 #        print(bvh_nodes)
