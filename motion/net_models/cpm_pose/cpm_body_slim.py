@@ -116,7 +116,8 @@ class CPM_Model(object):
         self.merged_summary = tf.summary.merge_all()
 
     def load_weights_from_file(self, weight_file_path, sess, finetune=True):
-        weights = pickle.load(open(weight_file_path, 'rb'), encoding='latin1')
+        #weights = pickle.load(open(weight_file_path, 'rb'), encoding='latin1')
+        weights = pickle.load(open(weight_file_path, 'rb'))
 
         with tf.variable_scope('', reuse=True):
             ## Pre stage conv

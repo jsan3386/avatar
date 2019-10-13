@@ -49,10 +49,7 @@ from bpy.props import *
 from simplify import simplifyFCurves, rescaleFCurves
 from utils import *
 import t_pose
-if bpy.app.version < (2,80,0):
-    from buttons27 import ProblemsString, LoadBVH
-else:
-    from buttons28 import ProblemsString, LoadBVH
+
 
 
 class CAnimation:
@@ -478,7 +475,6 @@ def loadRetargetSimplify(context, filepath, original_position,frame_start,extra,
     import load
     from fkik import limbsBendPositive
 
-    print("MY LOAD AND RETARGET")
     print("\nLoad and retarget %s" % filepath)
     time1 = time.clock()
     scn = context.scene
@@ -486,15 +482,13 @@ def loadRetargetSimplify(context, filepath, original_position,frame_start,extra,
     data = changeTargetData(trgRig, scn)
     try:
         #clearMcpProps(trgRig)
-        print("READ BVH")
         srcRig = load.readBvhFile(context, filepath, scn, False, original_position,frame_start,extra,origin)
         frames = getActiveFrames(srcRig)
-        print("END READ BVH")
         #
         #print(frames)
         try:
-            load.renameAndRescaleBvh(context, srcRig, trgRig)
             print("RETARGET ANIMATION")
+            load.renameAndRescaleBvh(context, srcRig, trgRig)
             retargetAnimation(context, srcRig, trgRig)
             scn = context.scene
             if scn.McpDoBendPositive:
@@ -511,102 +505,3 @@ def loadRetargetSimplify(context, filepath, original_position,frame_start,extra,
     print("%s finished in %.3f s" % (filepath, time2-time1))
     return
 
-
-########################################################################
-#
-#   Buttons
-#
-
-class MCP_OT_RetargetMhx(bpy.types.Operator, ProblemsString):
-    bl_idname = "mcp.retarget_mhx"
-    bl_label = "Retarget Selected To Active"
-    bl_description = "Retarget animation to the active (target) armature from the other selected (source) armature"
-    bl_options = {'UNDO'}
-
-    def execute(self, context):
-        import target
-
-        if self.problems:
-            return{'FINISHED'}
-
-        trgRig = context.object
-        scn = context.scene
-        data = changeTargetData(trgRig, scn)
-        rigList = list(context.selected_objects)
-
-        try:
-            target.getTargetArmature(trgRig, context)
-            for srcRig in rigList:
-                if srcRig != trgRig:
-                    retargetAnimation(context, srcRig, trgRig)
-        except MocapError:
-            bpy.ops.mcp.error('INVOKE_DEFAULT')
-        finally:
-            restoreTargetData(trgRig, data)
-        return{'FINISHED'}
-
-    def invoke(self, context, event):
-        return checkObjectProblems(self, context)
-
-    def draw(self, context):
-        drawObjectProblems(self)
-
-
-class MCP_OT_LoadAndRetarget(bpy.types.Operator, ProblemsString, LoadBVH):
-    bl_idname = "mcp.load_and_retarget"
-    bl_label = "Load And Retarget"
-    bl_description = "Load animation from bvh file to the active armature"
-    bl_options = {'UNDO'}
-
-    @classmethod
-    def poll(self, context):
-        return (context.object and context.object.type == 'ARMATURE')
-
-    def execute(self, context):
-        if self.problems:
-            return{'FINISHED'}
-
-        try:
-            loadRetargetSimplify(context, self.properties.filepath)
-        except MocapError:
-            bpy.ops.mcp.error('INVOKE_DEFAULT')
-        return{'FINISHED'}
-
-    def invoke(self, context, event):
-        return problemFreeFileSelect(self, context)
-
-    def draw(self, context):
-        drawObjectProblems(self)
-
-
-class MCP_OT_ClearTempProps(bpy.types.Operator):
-    bl_idname = "mcp.clear_temp_props"
-    bl_label = "Clear Temporary Properties"
-    bl_description = "Clear properties used by MakeWalk. Animation editing may fail after this."
-    bl_options = {'UNDO'}
-
-    def execute(self, context):
-        try:
-            clearMcpProps(context.object)
-        except MocapError:
-            bpy.ops.mcp.error('INVOKE_DEFAULT')
-        return{'FINISHED'}
-
-#----------------------------------------------------------
-#   Initialize
-#----------------------------------------------------------
-
-classes = [
-    MCP_OT_RetargetMhx,
-    MCP_OT_LoadAndRetarget,
-    MCP_OT_ClearTempProps,
-]
-
-def initialize():
-    for cls in classes:
-        bpy.utils.register_class(cls)
-
-
-def uninitialize():
-    for cls in classes:
-        bpy.utils.unregister_class(cls)

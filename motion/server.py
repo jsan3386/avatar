@@ -12,7 +12,11 @@ import numpy as np
 import time
 import cv2
 import tensorflow as tf
+import math
+
+#sys.path.insert(1, '/Users/jsanchez/Software/gitprojects/avatar/motion/net_models/cpm_pose')
 from net_models.cpm_pose import cpm_body_slim
+#import cpm_body_slim
 
 context = zmq.Context()
 socket = context.socket(zmq.PUB)
@@ -23,8 +27,10 @@ input_size = 368
 hmap_size = 46
 joints = 14
 cmap_radius = 21
+stages = 6
 #model_path = "%s/motion/net_models/cpm_pose" % avt_path
-model_path = "/home/jsanchez/Software/gitprojects/avatar/motion/net_models/cpm_pose/cpm_body.pkl"
+#model_path = "/home/jsanchez/Software/gitprojects/avatar/motion/net_models/cpm_pose/cpm_body.pkl"
+model_path = "/Users/jsanchez/Software/gitprojects/avatar/motion/net_models/cpm_pose/cpm_body.pkl"
 
 # Set color for each finger
 joint_color_code = [[139, 53, 255],
@@ -127,6 +133,16 @@ def read_image(oriImg, boxsize):
                      int(img_w / 2 - boxsize / 2):int(img_w / 2 + boxsize / 2), :]
     return output_img
 
+# Compute gaussian kernel for input image
+def gaussian_img(img_height, img_width, c_x, c_y, variance):
+    gaussian_map = np.zeros((img_height, img_width))
+    for x_p in range(img_width):
+        for y_p in range(img_height):
+            dist_sq = (x_p - c_x) * (x_p - c_x) + \
+                      (y_p - c_y) * (y_p - c_y)
+            exponent = dist_sq / 2.0 / variance / variance
+            gaussian_map[y_p, x_p] = np.exp(-exponent)
+    return gaussian_map
 
 if __name__ == "__main__":
 
@@ -152,7 +168,7 @@ if __name__ == "__main__":
         sess.run(tf.global_variables_initializer())
         model.load_weights_from_file(model_path, sess, False)
 
-        test_center_map = cpm_utils.gaussian_img(input_size,
+        test_center_map = gaussian_img(input_size,
                                                  input_size,
                                                  input_size / 2,
                                                  input_size / 2,

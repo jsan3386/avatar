@@ -50,7 +50,8 @@ sys.path.append(avt_path + "/body")
 sys.path.append(avt_path + "/dressing")
 sys.path.append(avt_path + "/dressing/materials")
 sys.path.append(avt_path + "/motion")
-
+sys.path.append(avt_path + "/motion/net_models/cpm_pose")
+sys.path.append(avt_path + "/motion/retarget_motion")
 
 #import load as load
 import zmq
@@ -73,6 +74,12 @@ importlib.reload(movement_280)
 
 import bvh_utils
 importlib.reload(bvh_utils)
+
+import retarget
+importlib.reload(retarget)
+
+import load
+importlib.reload(load)
 
 from bpy_extras.io_utils import axis_conversion
 
@@ -510,25 +517,74 @@ class AVATAR_OT_LoadBVH (bpy.types.Operator):
         scn = context.scene
         obj = context.active_object
         #
-        reference_body = "%s/body/Reference.bvh" % avt_path
-        file_bone_corresp = "%s/motion/bones/avt_corrsp_01.txt" % avt_path
+        mAvt.bvh_offset = obj.bvh_offset
+        mAvt.bvh_start_origin = obj.bvh_start_origin
+
+        print("VALUES")
+        print(mAvt.bvh_offset)
+        print(mAvt.bvh_start_origin)
+
+        arm2 = mAvt.skel
+        mesh_arm2 = mAvt.body
+        original_position = []
+        rest_pose_3D = []
+        
+        bones = ["Hips","LHipJoint","LeftUpLeg","LeftLeg","LeftFoot","LeftToeBase","LowerBack","Spine","Spine1","LeftShoulder","LeftArm","LeftForeArm","LeftHand","LThumb","LeftFingerBase","LeftHandFinger1","Neck","Neck1","Head","RightShoulder","RightArm","RightForeArm","RightHand","RThumb","RightFingerBase","RightHandFinger1","RHipJoint","RightUpLeg","RightLeg","RightFoot","RightToeBase"]        
+            
+        for i in range(len(bones)):
+            bone = bones[i]
+            matrix = arm2.pose.bones[bone].matrix
+            original_position.append(matrix)
+            
         file_path = self.filepath 
+        
+        initial_quaternion = Quaternion((1,0,0,0))
+        
+        extra = 0 #This variable is the angle to change the orientation of the motion.
 
-        bvh_nodes, bvh_frame_time, bvh_frame_count = bvh_utils.read_bvh(context, file_path) 
-        avt_nodes, _, _ = bvh_utils.read_bvh(context, reference_body)
-
-        bvh_name = bpy.path.display_name_from_filepath(file_path)
-        global_matrix = axis_conversion(from_forward='-Z', from_up='Y').to_4x4()        
-        bones_eq = bvh_utils.bone_equivalence(file_bone_corresp)
-
-        bvh_utils.transfer_motion(avt_nodes, bvh_nodes, mAvt.skel, mAvt.armature, bones_eq, global_matrix)
-#        bvh_utils.bvh_node_dict2armature(context, bvh_name, bvh_nodes, bvh_frame_time, mAvt.armature, mAvt.skel, 
-#                                         global_matrix=global_matrix)
-#        print(bvh_nodes)
-        print(bvh_frame_time)
-        print(bvh_frame_count)
+        retarget.loadRetargetSimplify(context,file_path,original_position,mAvt.bvh_offset,extra,mAvt.bvh_start_origin) 
 
         return {'FINISHED'}
+
+
+
+# class AVATAR_OT_LoadBVH (bpy.types.Operator):
+    
+#     bl_idname = "avt.load_bvh"
+#     bl_label = "Load BVH"
+#     bl_description = "Transfer motion to human model"
+
+#     filepath = bpy.props.StringProperty(subtype="FILE_PATH") 
+
+#     def invoke(self, context, event):
+#         bpy.context.window_manager.fileselect_add(self)
+#         return {'RUNNING_MODAL'}
+
+#     def execute(self, context):
+#         global avt_path
+#         global mAvt
+#         scn = context.scene
+#         obj = context.active_object
+#         #
+#         reference_body = "%s/body/Reference.bvh" % avt_path
+#         file_bone_corresp = "%s/motion/bones/avt_corrsp_01.txt" % avt_path
+#         file_path = self.filepath 
+
+#         bvh_nodes, bvh_frame_time, bvh_frame_count = bvh_utils.read_bvh(context, file_path) 
+#         avt_nodes, _, _ = bvh_utils.read_bvh(context, reference_body)
+
+#         bvh_name = bpy.path.display_name_from_filepath(file_path)
+#         global_matrix = axis_conversion(from_forward='-Z', from_up='Y').to_4x4()        
+#         bones_eq = bvh_utils.bone_equivalence(file_bone_corresp)
+
+#         bvh_utils.transfer_motion(avt_nodes, bvh_nodes, mAvt.skel, mAvt.armature, bones_eq, global_matrix)
+# #        bvh_utils.bvh_node_dict2armature(context, bvh_name, bvh_nodes, bvh_frame_time, mAvt.armature, mAvt.skel, 
+# #                                         global_matrix=global_matrix)
+# #        print(bvh_nodes)
+#         print(bvh_frame_time)
+#         print(bvh_frame_count)
+
+#         return {'FINISHED'}
 
 class AVATAR_PT_MotionPanel(bpy.types.Panel):
     
@@ -548,6 +604,9 @@ class AVATAR_PT_MotionPanel(bpy.types.Panel):
     bpy.types.WindowManager.write_timeline = BoolProperty(name = "wTimeline", description="Start at origin", default = False)
     bpy.types.WindowManager.start_origin = BoolProperty(name = "sOrigin", description="Start at origin", default = False)
 
+    bpy.types.Object.bvh_offset = IntProperty(name = "Offset", description="Start motion offset", default = 0, min = 0, max = 250)
+    bpy.types.Object.bvh_start_origin = BoolProperty(name = "Origin", description="Start at origin", default = False)
+
 
     def draw(self, context):
         layout = self.layout
@@ -564,7 +623,8 @@ class AVATAR_PT_MotionPanel(bpy.types.Panel):
         layout.operator("avt.set_rest_pose", text="Reset pose")
 #        layout.prop(wm, "write_bvh", text="Write BVH file")
         layout.operator("avt.load_bvh", text="Load BVH")
-
+        layout.prop(obj, "bvh_offset", text="Motion offset")
+        layout.prop(obj, "bvh_start_origin", text="Start origin")
 
         if not wm.socket_connected:
             return

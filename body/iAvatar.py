@@ -33,6 +33,8 @@ class Avatar:
         self.write_timeline = False
         self.start_origin = False
         self.trans = [0, 0, 0] # translation vector to start avatar in origin
+        self.bvh_start_origin = False
+        self.bvh_offset = 0
 
         # Parameters needed to deform clothes 
         self.body_kdtree = None
