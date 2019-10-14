@@ -113,7 +113,7 @@ Frames = 3
 
 Epsilon = 1e-5
 
-def readBvhFile(context, filepath, scn, scan, original_position,frame_start,extra,origin):
+def readBvhFile(context, filepath, scn, scan, original_position,frame_start,origin):
     props.ensureInited(context)
     setCategory("Load Bvh File")
     scale = scn.McpBvhScale
@@ -211,7 +211,7 @@ def readBvhFile(context, filepath, scn, scan, original_position,frame_start,extr
                 raise MocapError("Did not expect %s" % words[0])
         elif status == Motion:
             if key == 'FRAMES:':
-                nFrames = int(words[1])
+                nFrames = int(words[1]) + frame_start
             elif key == 'FRAME' and words[1].upper() == 'TIME:':
                 frameTime = float(words[2])
                 frameFactor = int(1.0/(scn.render.fps*frameTime) + 0.49)
@@ -248,7 +248,7 @@ def readBvhFile(context, filepath, scn, scan, original_position,frame_start,extr
                                     mat = node.inverse @ flipMatrix @ mats[0] @ mats[1] @ mats[2] @ flipInv @ node.matrix
                 start_rotation = mat
                 translation_vector = vec
-                addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector,start_rotation,extra,origin)
+                addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector,start_rotation,origin)
                 showProgress(frameno, frame, nFrames, step=200)
                 frameno += 1
             frame += 1
@@ -271,7 +271,7 @@ def readBvhFile(context, filepath, scn, scan, original_position,frame_start,extr
 #    addFrame(words, frame, nodes, pbones, scale, flipMatrix):
 #
 
-def addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector, start_rotation,extra,origin):
+def addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector, start_rotation,origin):
     m = 0
     first = True
     flipInv = flipMatrix.inverted()

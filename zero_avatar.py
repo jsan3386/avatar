@@ -135,7 +135,6 @@ def update_weights (self, context):
     mAvt.val_hips = - self.val_hips
     mAvt.val_armslegs = self.val_limbs
     mAvt.val_weight = - self.val_weight
-    mAvt.val_muscle = - self.val_muscle
     mAvt.val_strength = self.val_strength
 
     mAvt.refresh_shape()
@@ -215,7 +214,6 @@ class AVATAR_OT_ResetParams(bpy.types.Operator):
         mAvt.val_hips = self.val_hips = 0.0
         mAvt.val_armslegs = self.val_limbs = 0.0
         mAvt.val_weight = self.val_weight = 0.0
-        mAvt.val_muscle = self.val_muscle = 0.0
         mAvt.val_strength = self.val_strength = 0.0
 
         mAvt.refresh_shape()
@@ -237,13 +235,18 @@ class AVATAR_PT_LoadPanel(bpy.types.Panel):
     bl_region_type = "UI"
     bl_category = "Avatar"
 
-    bpy.types.Object.val_breast = FloatProperty(name="Breast Size", description="Breasts Size", default=0, min=-0.2, max=1.0, precision=2, update=update_weights)
-    bpy.types.Object.val_torso = FloatProperty(name="Shoulders Fat", description="Shoulders Fat", default=0, min=-0.3, max=0.3, precision=2, update=update_weights)
-    bpy.types.Object.val_limbs = FloatProperty(name="Limbs Fat", description="Limbs Fat", default=0, min=-0.8, max=1.0, precision=2, update=update_weights)
-    bpy.types.Object.val_hips = FloatProperty(name="Hip Fat", description="Hips Fat", default=0, min=-0.5, max=1.0, precision=2, update=update_weights)
-    bpy.types.Object.val_weight = FloatProperty(name="Weight", description="Overall Weight", default=0, min=-1.0, max=1.0, precision=2, update=update_weights)
-    bpy.types.Object.val_muscle = FloatProperty(name="Musculature", description="Musculature", default=0, min=-1.0, max=0.3, precision=2, update=update_weights)
-    bpy.types.Object.val_strength = FloatProperty(name="Strength", description="Body Strength", default=0, min=-0.5, max=0.5, precision=2, update=update_weights)
+    bpy.types.Object.val_breast = FloatProperty(name="Breast Size", description="Breasts Size", default=0, 
+                                                min=0.0, max=1.0, precision=2, update=update_weights)
+    bpy.types.Object.val_torso = FloatProperty(name="Shoulders Fat", description="Shoulders Fat", default=0, 
+                                               min=-0.3, max=0.3, precision=2, update=update_weights)
+    bpy.types.Object.val_limbs = FloatProperty(name="Limbs Fat", description="Limbs Fat", default=0, 
+                                               min=0.0, max=1.0, precision=2, update=update_weights)
+    bpy.types.Object.val_hips = FloatProperty(name="Hips Fat", description="Hips Fat", default=0, 
+                                              min=0.0, max=1.0, precision=2, update=update_weights)
+    bpy.types.Object.val_weight = FloatProperty(name="Weight", description="Weight", default=0, 
+                                                min=-0.5, max=1.5, precision=2, update=update_weights)
+    bpy.types.Object.val_strength = FloatProperty(name="Strength", description="Body Strength", default=0, 
+                                                  min=0.0, max=0.5, precision=2, update=update_weights)
     
 
     def draw(self, context):
@@ -263,7 +266,6 @@ class AVATAR_PT_LoadPanel(bpy.types.Panel):
         layout.prop(obj, "val_limbs")
         layout.prop(obj, "val_hips")
         layout.prop(obj, "val_weight")
-        layout.prop(obj, "val_muscle")
         layout.prop(obj, "val_strength")
         layout.separator()
         row = layout.row()
@@ -538,11 +540,7 @@ class AVATAR_OT_LoadBVH (bpy.types.Operator):
             
         file_path = self.filepath 
         
-        initial_quaternion = Quaternion((1,0,0,0))
-        
-        extra = 0 #This variable is the angle to change the orientation of the motion.
-
-        retarget.loadRetargetSimplify(context,file_path,original_position,mAvt.bvh_offset,extra,mAvt.bvh_start_origin) 
+        retarget.loadRetargetSimplify(context,file_path,original_position,mAvt.bvh_offset,mAvt.bvh_start_origin) 
 
         return {'FINISHED'}
 

@@ -50,11 +50,10 @@ class Avatar:
 
         # weights and means to control shape
         self.val_breast = self.val_torso = self.val_hips = 0.0
-        self.val_armslegs = self.val_weight = self.val_muscle = self.val_strength = 0.0
+        self.val_armslegs = self.val_weight = self.val_strength = 0.0
 
-        self.vertices_breast, self.vertices_torso = [], []
+        self.vertices_breast, self.vertices_torso, self.vertices_strength = [], [], []
         self.vertices_armslegs, self.vertices_hips, self.vertices_weight = [], [], []
-        self.vertices_muscle, self.vertices_strength = [], []
 
         self.vertices_model = []
         
@@ -89,17 +88,11 @@ class Avatar:
         pca_vec = weights - mean_model
         self.vertices_hips = shape_utils.compose_vertices_eigenmat(pca_vec)
 
-        # load weights/mean weight
-        file_eigen_weights = "%s/body/PCA/Eigenbodies/parts/weight/eigenbody0.txt" % (self.addon_path)
-        weights = shape_utils.read_eigenbody(file_eigen_weights)
-        pca_vec = weights - mean_model
-        self.vertices_weight = shape_utils.compose_vertices_eigenmat(pca_vec)
-
-        # load weights/mean muscle
+        # load weights/mean muscle: we change muscle by weight since deformation it looks more like weight
         file_eigen_weights = "%s/body/PCA/Eigenbodies/parts/muscle/eigenbody0.txt" % (self.addon_path)
         weights = shape_utils.read_eigenbody(file_eigen_weights)
         pca_vec = weights - mean_model
-        self.vertices_muscle = shape_utils.compose_vertices_eigenmat(pca_vec)
+        self.vertices_weight = shape_utils.compose_vertices_eigenmat(pca_vec)
 
         # load weights/mean strenght
         file_eigen_weights = "%s/body/PCA/Eigenbodies/parts/strength/eigenbody0.txt" % (self.addon_path)
@@ -116,7 +109,6 @@ class Avatar:
                                   self.vertices_breast[i][0] * self.val_breast + 
                                   self.vertices_armslegs[i][0] * self.val_armslegs + 
                                   self.vertices_hips[i][0] * self.val_hips + 
-                                  self.vertices_muscle[i][0] * self.val_muscle + 
                                   self.vertices_strength[i][0] * self.val_strength + 
                                   self.vertices_torso[i][0] * self.val_torso + 
                                   self.vertices_model[i][0],
@@ -125,7 +117,6 @@ class Avatar:
                                   self.vertices_breast[i][1] * self.val_breast +
                                   self.vertices_armslegs[i][1] * self.val_armslegs + 
                                   self.vertices_hips[i][1] * self.val_hips + 
-                                  self.vertices_muscle[i][1] * self.val_muscle + 
                                   self.vertices_strength[i][1] * self.val_strength + 
                                   self.vertices_torso[i][1] * self.val_torso + 
                                   self.vertices_model[i][1],
@@ -134,7 +125,6 @@ class Avatar:
                                   self.vertices_breast[i][2] * self.val_breast + 
                                   self.vertices_armslegs[i][2] * self.val_armslegs + 
                                   self.vertices_hips[i][2] * self.val_hips + 
-                                  self.vertices_muscle[i][2] * self.val_muscle + 
                                   self.vertices_strength[i][2] * self.val_strength + 
                                   self.vertices_torso[i][2] * self.val_torso + 
                                   self.vertices_model[i][2]
