@@ -279,6 +279,7 @@ def calculate_rotations(skel_basis, goal_pts):
 
     rotation = []
 
+#    for x in range(0, 13):
     for x in range(0, 13):
 
         bpy.context.view_layer.update()
@@ -293,6 +294,8 @@ def calculate_rotations(skel_basis, goal_pts):
         q2 = compute_rotation(poseBone, start_point_bone, end_point_bone, goal_point_end_bone)
         poseBone.rotation_mode = "QUATERNION"
         poseBone.rotation_quaternion = q2
+
+
 
         # if (write_bvh):
         #     # convert rotation to bvh format
