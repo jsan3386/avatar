@@ -103,12 +103,60 @@ def compute_rotation(poseBone, pt0, pt1, pt2):
 
     return q
 
+def rotate_point(point, matrix, rot_center):
+    # move point to origin
+    v1 = point - rot_center
+    v2 = matrix @ v1
+    v3 = v2 + rot_center
+    return v3
 
 def get_bone_tail_position(obj, bone_name):
     return (obj.matrix_world @ Matrix.Translation(obj.pose.bones[bone_name].tail)).to_translation()
 
 def get_bone_head_position(obj, bone_name):
     return (obj.matrix_world @ Matrix.Translation(obj.pose.bones[bone_name].head)).to_translation()
+
+def set_point_bvh_nodes(bvh_nodes, node_name, pt):
+
+    for node in bvh_nodes:
+        if node.name == node_name:
+            bvh_node.rest_tail_world = pt
+
+def get_bvh_node_val(bvh_nodes, name, btype):
+
+    value = []
+    for bvh_node in bvh_nodes:
+        if bvh_node.name == name :
+            if btype == 'HEAD' :
+                value = bvh_node.rest_head_world
+            elif btype == 'TAIL' :
+                value = bvh_node.rest_tail_world
+            else:
+                value = [0,0,0]
+                print("Error evaluating bvh nodes")
+    return value
+
+def get_skeleton_bvh_joints(bvh_nodes):
+
+    jnts = []
+
+    jnts.append(get_bvh_node_val(bvh_nodes, "Head", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "Neck", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "RightArm", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "RightForeArm", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "RightHand", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "LeftArm", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "LeftForeArm", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "LeftHand", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "RightUpLeg", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "RightLeg", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "RightFoot", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "LeftUpLeg", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "LeftLeg", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "LeftFoot", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "Hips", "HEAD"))
+
+    return jnts
 
 def get_skeleton_joints (obj):
 
@@ -278,6 +326,52 @@ def set_pose (skel_basis):
     poseBone.rotation_quaternion = Quaternion((0.9999021291732788, -0.013957100920379162, 5.3658322229921396e-08, 0.0009937164140865207))
 
 
+def calculate_rotations(bvh_nodes, goal_pts):
+
+    # Use bvh nodes structure so we don't need to update scene to see changes (very slow)
+    rotations = []
+
+    ref_arm = get_skel_bvh_joints(bvh_nodes)
+    ref_skel = np.array(ref_arm)
+
+    A = np.mat((ref_skel[14,:], ref_skel[8,:], ref_skel[11,:], ref_skel[1,:]))
+    B = np.mat((goal_pts[14,:], goal_pts[8,:], goal_pts[11,:], goal_pts[1,:]))
+    R, T = rigid_transform_3D(A,B)
+
+    mR = Matrix([[R[0,0],R[0,1],R[0,2]], [R[1,0],R[1,1],R[1,2]], [R[2,0],R[2,1],R[2,2]]])
+    vT = Vector(T)
+
+    # move arm2 to orient with pts_skel
+    pts_r1 = []
+    for vec in ref_skel: pts_r1.append(mR @ Vector(vec))
+    pts_tr1 = []
+    for vec in pts_r1: pts_tr1.append(vT+Vector(vec))
+    skel_coords = pts_tr1
+
+
+    bone_name = ["Neck","LHipJoint","LeftUpLeg", "LeftLeg", "RHipJoint", "RightUpLeg", "RightLeg", 
+                 "LeftShoulder", "LeftArm", "LeftForeArm", "RightShoulder", "RightArm", "RightForeArm"]
+    begin = [1, 14, 11, 12, 14, 8, 9, 1, 5, 6, 1, 2, 3]
+    end = [0, 11, 12, 13, 8, 9, 10, 5, 6, 7, 2, 3, 4]
+
+    for x in range(0, 13):
+
+        skel_coords = get_skel_bvh_joints(bvh_nodes)
+
+        start_point_bone = Vector(skel_coords[begin[x]])
+        end_point_bone = Vector(skel_coords[end[x]])
+        goal_point_end_bone = Vector(goal_pts[end[x]])
+
+        # posebone only needed for matrix: need to save this in another structure
+        q2 = compute_rotation(poseBone, start_point_bone, end_point_bone, goal_point_end_bone)
+
+        # TODO: Update bvh_nodes?
+        mat_rot = q2.to_matrix()
+        new_point = rotate_point(end_point_bone, mat_rot, start_point_bone)
+        bname = bone_name[x]
+        set_point_bvh_nodes(bvh_nodes, bname, new_point)
+
+
 def calculate_rotations(skel_basis, goal_pts):
 
     list_quaternions = []
@@ -319,7 +413,8 @@ def calculate_rotations(skel_basis, goal_pts):
 
 
     #compute other rotations[
-    bone_name = ["Neck","LHipJoint","LeftUpLeg", "LeftLeg", "RHipJoint", "RightUpLeg", "RightLeg", "LeftShoulder", "LeftArm", "LeftForeArm", "RightShoulder", "RightArm", "RightForeArm"]
+    bone_name = ["Neck","LHipJoint","LeftUpLeg", "LeftLeg", "RHipJoint", "RightUpLeg", "RightLeg", 
+                 "LeftShoulder", "LeftArm", "LeftForeArm", "RightShoulder", "RightArm", "RightForeArm"]
     begin = [1, 14, 11, 12, 14, 8, 9, 1, 5, 6, 1, 2, 3]
     end = [0, 11, 12, 13, 8, 9, 10, 5, 6, 7, 2, 3, 4]
 

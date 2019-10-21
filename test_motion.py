@@ -46,6 +46,11 @@ bvh_file = "/Users/jsanchez/Software/gitprojects/avatar/body/Reference.bvh"
 # q3 = q1 @ q2
 # print(q3)
 
+list_cpm_bones = ["Hips", "LeftUpLeg", "LeftLeg", "LeftFoot", "RightUpLeg", "RightLeg", "RightFoot",
+                  "LeftArm", "LeftForeArm", "LeftHand", "RightArm", "RightForeArm", "RightHand",
+                  "Neck", "Head"]
+
+
 #for f in point_files:
 for f in range(1,2):
 
@@ -74,11 +79,21 @@ for f in range(1,2):
     bvh_nodes, _, _ = bvh_utils.read_bvh(bpy.context, bvh_file)
     bvh_nodes_list = bvh_utils.sorted_nodes(bvh_nodes)
 
-    for node in bvh_nodes_list:
-        print(node.name)
-        print(node.rest_head_world)
-        print(node.rest_tail_world)
-        print(node.children)
+    print("BVH JOINT NODES")
+    jnts_bvh = movement_280.get_skeleton_bvh_joints(bvh_nodes_list)
+    print(jnts_bvh)
+    print("JOINT NODES")
+    jnts = movement_280.get_skeleton_joints(skel)
+    print(jnts)
+
+
+    # get rest pose nodes
+
+    # for node in bvh_nodes_list:
+    #     print(node.name)
+    #     print(node.rest_head_world)
+    #     print(node.rest_tail_world)
+    #     print(node.children)
 
 #    bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
