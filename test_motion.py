@@ -46,10 +46,20 @@ bvh_file = "/Users/jsanchez/Software/gitprojects/avatar/body/Reference.bvh"
 # q3 = q1 @ q2
 # print(q3)
 
-list_cpm_bones = ["Hips", "LeftUpLeg", "LeftLeg", "LeftFoot", "RightUpLeg", "RightLeg", "RightFoot",
-                  "LeftArm", "LeftForeArm", "LeftHand", "RightArm", "RightForeArm", "RightHand",
-                  "Neck", "Head"]
+# list_cpm_bones = ["Hips", "LeftUpLeg", "LeftLeg", "LeftFoot", "RightUpLeg", "RightLeg", "RightFoot",
+#                   "LeftArm", "LeftForeArm", "LeftHand", "RightArm", "RightForeArm", "RightHand",
+#                   "Neck", "Head"]
 
+bone_name = ["Neck","LHipJoint","LeftUpLeg", "LeftLeg", "RHipJoint", "RightUpLeg", "RightLeg", 
+             "LeftShoulder", "LeftArm", "LeftForeArm", "RightShoulder", "RightArm", "RightForeArm"]
+
+list_pb_matrices = []
+
+for bone in bone_name:
+    pb = skel.pose.bones[bone]
+    list_pb_matrices.append(pb.matrix)
+
+print(list_pb_matrices)
 
 #for f in point_files:
 for f in range(1,2):
@@ -74,7 +84,7 @@ for f in range(1,2):
     # print(loc)
     # print(list_q)
 
-    movement_280.set_pose(skel)
+#    movement_280.set_pose(skel)
 
     bvh_nodes, _, _ = bvh_utils.read_bvh(bpy.context, bvh_file)
     bvh_nodes_list = bvh_utils.sorted_nodes(bvh_nodes)
@@ -85,7 +95,9 @@ for f in range(1,2):
     print("JOINT NODES")
     jnts = movement_280.get_skeleton_joints(skel)
     print(jnts)
-
+    hips_loc, hips_rot, rotations = movement_280.calculate_rotations2(bvh_nodes_list, list_pb_matrices, pts_skel)
+    print(rotations)
+    movement_280.apply_rotations(skel, hips_loc, hips_rot, rotations)
 
     # get rest pose nodes
 
