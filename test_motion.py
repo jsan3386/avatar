@@ -59,7 +59,12 @@ for bone in bone_name:
     pb = skel.pose.bones[bone]
     list_pb_matrices.append(pb.matrix)
 
-print(list_pb_matrices)
+#print(list_pb_matrices)
+
+working = 1
+
+bvh_nodes, _, _ = bvh_utils.read_bvh(bpy.context, bvh_file)
+bvh_nodes_list = bvh_utils.sorted_nodes(bvh_nodes)
 
 #for f in point_files:
 for f in range(1,2):
@@ -72,32 +77,28 @@ for f in range(1,2):
 
     M_mb = movement_280.get_trans_mat_blend_to_matlab()
     pts_skel = np.matmul(pts_skel, M_mb)
-
     
     # poseBone.rotation_mode = "QUATERNION"
     # poseBone.rotation_quaternion = q2
 
+    if working:
+        print("WORKING")
+        # set skeleton rest position: MAYBE MOVE ALL THIS TO SERVER.PY IN ORDER TO MAKE FASTER UPDATES
+        movement_280.set_rest_pose(skel, skel_ref, list_bones)
+        loc, list_q = movement_280.calculate_rotations(skel, pts_skel)
 
-    # set skeleton rest position: MAYBE MOVE ALL THIS TO SERVER.PY IN ORDER TO MAKE FASTER UPDATES
-    # movement_280.set_rest_pose(skel, skel_ref, list_bones)
-    # loc, list_q = movement_280.calculate_rotations(skel, pts_skel)
-    # print(loc)
-    # print(list_q)
-
-#    movement_280.set_pose(skel)
-
-    bvh_nodes, _, _ = bvh_utils.read_bvh(bpy.context, bvh_file)
-    bvh_nodes_list = bvh_utils.sorted_nodes(bvh_nodes)
-
-    print("BVH JOINT NODES")
-    jnts_bvh = movement_280.get_skeleton_bvh_joints(bvh_nodes_list)
-    print(jnts_bvh)
-    print("JOINT NODES")
-    jnts = movement_280.get_skeleton_joints(skel)
-    print(jnts)
-    hips_loc, hips_rot, rotations = movement_280.calculate_rotations2(bvh_nodes_list, list_pb_matrices, pts_skel)
-    print(rotations)
-    movement_280.apply_rotations(skel, hips_loc, hips_rot, rotations)
+    else:
+        print("FAILING")
+        # Try to implement faster way
+        # print("BVH JOINT NODES")
+        # jnts_bvh = movement_280.get_skeleton_bvh_joints(bvh_nodes_list)
+        # print(jnts_bvh)
+        # print("JOINT NODES")
+        # jnts = movement_280.get_skeleton_joints(skel)
+        # print(jnts)
+        hips_loc, hips_rot, rotations = movement_280.calculate_rotations2(bvh_nodes_list, list_pb_matrices, pts_skel)
+        #print(rotations)
+        movement_280.apply_rotations(skel, hips_loc, hips_rot, rotations)
 
     # get rest pose nodes
 
@@ -107,6 +108,6 @@ for f in range(1,2):
     #     print(node.rest_tail_world)
     #     print(node.children)
 
-#    bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
+    bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
 #    time.sleep(max(1./30 - (time.time() - start), 0))
