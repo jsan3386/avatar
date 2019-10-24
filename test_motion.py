@@ -8,7 +8,7 @@ import numpy as np
 
 from mathutils import Vector, Matrix, Quaternion
 
-sys.path.append("/Users/jsanchez/Software/gitprojects/avatar/motion")
+sys.path.append("/home/jsanchez/Software/gitprojects/avatar/motion")
 
 import movement_280
 importlib.reload(movement_280)
@@ -16,7 +16,7 @@ importlib.reload(movement_280)
 import bvh_utils
 importlib.reload(bvh_utils)
 
-frames_folder = "/Users/jsanchez/Software/gitprojects/avatar/motion/frames"
+frames_folder = "/home/jsanchez/Software/gitprojects/avatar/motion/frames"
 
 skel = bpy.data.objects["Standard"]
 
@@ -36,7 +36,7 @@ point_files.sort()
         
 num_packg = 0
 
-bvh_file = "/Users/jsanchez/Software/gitprojects/avatar/body/Reference.bvh"
+bvh_file = "/home/jsanchez/Software/gitprojects/avatar/body/Reference.bvh"
 
 # poseBone = skel.pose.bones["Neck"]
 # print(poseBone.rotation_quaternion)
@@ -61,7 +61,7 @@ for bone in bone_name:
 
 #print(list_pb_matrices)
 
-working = 1
+working = 0
 
 bvh_nodes, _, _ = bvh_utils.read_bvh(bpy.context, bvh_file)
 bvh_nodes_list = bvh_utils.sorted_nodes(bvh_nodes)
@@ -102,11 +102,12 @@ for f in range(1,2):
 
     # get rest pose nodes
 
-    # for node in bvh_nodes_list:
-    #     print(node.name)
-    #     print(node.rest_head_world)
-    #     print(node.rest_tail_world)
-    #     print(node.children)
+#    for node in bvh_nodes_list:
+#        print("OHOHO")
+#        print(node.name)
+#        print(node.rest_head_world)
+#        print(node.rest_tail_world)
+#        print(node.children)
 
     bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
 
