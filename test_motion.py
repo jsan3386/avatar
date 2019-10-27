@@ -8,7 +8,7 @@ import numpy as np
 
 from mathutils import Vector, Matrix, Quaternion
 
-sys.path.append("/home/jsanchez/Software/gitprojects/avatar/motion")
+sys.path.append("/Users/jsanchez/Software/gitprojects/avatar/motion")
 
 import movement_280
 importlib.reload(movement_280)
@@ -16,7 +16,7 @@ importlib.reload(movement_280)
 import bvh_utils
 importlib.reload(bvh_utils)
 
-frames_folder = "/home/jsanchez/Software/gitprojects/avatar/motion/frames"
+frames_folder = "/Users/jsanchez/Software/gitprojects/avatar/motion/frames"
 
 skel = bpy.data.objects["Standard"]
 
@@ -36,7 +36,7 @@ point_files.sort()
         
 num_packg = 0
 
-bvh_file = "/home/jsanchez/Software/gitprojects/avatar/body/Reference.bvh"
+bvh_file = "/Users/jsanchez/Software/gitprojects/avatar/body/Reference.bvh"
 
 # poseBone = skel.pose.bones["Neck"]
 # print(poseBone.rotation_quaternion)
@@ -53,7 +53,12 @@ bvh_file = "/home/jsanchez/Software/gitprojects/avatar/body/Reference.bvh"
 bone_name = ["Neck","LHipJoint","LeftUpLeg", "LeftLeg", "RHipJoint", "RightUpLeg", "RightLeg", 
              "LeftShoulder", "LeftArm", "LeftForeArm", "RightShoulder", "RightArm", "RightForeArm"]
 
+poseBone = skel.pose.bones["Hips"]
+boneRefPoseMtx = poseBone.bone.matrix_local.copy()
+
 list_pb_matrices = []
+
+list_pb_matrices.append(boneRefPoseMtx)
 
 for bone in bone_name:
     pb = skel.pose.bones[bone]
@@ -65,6 +70,17 @@ working = 0
 
 bvh_nodes, _, _ = bvh_utils.read_bvh(bpy.context, bvh_file)
 bvh_nodes_list = bvh_utils.sorted_nodes(bvh_nodes)
+
+bvh_utils.set_bone_matrices(skel, bvh_nodes_list)
+
+for node in bvh_nodes_list:
+    print("OHOHO")
+    print(node.name)
+    print(node.rest_head_world)
+    print(node.rest_tail_world)
+    print(node.children)
+    print(node.matrix)
+
 
 #for f in point_files:
 for f in range(1,2):
@@ -80,6 +96,13 @@ for f in range(1,2):
     
     # poseBone.rotation_mode = "QUATERNION"
     # poseBone.rotation_quaternion = q2
+    poseBone = skel.pose.bones["Hips"]
+    mat1 = poseBone.bone.matrix
+    mat2 = poseBone.bone.matrix_local
+
+    m_world = skel.matrix_world
+#    print(m_world)
+
 
     if working:
         print("WORKING")
@@ -87,18 +110,45 @@ for f in range(1,2):
         movement_280.set_rest_pose(skel, skel_ref, list_bones)
         loc, list_q = movement_280.calculate_rotations(skel, pts_skel)
 
+        # print("hips matrices")
+        # poseBone = skel.pose.bones["Hips"]
+        # mat1 = poseBone.bone.matrix
+        # mat2 = poseBone.bone.matrix_local
+ 
+        # print("rotate joints")
+        # mR = Matrix([[1,0,0], [0,0,-1], [0,1,0]])
+        # poseBone.rotation_mode = "QUATERNION"
+        # rotMtx = boneRefPoseMtx.to_3x3().inverted() @ mR @ boneRefPoseMtx.to_3x3()
+        # poseBone.rotation_quaternion = rotMtx.to_quaternion()
+
+        bpy.context.view_layer.update()
+        print("joints")
+        ref_arm = movement_280.get_skeleton_joints(skel)
+        print(np.array(ref_arm))
+
+
     else:
         print("FAILING")
         # Try to implement faster way
         # print("BVH JOINT NODES")
         # jnts_bvh = movement_280.get_skeleton_bvh_joints(bvh_nodes_list)
-        # print(jnts_bvh)
+        # print(np.array(jnts_bvh))
         # print("JOINT NODES")
         # jnts = movement_280.get_skeleton_joints(skel)
-        # print(jnts)
+        # print(np.array(jnts))
         hips_loc, hips_rot, rotations = movement_280.calculate_rotations2(bvh_nodes_list, list_pb_matrices, pts_skel)
         #print(rotations)
-        movement_280.apply_rotations(skel, hips_loc, hips_rot, rotations)
+#        movement_280.apply_rotations(skel, hips_loc, hips_rot, rotations)
+
+        # # # print("bvh joints")
+        # # jnts_bvh = movement_280.get_skeleton_bvh_joints(bvh_nodes_list)
+        # # print(np.array(jnts_bvh))
+        # print("rotate jnts")
+        # rot_mat = Matrix([[1,0,0], [0,0,-1], [0,1,0]])
+        # movement_280.rotate_bvh_joint (bvh_nodes_list, rot_mat, "Hips")
+        print("bvh joints")
+        jnts_bvh = movement_280.get_skeleton_bvh_joints(bvh_nodes_list)
+        print(np.array(jnts_bvh))
 
     # get rest pose nodes
 

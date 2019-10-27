@@ -42,6 +42,7 @@ class BVH_Node:
         'index',
         # Use this for whatever you want.
         'temp',
+        'matrix',
     )
 
     _eul_order_lookup = {
@@ -65,6 +66,7 @@ class BVH_Node:
         self.rot_order = tuple(rot_order)
         self.rot_order_str = BVH_Node._eul_order_lookup[self.rot_order]
         self.index = index
+        self.matrix = None
 
         # convenience functions
         self.has_loc = channels[0] != -1 or channels[1] != -1 or channels[2] != -1
@@ -84,6 +86,12 @@ class BVH_Node:
                 *self.rest_head_world,
             )
         )
+
+def set_bone_matrices(skel, bvh_nodes):
+
+    for node in bvh_nodes:
+        pb = skel.pose.bones[node.name]
+        node.matrix = pb.matrix
 
 def sorted_nodes(bvh_nodes):
     bvh_nodes_list = list(bvh_nodes.values())
