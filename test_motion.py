@@ -8,7 +8,7 @@ import numpy as np
 
 from mathutils import Vector, Matrix, Quaternion
 
-sys.path.append("/Users/jsanchez/Software/gitprojects/avatar/motion")
+sys.path.append("/home/jsanchez/Software/gitprojects/avatar/motion")
 
 import movement_280
 importlib.reload(movement_280)
@@ -16,7 +16,7 @@ importlib.reload(movement_280)
 import bvh_utils
 importlib.reload(bvh_utils)
 
-frames_folder = "/Users/jsanchez/Software/gitprojects/avatar/motion/frames"
+frames_folder = "/home/jsanchez/Software/gitprojects/avatar/motion/frames"
 
 skel = bpy.data.objects["Standard"]
 
@@ -36,7 +36,7 @@ point_files.sort()
         
 num_packg = 0
 
-bvh_file = "/Users/jsanchez/Software/gitprojects/avatar/body/Reference.bvh"
+bvh_file = "/home/jsanchez/Software/gitprojects/avatar/body/Reference.bvh"
 
 # poseBone = skel.pose.bones["Neck"]
 # print(poseBone.rotation_quaternion)
@@ -73,13 +73,13 @@ bvh_nodes_list = bvh_utils.sorted_nodes(bvh_nodes)
 
 bvh_utils.set_bone_matrices(skel, bvh_nodes_list)
 
-for node in bvh_nodes_list:
-    print("OHOHO")
-    print(node.name)
-    print(node.rest_head_world)
-    print(node.rest_tail_world)
-    print(node.children)
-    print(node.matrix)
+# for node in bvh_nodes_list:
+#     print("OHOHO")
+#     print(node.name)
+#     print(node.rest_head_world)
+#     print(node.rest_tail_world)
+#     print(node.children)
+#     print(node.matrix)
 
 
 #for f in point_files:
@@ -122,9 +122,9 @@ for f in range(1,2):
         # poseBone.rotation_quaternion = rotMtx.to_quaternion()
 
         bpy.context.view_layer.update()
-        print("joints")
-        ref_arm = movement_280.get_skeleton_joints(skel)
-        print(np.array(ref_arm))
+        # print("joints")
+        # ref_arm = movement_280.get_skeleton_joints(skel)
+        # print(np.array(ref_arm))
 
 
     else:
@@ -146,9 +146,9 @@ for f in range(1,2):
         # print("rotate jnts")
         # rot_mat = Matrix([[1,0,0], [0,0,-1], [0,1,0]])
         # movement_280.rotate_bvh_joint (bvh_nodes_list, rot_mat, "Hips")
-        print("bvh joints")
-        jnts_bvh = movement_280.get_skeleton_bvh_joints(bvh_nodes_list)
-        print(np.array(jnts_bvh))
+        # print("bvh joints")
+        # jnts_bvh = movement_280.get_skeleton_bvh_joints(bvh_nodes_list)
+        # print(np.array(jnts_bvh))
 
     # get rest pose nodes
 
