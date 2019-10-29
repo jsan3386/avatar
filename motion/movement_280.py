@@ -187,10 +187,13 @@ def rotate_bvh_joint (bvh_nodes, matrix, name):
     # flatten list
     f_children = [val for sublist in children for val in sublist]
     # update matrix value of node name
-    t_node = get_bvh_node(bvh_nodes, name)
-    t_node.matrix = matrix @ t_node.matrix.to_3x3()
+    # if name is not "Hips":
+    #     t_node = get_bvh_node(bvh_nodes, name)
+    #     t_node.matrix = matrix @ t_node.matrix.to_4x4()
 
     for child in f_children:
+        if child == "Hips":
+            print("how this is possible")
         node = get_bvh_node(bvh_nodes, child)
         pt_head = node.rest_head_world
         pt_tail = node.rest_tail_world
@@ -201,7 +204,7 @@ def rotate_bvh_joint (bvh_nodes, matrix, name):
         node.rest_head_world = new_pt_head
         node.rest_tail_world = new_pt_tail
         # update matrix
-        node.matrix = matrix @ node.matrix.to_3x3()
+#        node.matrix = matrix @ node.matrix.to_4x4()
     # set coordinates back
     translate_bvh_nodes (bvh_nodes, rot_center)
 
