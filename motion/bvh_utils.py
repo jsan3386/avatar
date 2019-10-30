@@ -91,7 +91,7 @@ def set_bone_matrices(skel, bvh_nodes):
 
     for node in bvh_nodes:
         pb = skel.pose.bones[node.name]
-        node.matrix = pb.matrix
+        node.matrix = pb.matrix.copy()
 
 def sorted_nodes(bvh_nodes):
     bvh_nodes_list = list(bvh_nodes.values())
