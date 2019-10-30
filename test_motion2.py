@@ -17,24 +17,30 @@ pb_uple = skel.pose.bones["LeftUpLeg"]
 
 # code from : https://ipfs-sec.stackexchange.cloudflare-ipfs.com/blender/A/question/44637.html
 
-def matrix_world(armature_ob, bone_name):
-    local = armature_ob.data.bones[bone_name].matrix_local
-    basis = armature_ob.pose.bones[bone_name].matrix_basis
+def matrix_world(bvh_nodes, bone_name):
 
-    parent = armature_ob.pose.bones[bone_name].parent
+    node = movement_280.get_bvh_node(bvh_nodes, bone_name)
+
+    local = node.matrix_local
+    basis = node.matrix_basis
+
+    parent = movement_280.get_node_parent(bvh_nodes, bone_name)
     if parent == None:
         return  local @ basis
     else:
-        parent_local = armature_ob.data.bones[parent.name].matrix_local
-        return matrix_world(armature_ob, parent.name) @ (parent_local.inverted() @ local) @ basis
+        parent_local = parent.matrix_local
+        return matrix_world(bvh_nodes, parent.name) @ (parent_local.inverted() @ local) @ basis
 
 
-bvh_file = "/home/jsanchez/Software/gitprojects/avatar/body/Reference.bvh"
+bvh_file = "/Users/jsanchez/Software/gitprojects/avatar/body/Reference.bvh"
 
 bvh_nodes, _, _ = bvh_utils.read_bvh(bpy.context, bvh_file)
 bvh_nodes_list = bvh_utils.sorted_nodes(bvh_nodes)
 
 bvh_utils.set_bone_matrices(skel, bvh_nodes_list)
+
+for node in bvh_nodes_list:
+    print(node.parent)
 
 hips_pos = movement_280.get_bvh_node_val(bvh_nodes_list, "Hips", "HEAD")
 vT = Vector((-2.8643, -9.4030, 0.5685))
@@ -82,6 +88,7 @@ pb_hips.rotation_quaternion = q1
 
 bpy.context.view_layer.update()
 
+
 print("Check values 2 sides")
 
 #mat1 = movement_280.get_bvh_node_matrix(bvh_nodes_list, "Hips")
@@ -99,7 +106,7 @@ join_trans = hips_trans.to_4x4() @ q1.to_matrix().to_4x4()
 rep_mat = join_trans.inverted().to_4x4() @ skel.matrix_world @ mat_join
 print(rep_mat)
 
-mat_world = matrix_world(skel, "LHipJoint")
+mat_world = matrix_world(bvh_nodes_list, "LHipJoint")
 print(mat_world)
 
 

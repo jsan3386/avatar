@@ -131,6 +131,13 @@ def get_bvh_node (bvh_nodes, name):
             sel_node = node
     return sel_node
 
+def get_node_parent(bvh_nodes, name):
+    sel_node = []
+    for node in bvh_nodes:
+        if node.name == name:
+            sel_node = node.parent
+    return sel_node
+
 def get_bvh_node_matrix(bvh_nodes, name):
     for bvh_node in bvh_nodes:
         if bvh_node.name == name :
