@@ -189,6 +189,12 @@ def rotate_bvh_joint (bvh_nodes, matrix, name):
     rot_center = get_bvh_node_val(bvh_nodes, name, 'HEAD')
     # translate all points
     translate_bvh_nodes (bvh_nodes, -rot_center)
+
+    # # rotate node
+    # o_node = get_bvh_node(bvh_nodes, name)
+    # o_node.rest_head_world = matrix @ o_node.rest_head_world
+    # o_node.rest_tail_world = matrix @ o_node.rest_tail_world
+
     # rotate children
     children = get_children(bvh_nodes, name)
     # flatten list
@@ -197,7 +203,6 @@ def rotate_bvh_joint (bvh_nodes, matrix, name):
     # if name is not "Hips":
     #     t_node = get_bvh_node(bvh_nodes, name)
     #     t_node.matrix = matrix @ t_node.matrix.to_4x4()
-
     for child in f_children:
         if child == "Hips":
             print("how this is possible")
@@ -408,14 +413,28 @@ def set_pose (skel_basis):
     poseBone.rotation_quaternion = Quaternion((0.9999021291732788, -0.013957100920379162, 5.3658322229921396e-08, 0.0009937164140865207))
 
 
-def calculate_rotations2(bvh_nodes, list_matrices, goal_pts):
+def matrix_world(armature_ob, bone_name):
+    local = armature_ob.data.bones[bone_name].matrix_local
+    basis = armature_ob.pose.bones[bone_name].matrix_basis
 
-    # Use bvh nodes structure so we don't need to update scene to see changes (very slow)
-    rotations = []
+    parent = armature_ob.pose.bones[bone_name].parent
+    if parent == None:
+        return  local @ basis
+    else:
+        parent_local = armature_ob.data.bones[parent.name].matrix_local
+        return matrix_world(armature_ob, parent.name) @ (parent_local.inverted() @ local) @ basis
+
+def calculate_rotations2(skel_basis, bvh_nodes, goal_pts):
+
+    # we keep 2 parallel structures, blender skeleton, and bvh_nodes
+    # blender skeleton update matrices of bodies, but when reading values of skeleton are not updated
+    # only way to update is to use scene_update function which makes calculations very slow
+    # for this reason we need to update skeleton joints in a different structure
+
 
     ref_arm = get_skeleton_bvh_joints(bvh_nodes)
     ref_skel = np.array(ref_arm)
-#    print(ref_arm)
+
     hips_pos = get_bvh_node_val(bvh_nodes, "Hips", "HEAD")
 
     A = np.mat((ref_skel[14,:], ref_skel[8,:], ref_skel[11,:], ref_skel[1,:]))
@@ -432,23 +451,23 @@ def calculate_rotations2(bvh_nodes, list_matrices, goal_pts):
     for vec in pts_r1: pts_tr1.append(vT+Vector(vec))
     skel_coords = pts_tr1
 
+    poseBone = skel_basis.pose.bones["Hips"]
+    boneRefPoseMtx = poseBone.bone.matrix_local.copy()
+
     vT = Vector(getcoords(skel_coords)[-1])
-    print("BTVTVTBT")
-    print(vT)
-    print(mR)
-    # bone_translate_matrix = Matrix.Translation(vT)
-    # boneRefPoseMtx = list_matrices[0]
-    # loc = (boneRefPoseMtx.inverted() @ bone_translate_matrix).to_translation()
+    bone_translate_matrix = Matrix.Translation(vT)
+    loc = (boneRefPoseMtx.inverted() @ bone_translate_matrix).to_translation()
     # In the blender skeleton hips pivot point is in (0,0,0), therefore when we transform the 3D poinst
     # we need to accound for the real hips distance
+    poseBone.location = loc
     translate_bvh_nodes(bvh_nodes, vT - hips_pos)
 
     # rZ = Matrix([[0,1,0], [-1,0,0], [0,0,1]])
-    # rotMtx = boneRefPoseMtx.to_3x3().inverted() @ mR @ boneRefPoseMtx.to_3x3()
+    poseBone.rotation_mode = "QUATERNION"
+    rotMtx = boneRefPoseMtx.to_3x3().inverted() @ mR @ boneRefPoseMtx.to_3x3()
+    poseBone.rotation_quaternion = rotMtx.to_quaternion()
     rotate_bvh_joint(bvh_nodes, mR, "Hips")
 
-    hips_loc = vT
-    hips_rot = mR    
 
     bone_name = ["Neck","LHipJoint","LeftUpLeg", "LeftLeg", "RHipJoint", "RightUpLeg", "RightLeg", 
                  "LeftShoulder", "LeftArm", "LeftForeArm", "RightShoulder", "RightArm", "RightForeArm"]
@@ -457,7 +476,6 @@ def calculate_rotations2(bvh_nodes, list_matrices, goal_pts):
 
     # skel_coords = get_skeleton_bvh_joints(bvh_nodes)
     # print(skel_coords)
-
 
     for x in range(0, 3):
 #    for x in range(0, 1):
@@ -468,32 +486,24 @@ def calculate_rotations2(bvh_nodes, list_matrices, goal_pts):
         end_point_bone = Vector(skel_coords[end[x]])
         goal_point_end_bone = Vector(goal_pts[end[x]])
 
-        # print(start_point_bone)
-        # print(end_point_bone)
-        # print(goal_point_end_bone)
-
-        # posebone only needed for matrix: need to save this in another structure
-        # Need to pass Matrix structure from blender
-        pbmatrix = list_matrices[x+1] # list_matrices[0] corresponds to hips
-#        print(pbmatrix)
-
-        mat1 = get_bvh_node_matrix(bvh_nodes, "Neck")
-        print(mat1)
-        mat2 = get_bvh_node_matrix(bvh_nodes, "LHipJoint")
+        poseBone = skel_basis.pose.bones[bone_name[x]]
+        mat = poseBone.matrix_basis
+        mat1 = poseBone.matrix
+        mat2 = matrix_world(skel_basis, bone_name[x])
+        # print(mat)
+        # print(mat1)
+        # print(mat2)
         print(mat2)
-        mat3 = get_bvh_node_matrix(bvh_nodes, "LeftUpLeg")
-        print(mat3)
-
-
-        mat = get_bvh_node_matrix(bvh_nodes, bone_name[x])
-        q2 = compute_rotation(mat, start_point_bone, end_point_bone, goal_point_end_bone)
-        rotations.append(q2)
+        print(start_point_bone)
+        print(end_point_bone)
+        print(goal_point_end_bone)
+        q2 = compute_rotation(mat2, start_point_bone, end_point_bone, goal_point_end_bone)
         print(q2)
 
-        rotate_bvh_joint(bvh_nodes, mat, bone_name[x])
-        #list_matrices[x+1] = pbmatrix.to_3x3() @ q2.to_matrix()
+        poseBone.rotation_mode = "QUATERNION"
+        poseBone.rotation_quaternion = q2
+        rotate_bvh_joint(bvh_nodes, mat2, bone_name[x])
 
-    return hips_loc, hips_rot, rotations
 
 def apply_rotations(skel_basis, hips_loc, hips_rot, rotations):
 
@@ -572,8 +582,6 @@ def calculate_rotations(skel_basis, goal_pts):
 
     bpy.context.view_layer.update()
 
-    print(loc)
-    print(rotMtx.to_quaternion())
 
     # new_pts = get_skeleton_joints(skel_basis)
     # print(new_pts)
@@ -586,7 +594,7 @@ def calculate_rotations(skel_basis, goal_pts):
 
     # rotation = []
 
-    for x in range(0, 2):
+    for x in range(0, 3):
 #    for x in range(0, 1):
 
         bpy.context.view_layer.update()
@@ -598,19 +606,13 @@ def calculate_rotations(skel_basis, goal_pts):
         end_point_bone = Vector(skel_coords[end[x]])
         goal_point_end_bone = Vector(goal_pts[end[x]])
 
-        # print(start_point_bone)
-        # print(end_point_bone)
-        # print(goal_point_end_bone)
-
-        pb1 = skel_basis.pose.bones["Neck"]
-        print(pb1.matrix)
-        pb2 = skel_basis.pose.bones["LHipJoint"]
-        print(pb2.matrix)
-        pb3 = skel_basis.pose.bones["LeftUpLeg"]
-        print(pb3.matrix)
-
         poseBone = skel_basis.pose.bones[bone_name[x]]
         pb_matrix = poseBone.matrix # doesn't seem we need a copy version of matrix .copy()
+        print(pb_matrix)
+        print(start_point_bone)
+        print(end_point_bone)
+        print(goal_point_end_bone)
+
         q2 = compute_rotation(pb_matrix, start_point_bone, end_point_bone, goal_point_end_bone)
         poseBone.rotation_mode = "QUATERNION"
         poseBone.rotation_quaternion = q2

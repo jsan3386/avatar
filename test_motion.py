@@ -136,9 +136,9 @@ for f in range(1,2):
         # print("JOINT NODES")
         # jnts = movement_280.get_skeleton_joints(skel)
         # print(np.array(jnts))
-        hips_loc, hips_rot, rotations = movement_280.calculate_rotations2(bvh_nodes_list, list_pb_matrices, pts_skel)
+        movement_280.calculate_rotations2(skel, bvh_nodes_list, pts_skel)
         #print(rotations)
-        movement_280.apply_rotations(skel, hips_loc, hips_rot, rotations)
+#        movement_280.apply_rotations(skel, hips_loc, hips_rot, rotations)
 
         # # # print("bvh joints")
         # # jnts_bvh = movement_280.get_skeleton_bvh_joints(bvh_nodes_list)
