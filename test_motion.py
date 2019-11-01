@@ -8,7 +8,7 @@ import numpy as np
 
 from mathutils import Vector, Matrix, Quaternion
 
-sys.path.append("/home/jsanchez/Software/gitprojects/avatar/motion")
+sys.path.append("/Users/jsanchez/Software/gitprojects/avatar/motion")
 
 import movement_280
 importlib.reload(movement_280)
@@ -16,7 +16,7 @@ importlib.reload(movement_280)
 import bvh_utils
 importlib.reload(bvh_utils)
 
-frames_folder = "/home/jsanchez/Software/gitprojects/avatar/motion/frames"
+frames_folder = "/Users/jsanchez/Software/gitprojects/avatar/motion/frames"
 
 skel = bpy.data.objects["Standard"]
 
@@ -36,7 +36,7 @@ point_files.sort()
         
 num_packg = 0
 
-bvh_file = "/home/jsanchez/Software/gitprojects/avatar/body/Reference.bvh"
+bvh_file = "/Users/jsanchez/Software/gitprojects/avatar/body/Reference.bvh"
 
 # poseBone = skel.pose.bones["Neck"]
 # print(poseBone.rotation_quaternion)
@@ -83,7 +83,7 @@ bvh_utils.set_bone_matrices(skel, bvh_nodes_list)
 
 
 #for f in point_files:
-for f in range(1,2):
+for f in range(1,250):
 
 #    start = time.time()
     #fpname = "%s/%s" % (frames_folder,f)

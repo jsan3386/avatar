@@ -19,22 +19,19 @@ pb_head = skel.pose.bones["Head"]
 
 # code from : https://ipfs-sec.stackexchange.cloudflare-ipfs.com/blender/A/question/44637.html
 
-def matrix_world(bvh_nodes, bone_name):
+def matrix_world(armature_ob, bone_name):
+    local = armature_ob.data.bones[bone_name].matrix_local
+    basis = armature_ob.pose.bones[bone_name].matrix_basis
 
-    node = movement_280.get_bvh_node(bvh_nodes, bone_name)
-
-    local = node.matrix_local
-    basis = node.matrix_basis
-
-    parent = movement_280.get_node_parent(bvh_nodes, bone_name)
+    parent = armature_ob.pose.bones[bone_name].parent
     if parent == None:
         return  local @ basis
     else:
-        parent_local = parent.matrix_local
-        return matrix_world(bvh_nodes, parent.name) @ (parent_local.inverted() @ local) @ basis
+        parent_local = armature_ob.data.bones[parent.name].matrix_local
+        return matrix_world(armature_ob, parent.name) @ (parent_local.inverted() @ local) @ basis
 
 
-bvh_file = "/home/jsanchez/Software/gitprojects/avatar/body/Reference.bvh"
+bvh_file = "/Users/jsanchez/Software/gitprojects/avatar/body/Reference.bvh"
 
 bvh_nodes, _, _ = bvh_utils.read_bvh(bpy.context, bvh_file)
 bvh_nodes_list = bvh_utils.sorted_nodes(bvh_nodes)
@@ -64,9 +61,13 @@ print("Before start anything")
 
 
 ref_arm = movement_280.get_skeleton_joints(skel)
-print(np.array(ref_arm[0]))
+pt1 = np.array(ref_arm[11])
+pt2 = np.array(ref_arm[12])
+print(pt1)
+print(pt2)
 
-
+vec_pt2 = Vector((pt2[0], pt2[1], pt2[2]))
+orig_knee = Vector((1.42479992, -0.37378985,  4.75250053))
 
 # set hips loc, rot
 #pb_hips.location = loc
@@ -76,48 +77,14 @@ print(np.array(ref_arm[0]))
 # pb_join.rotation_mode = "QUATERNION"
 # pb_join.rotation_quaternion = q2
 
-pb_head.rotation_mode = "QUATERNION"
-pb_head.rotation_quaternion = q2
+pb_uple.rotation_mode = "QUATERNION"
+pb_uple.rotation_quaternion = q2
 
+mat1 = matrix_world(skel, "LeftUpLeg")
+mat2 = matrix_world(skel, "LeftLeg")
+print(mat1)
+print(mat2)
 
-#mat3 = skel.pose.bones["Head"].matrix_basis
-mat3 = q2.to_matrix().to_4x4()
-print(mat3)
+new_knee = mat1.inverted() @ (q2.to_matrix().to_4x4() @ orig_knee)
 
-#movement_280.translate_bvh_nodes(bvh_nodes_list, vT - hips_pos)
-movement_280.rotate_bvh_joint(bvh_nodes_list, mat3, "Head")
-# movement_280.rotate_bvh_joint(bvh_nodes_list, q2.to_matrix().to_4x4(), "LHipJoint")
-
-
-#bpy.context.view_layer.update()
-
-jnts_bvh = movement_280.get_skeleton_bvh_joints(bvh_nodes_list)
-print(np.array(jnts_bvh[0]))
-
-
-
-
-
-
-# print("Check values 2 sides")
-
-# #mat1 = movement_280.get_bvh_node_matrix(bvh_nodes_list, "Hips")
-# #mat2 = movement_280.get_bvh_node_matrix(bvh_nodes_list, "LHipJoint")
-# #print(mat1)
-# print(pb_hips.matrix)
-# #print(mat2)
-# print(pb_join.matrix)
-# print(pb_join.matrix_basis)
-
-
-# print("Reproduce matrices")
-# hips_trans = par_hips.to_4x4() @ q1.to_matrix().to_4x4()
-# join_trans = hips_trans.to_4x4() @ q1.to_matrix().to_4x4()
-# rep_mat = join_trans.inverted().to_4x4() @ skel.matrix_world @ mat_join
-# print(rep_mat)
-
-# mat_world = matrix_world(bvh_nodes_list, "LHipJoint")
-# print(mat_world)
-
-
-
+print(new_knee)
