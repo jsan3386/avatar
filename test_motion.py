@@ -64,9 +64,21 @@ for bone in bone_name:
     pb = skel.pose.bones[bone]
     list_pb_matrices.append(pb.matrix)
 
+list_matrices2 = []
+for bone in skel.pose.bones:
+    list_matrices2.append(bone.matrix_basis.copy())
+    # print(bone.name)
+    # print(bone.matrix_basis)
+
+list_matrices3 = []
+for bone in skel.data.bones:
+    list_matrices3.append(bone.matrix_local.copy())
+    # print(bone.name)
+    # print(bone.matrix_local)
+
 #print(list_pb_matrices)
 
-working = 0
+working = 1
 
 bvh_nodes, _, _ = bvh_utils.read_bvh(bpy.context, bvh_file)
 bvh_nodes_list = bvh_utils.sorted_nodes(bvh_nodes)
@@ -83,7 +95,7 @@ bvh_utils.set_bone_matrices(skel, bvh_nodes_list)
 
 
 #for f in point_files:
-for f in range(1,250):
+for f in range(1,2):
 
 #    start = time.time()
     #fpname = "%s/%s" % (frames_folder,f)
@@ -121,7 +133,7 @@ for f in range(1,250):
         # rotMtx = boneRefPoseMtx.to_3x3().inverted() @ mR @ boneRefPoseMtx.to_3x3()
         # poseBone.rotation_quaternion = rotMtx.to_quaternion()
 
-        bpy.context.view_layer.update()
+#        bpy.context.view_layer.update()
         # print("joints")
         # ref_arm = movement_280.get_skeleton_joints(skel)
         # print(np.array(ref_arm))
@@ -136,6 +148,8 @@ for f in range(1,250):
         # print("JOINT NODES")
         # jnts = movement_280.get_skeleton_joints(skel)
         # print(np.array(jnts))
+        movement_280.set_rest_pose3(skel, list_matrices2, list_matrices3)
+
         movement_280.calculate_rotations2(skel, bvh_nodes_list, pts_skel)
         #print(rotations)
 #        movement_280.apply_rotations(skel, hips_loc, hips_rot, rotations)

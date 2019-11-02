@@ -89,6 +89,128 @@ class BVH_Node:
             )
         )
 
+def set_point_bvh_nodes(bvh_nodes, node_name, pt):
+
+    for node in bvh_nodes:
+        if node.name == node_name:
+            node.rest_tail_world = pt
+
+def get_bvh_node (bvh_nodes, name):
+    sel_node = []
+    for node in bvh_nodes:
+        if node.name == name:
+            sel_node = node
+    return sel_node
+
+def get_node_parent(bvh_nodes, name):
+    sel_node = []
+    for node in bvh_nodes:
+        if node.name == name:
+            sel_node = node.parent
+    return sel_node
+
+def get_bvh_node_matrix(bvh_nodes, name):
+    for bvh_node in bvh_nodes:
+        if bvh_node.name == name :
+            return bvh_node.matrix
+
+def get_bvh_node_val(bvh_nodes, name, btype):
+
+    value = []
+    for bvh_node in bvh_nodes:
+        if bvh_node.name == name :
+            if btype == 'HEAD' :
+                value = bvh_node.rest_head_world
+            elif btype == 'TAIL' :
+                value = bvh_node.rest_tail_world
+            else:
+                value = [0,0,0]
+                print("Error evaluating bvh nodes")
+    return value
+
+def translate_bvh_nodes (bvh_nodes, displacement):
+    for node in bvh_nodes:
+        node.rest_head_world = node.rest_head_world + displacement
+        node.rest_tail_world = node.rest_tail_world + displacement
+
+def get_child_names(bvh_node):
+    child = []
+    for chld in bvh_node.children:
+        child.append(chld.name)
+    return child
+
+def get_children(bvh_nodes, name):
+
+    res = []
+    bvh_node = get_bvh_node(bvh_nodes, name)
+    child = get_child_names(bvh_node)
+    res.append(child)
+    if not child:
+        return []
+    else:
+        for ch in child:
+            res += get_children(bvh_nodes, ch)
+
+    return res
+
+def rotate_bvh_joint (bvh_nodes, matrix, name):
+    # 
+    rot_center = get_bvh_node_val(bvh_nodes, name, 'HEAD')
+    # translate all points
+    translate_bvh_nodes (bvh_nodes, -rot_center)
+
+    # rotate node
+    o_node = get_bvh_node(bvh_nodes, name)
+    o_node.rest_head_world = matrix @ o_node.rest_head_world
+    o_node.rest_tail_world = matrix @ o_node.rest_tail_world
+
+    # rotate children
+    children = get_children(bvh_nodes, name)
+    # flatten list
+    f_children = [val for sublist in children for val in sublist]
+    # update matrix value of node name
+    # if name is not "Hips":
+    #     t_node = get_bvh_node(bvh_nodes, name)
+    #     t_node.matrix = matrix @ t_node.matrix.to_4x4()
+    for child in f_children:
+        if child == "Hips":
+            print("how this is possible")
+        node = get_bvh_node(bvh_nodes, child)
+        pt_head = node.rest_head_world
+        pt_tail = node.rest_tail_world
+        #new_pt_head = rotate_point(pt_head, matrix, rot_center)
+        #new_pt_tail = rotate_point(pt_tail, matrix, rot_center)
+        new_pt_head = matrix @ pt_head
+        new_pt_tail = matrix @ pt_tail
+        node.rest_head_world = new_pt_head
+        node.rest_tail_world = new_pt_tail
+        # update matrix
+#        node.matrix = matrix @ node.matrix.to_4x4()
+    # set coordinates back
+    translate_bvh_nodes (bvh_nodes, rot_center)
+
+def get_skeleton_bvh_joints(bvh_nodes):
+
+    jnts = []
+
+    jnts.append(get_bvh_node_val(bvh_nodes, "Head", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "Neck", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "RightArm", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "RightForeArm", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "RightHand", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "LeftArm", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "LeftForeArm", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "LeftHand", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "RightUpLeg", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "RightLeg", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "RightFoot", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "LeftUpLeg", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "LeftLeg", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "LeftFoot", "HEAD"))
+    jnts.append(get_bvh_node_val(bvh_nodes, "Hips", "HEAD"))
+
+    return jnts
+
 def set_bone_matrices(skel, bvh_nodes):
 
     for node in bvh_nodes:
