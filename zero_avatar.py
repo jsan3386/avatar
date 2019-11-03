@@ -172,6 +172,21 @@ class AVATAR_OT_LoadModel(bpy.types.Operator):
         mAvt.skel_ref = movement_280.get_rest_pose(mAvt.skel, mAvt.list_bones)
         mAvt.hips_pos = (mAvt.skel.matrix_world @ Matrix.Translation(mAvt.skel.pose.bones["Hips"].head)).to_translation()
 
+        # Info to be used to compute body rotations is a faster manner
+        list_matrices2 = []
+        for bone in mAvt.skel.pose.bones:
+            list_matrices2.append(bone.matrix_basis.copy())
+        mAvt.list_matrices_basis = list_matrices2
+
+        list_matrices3 = []
+        for bone in mAvt.skel.data.bones:
+            list_matrices3.append(bone.matrix_local.copy())
+        mAvt.list_matrices_local = list_matrices3 
+
+        bvh_file = "%s/body/Reference.bvh" % avt_path
+        bvh_nodes, _, _ = bvh_utils.read_bvh(bpy.context, bvh_file)
+        mAvt.list_nodes = bvh_utils.sorted_nodes(bvh_nodes)
+
         # Info to compute deformation of clothes in fast manner
         size = len(mAvt.body.data.vertices)
         mAvt.body_kdtree = mathutils.kdtree.KDTree(size)
@@ -458,8 +473,13 @@ class AVATAR_OT_StreamingPose(bpy.types.Operator):
                     pts_skel = np.array(new_pts_skel)
 
                 # set skeleton rest position: MAYBE MOVE ALL THIS TO SERVER.PY IN ORDER TO MAKE FASTER UPDATES
-                movement_280.set_rest_pose(mAvt.skel, mAvt.skel_ref, mAvt.list_bones)
-                movement_280.calculate_rotations(mAvt.skel, pts_skel)
+                # slow version
+                # movement_280.set_rest_pose(mAvt.skel, mAvt.skel_ref, mAvt.list_bones)
+                # movement_280.calculate_rotations(mAvt.skel, pts_skel)
+                # faster version
+                movement_280.set_rest_pose3(mAvt.skel, mAvt.list_matrices_basis, mAvt.list_matrices_local)
+                movement_280.calculate_rotations_fast(mAvt.skel, mAvt.list_nodes, pts_skel)
+
 
                 if mAvt.write_timeline:
                     bpy.context.view_layer.update()

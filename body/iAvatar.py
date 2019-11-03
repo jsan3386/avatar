@@ -36,6 +36,11 @@ class Avatar:
         self.bvh_start_origin = False
         self.bvh_offset = 0
 
+        # parameters for motion from 3D points
+        self.list_matrices_local = []
+        self.list_matrices_basis = []
+        self.list_nodes = []
+
         # Parameters needed to deform clothes 
         self.body_kdtree = None
         self.np_mesh = None

@@ -288,7 +288,7 @@ def matrix_world(armature_ob, bone_name):
         parent_local = armature_ob.data.bones[parent.name].matrix_local
         return matrix_world(armature_ob, parent.name) @ (parent_local.inverted() @ local) @ basis
 
-def calculate_rotations2(skel_basis, bvh_nodes, goal_pts):
+def calculate_rotations_fast(skel_basis, bvh_nodes, goal_pts):
 
     # we keep 2 parallel structures, blender skeleton, and bvh_nodes
     # blender skeleton update matrices of bodies, but when reading values of skeleton are not updated
