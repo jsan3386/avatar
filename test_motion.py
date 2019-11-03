@@ -78,7 +78,7 @@ for bone in skel.data.bones:
 
 #print(list_pb_matrices)
 
-working = 1
+working = 0
 
 bvh_nodes, _, _ = bvh_utils.read_bvh(bpy.context, bvh_file)
 bvh_nodes_list = bvh_utils.sorted_nodes(bvh_nodes)
@@ -95,7 +95,7 @@ bvh_utils.set_bone_matrices(skel, bvh_nodes_list)
 
 
 #for f in point_files:
-for f in range(1,2):
+for f in range(1,350):
 
 #    start = time.time()
     #fpname = "%s/%s" % (frames_folder,f)
