@@ -69,8 +69,8 @@ importlib.reload(shape_utils)
 import dressing
 importlib.reload(dressing)
 
-import movement_280
-importlib.reload(movement_280)
+import motion_utils
+importlib.reload(motion_utils)
 
 import bvh_utils
 importlib.reload(bvh_utils)
@@ -169,7 +169,7 @@ class AVATAR_OT_LoadModel(bpy.types.Operator):
         mAvt.body = bpy.data.objects["Standard:Body"]
         mAvt.skel = bpy.data.objects["Standard"]
         mAvt.armature = bpy.data.armatures["Standard"]
-        mAvt.skel_ref = movement_280.get_rest_pose(mAvt.skel, mAvt.list_bones)
+        mAvt.skel_ref = motion_utils.get_rest_pose(mAvt.skel, mAvt.list_bones)
         mAvt.hips_pos = (mAvt.skel.matrix_world @ Matrix.Translation(mAvt.skel.pose.bones["Hips"].head)).to_translation()
 
         # Info to be used to compute body rotations is a faster manner
@@ -391,7 +391,7 @@ class AVATAR_OT_SetRestPose(bpy.types.Operator):
     def execute(self, context):  # execute() is called when running the operator.
         global mAvt
 
-        movement_280.set_rest_pose(mAvt.skel, mAvt.skel_ref, mAvt.list_bones)
+        motion_utils.set_rest_pose(mAvt.skel, mAvt.skel_ref, mAvt.list_bones)
         mAvt.frame = 1
 
         return {'FINISHED'}
@@ -460,7 +460,7 @@ class AVATAR_OT_StreamingPose(bpy.types.Operator):
                 # get the message
                 points3d = recv_array(socket_sub)
                 #print(points3d)
-                M_mb = movement_280.get_trans_mat_blend_to_matlab()
+                M_mb = motion_utils.get_trans_mat_blend_to_matlab()
                 pts_skel = np.matmul(points3d, M_mb)
                 if mAvt.start_origin:
                     # translate points
@@ -474,11 +474,11 @@ class AVATAR_OT_StreamingPose(bpy.types.Operator):
 
                 # set skeleton rest position: MAYBE MOVE ALL THIS TO SERVER.PY IN ORDER TO MAKE FASTER UPDATES
                 # slow version
-                # movement_280.set_rest_pose(mAvt.skel, mAvt.skel_ref, mAvt.list_bones)
-                # movement_280.calculate_rotations(mAvt.skel, pts_skel)
+                # motion_utils.set_rest_pose(mAvt.skel, mAvt.skel_ref, mAvt.list_bones)
+                # motion_utils.calculate_rotations(mAvt.skel, pts_skel)
                 # faster version
-                movement_280.set_rest_pose3(mAvt.skel, mAvt.list_matrices_basis, mAvt.list_matrices_local)
-                movement_280.calculate_rotations_fast(mAvt.skel, mAvt.list_nodes, pts_skel)
+                motion_utils.set_rest_pose3(mAvt.skel, mAvt.list_matrices_basis, mAvt.list_matrices_local)
+                motion_utils.calculate_rotations_fast(mAvt.skel, mAvt.list_nodes, pts_skel)
 
 
                 if mAvt.write_timeline:

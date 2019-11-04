@@ -363,7 +363,6 @@ def calculate_rotations(skel_basis, goal_pts):
 
     ref_arm = get_skeleton_joints(skel_basis)
     ref_skel = np.array(ref_arm)
-    print(ref_skel[14])
 
     A = np.mat((ref_skel[14,:], ref_skel[8,:], ref_skel[11,:], ref_skel[1,:]))
     B = np.mat((goal_pts[14,:], goal_pts[8,:], goal_pts[11,:], goal_pts[1,:]))
@@ -379,23 +378,19 @@ def calculate_rotations(skel_basis, goal_pts):
     for vec in pts_r1: pts_tr1.append(vT+Vector(vec))
     skel_coords = pts_tr1
 
-
-    #mR.resize_4x4()
     # Update Hips position
     poseBone = skel_basis.pose.bones["Hips"]
     boneRefPoseMtx = poseBone.bone.matrix_local.copy()
-#    bonePoseMtx = poseBone.matrix.to_3x3().copy()
 
-    vT = Vector(getcoords(skel_coords)[-1])  # not sure what this line is doing here!!
+    vT = Vector(getcoords(skel_coords)[-1])  
     # When translate posebone hips actually is translating the whole object and takes origin as pivot point
     # need to account for this difference
     hips_bone_pos = get_bone_head_position(skel_basis, "Hips")
     bone_translate_matrix = Matrix.Translation(vT)
     loc = (boneRefPoseMtx.inverted() @ bone_translate_matrix).to_translation()
     poseBone.location = loc
-#    location = loc 
+    location = loc 
 
-    #mR = Matrix([[0,-1,0], [1,0,0], [0,0,1]])
     poseBone.rotation_mode = "QUATERNION"
     rotMtx = boneRefPoseMtx.to_3x3().inverted() @ mR @ boneRefPoseMtx.to_3x3()
     poseBone.rotation_quaternion = rotMtx.to_quaternion()
@@ -403,26 +398,18 @@ def calculate_rotations(skel_basis, goal_pts):
 
     bpy.context.view_layer.update()
 
-
-    # new_pts = get_skeleton_joints(skel_basis)
-    # print(new_pts)
-
     #compute other rotations[
     bone_name = ["Neck","LHipJoint","LeftUpLeg", "LeftLeg", "RHipJoint", "RightUpLeg", "RightLeg", 
                  "LeftShoulder", "LeftArm", "LeftForeArm", "RightShoulder", "RightArm", "RightForeArm"]
     begin = [1, 14, 11, 12, 14, 8, 9, 1, 5, 6, 1, 2, 3]
     end = [0, 11, 12, 13, 8, 9, 10, 5, 6, 7, 2, 3, 4]
 
-    # rotation = []
-
     for x in range(0, 13):
-#    for x in range(0, 1):
 
         bpy.context.view_layer.update()
 
         skel_coords = get_skeleton_joints(skel_basis)
         poseBone = skel_basis.pose.bones[bone_name[x]]
-        # print(np.array(skel_coords))
 
         start_point_bone = Vector(skel_coords[begin[x]])
         end_point_bone = Vector(skel_coords[end[x]])
@@ -430,20 +417,11 @@ def calculate_rotations(skel_basis, goal_pts):
 
         poseBone = skel_basis.pose.bones[bone_name[x]]
         pb_matrix = poseBone.matrix # doesn't seem we need a copy version of matrix .copy()
-        # print(pb_matrix)
-        # print(start_point_bone)
-        # print(end_point_bone)
-        # print(goal_point_end_bone)
 
         q2 = compute_rotation(pb_matrix, start_point_bone, end_point_bone, goal_point_end_bone)
         poseBone.rotation_mode = "QUATERNION"
         poseBone.rotation_quaternion = q2
         list_quaternions.append(q2)
-        # print(bone_name[x])
-        # print(q2)
-
-        # bpy.context.view_layer.update()
-
 
     return location, list_quaternions
 
@@ -472,334 +450,3 @@ def calculate_rotations(skel_basis, goal_pts):
 
     # if (write_timeline):
 
-    
-
-
-
-
-def get_skeleton_parameters(skel_basis, goal_pts, correction_params):
-    skel_params = []
-    ref_arm = get_skeleton_joints(skel_basis)
-    ref_skel = np.array(ref_arm)
-    q_list = []
-
-    A = np.mat((ref_skel[14,:], ref_skel[8,:], ref_skel[11,:], ref_skel[1,:]))
-    B = np.mat((goal_pts[14,:], goal_pts[8,:], goal_pts[11,:], goal_pts[1,:]))
-    R, T = rigid_transform_3D(A,B)
-
-    mR = Matrix([[R[0,0],R[0,1],R[0,2]], [R[1,0],R[1,1],R[1,2]], [R[2,0],R[2,1],R[2,2]]])
-    vT = Vector(T)
-
-    # move arm2 to orient with pts_skel
-    pts_r1 = []
-    for vec in ref_skel: pts_r1.append(mR @ Vector(vec))
-    pts_tr1 = []
-    for vec in pts_r1: pts_tr1.append(vT+Vector(vec))
-    skel_coords = pts_tr1
-    #apply translation and first rotation to all skeleton
-    bpy.context.view_layer.update()
-    #mR.resize_4x4()
-    poseBone = skel_basis.pose.bones["Hips"]
-    boneRefPoseMtx = poseBone.bone.matrix_local.copy()
-    bonePoseMtx = poseBone.matrix.to_3x3().copy()
-    vT = Vector(getcoords(skel_coords)[-1])
-    bone_translate_matrix = Matrix.Translation(vT)
-    loc = (boneRefPoseMtx.inverted() @ bone_translate_matrix).to_translation()
-    poseBone.location = loc
-    rotMtx = boneRefPoseMtx.to_3x3().inverted() @ mR @ boneRefPoseMtx.to_3x3()
-    initial_rotation = rotMtx.to_quaternion()
-    poseBone.rotation_mode = "QUATERNION"
-
-    poseBone.rotation_quaternion = rotMtx.to_quaternion()
-    q_list.append(rotMtx.to_quaternion())
-    p_hips_rot = [degrees(mR.to_euler().z), degrees(mR.to_euler().y), degrees(mR.to_euler().x)]
-    p_hips_loc = [vT.x, vT.y, vT.z]
-    reference = get_skeleton_joints(skel_basis)
-    #compute other rotations[
-    bone_name = ["Neck","LHipJoint","LeftUpLeg", "LeftLeg", "RHipJoint", "RightUpLeg", "RightLeg", "LeftShoulder", "LeftArm", "LeftForeArm", "RightShoulder", "RightArm", "RightForeArm"]
-    begin = [1, 14, 11, 12, 14, 8, 9, 1, 5, 6, 1, 2, 3]
-    end = [0, 11, 12, 13, 8, 9, 10, 5, 6, 7, 2, 3, 4]
-    rotation = []
-    previous_q = Quaternion([1,0,0,0])
-    skel_coords = get_skeleton_joints(skel_basis)
-    for x in range(0, 13):
-        bpy.context.view_layer.update()
-        #skel_coords = get_skeleton_coords(skel_basis)
-        skel_coords = get_skeleton_joints(skel_basis)
-        poseBone = skel_basis.pose.bones[bone_name[x]]
-        boneRefPoseMtx = poseBone.bone.matrix_local.copy()
-        parentRefPoseMtx = poseBone.parent.bone.matrix_local.copy()
-        parentPoseMtx = poseBone.parent.matrix.copy()
-        bonePoseMtx = poseBone.matrix.copy()
-        #print(bonePoseMtx)
-        # print("############ " + bone_name[x] + "  #############")
-        start_point_bone = Vector(skel_coords[begin[x]])
-        end_point_bone = Vector(skel_coords[end[x]])
-        goal_point_end_bone = Vector(goal_pts[end[x]])
-        #q2 = compute_rotation(poseBone, start_point_bone, end_point_bone, goal_point_end_bone)
-        q2 = compute_rotation(bonePoseMtx.to_3x3(), start_point_bone, end_point_bone, goal_point_end_bone)
-        poseBone.rotation_mode = "QUATERNION"
-        poseBone.rotation_quaternion = q2
-        q_list.append(q2)
-        #mat_final = parentRefPoseMtx * parentPoseMtx.inverted() * bonePoseMtx * q2.to_matrix().to_4x4() * boneRefPoseMtx.inverted()
-        mat_final = parentRefPoseMtx.to_3x3() @ parentPoseMtx.to_3x3().inverted() @ bonePoseMtx.to_3x3() @ q2.to_matrix().to_3x3() @ boneRefPoseMtx.to_3x3().inverted()
-        #p = [degrees(mat_final.to_euler().z), degrees(mat_final.to_euler().y), degrees(mat_final.to_euler().x)]
-        p =  [mat_final.to_euler().z,mat_final.to_euler().y,mat_final.to_euler().x]
-        newp = [x - y for x, y in zip(p, correction_params[x])]
-
-            ##POCA BROMA QUE AIXÒ CONVERGIA (GAIREBÉ TOT)
-#        poseBone.rotation_mode = "ZYX"
-#        poseBone.rotation_euler = Vector(newp)
-        rotation.append(newp)
-
-
-
-    skel_params.append(p_hips_loc)
-    skel_params.append(p_hips_rot)
-    skel_params.append(rotation[0])
-    skel_params.append(rotation[1])
-    skel_params.append([0,0,0])
-    skel_params.append(rotation[2])
-    skel_params.append(rotation[3])
-    skel_params.append([0,0,0])
-    skel_params.append([0,0,0])
-    skel_params.append(rotation[4])
-    skel_params.append(rotation[5])
-    skel_params.append(rotation[6])
-    skel_params.append(rotation[7])
-    skel_params.append(rotation[8])
-    skel_params.append(rotation[9])
-    skel_params.append(rotation[10])
-    previous_q = q2
-
-
-    ## SKEL PARAMS ARE QUITE IMPORTANT TOO. THERE ARE THE ROTATIONS OF THE BONES (INVERSE CAN BE COMPUTED EZI)
-
-    return q_list
-
-
-def get_skeleton_parameters_correction(skel_basis, goal_pts, correction_params):
-    skel_params = []
-    ref_arm = get_skeleton_joints(skel_basis)
-    ref_skel = np.array(ref_arm)
-    q_list = []
-
-    A = np.mat((ref_skel[14,:], ref_skel[8,:], ref_skel[11,:], ref_skel[1,:]))
-    B = np.mat((goal_pts[14,:], goal_pts[8,:], goal_pts[11,:], goal_pts[1,:]))
-    R, T = rigid_transform_3D(A,B)
-
-    mR = Matrix([[R[0,0],R[0,1],R[0,2]], [R[1,0],R[1,1],R[1,2]], [R[2,0],R[2,1],R[2,2]]])
-    vT = Vector(T)
-
-    # move arm2 to orient with pts_skel
-    pts_r1 = []
-    for vec in ref_skel: pts_r1.append(mR @ Vector(vec))
-    pts_tr1 = []
-    for vec in pts_r1: pts_tr1.append(vT+Vector(vec))
-    skel_coords = pts_tr1
-    #apply translation and first rotation to all skeleton
-    bpy.context.view_layer.update()
-    #mR.resize_4x4()
-    poseBone = skel_basis.pose.bones["Hips"]
-    boneRefPoseMtx = poseBone.bone.matrix_local.copy()
-    bonePoseMtx = poseBone.matrix.to_3x3().copy()
-    vT = Vector(getcoords(skel_coords)[-1])
-    bone_translate_matrix = Matrix.Translation(vT)
-    loc = (boneRefPoseMtx.inverted() @ bone_translate_matrix).to_translation()
-    poseBone.location = loc
-    rotMtx = boneRefPoseMtx.to_3x3().inverted() @ mR @ boneRefPoseMtx.to_3x3()
-    initial_rotation = rotMtx.to_quaternion()
-    poseBone.rotation_mode = "QUATERNION"
-    poseBone.rotation_quaternion = rotMtx.to_quaternion()
-    p_hips_rot = [degrees(mR.to_euler().z), degrees(mR.to_euler().y), degrees(mR.to_euler().x)]
-    p_hips_loc = [vT.x, vT.y, vT.z]
-    reference = get_skeleton_joints(skel_basis)
-    #compute other rotations[
-    bone_name = ["Neck","LHipJoint","LeftUpLeg", "LeftLeg", "RHipJoint", "RightUpLeg", "RightLeg", "LeftShoulder", "LeftArm", "LeftForeArm", "RightShoulder", "RightArm", "RightForeArm"]
-    begin = [1, 14, 11, 12, 14, 8, 9, 1, 5, 6, 1, 2, 3]
-    end = [0, 11, 12, 13, 8, 9, 10, 5, 6, 7, 2, 3, 4]
-    rotation = []
-    previous_q = Quaternion([1,0,0,0])
-    skel_coords = get_skeleton_joints(skel_basis)
-    for x in range(len(bone_name)):
-        bpy.context.view_layer.update()
-        #skel_coords = get_skeleton_coords(skel_basis)
-        skel_coords = get_skeleton_joints(skel_basis)
-        poseBone = skel_basis.pose.bones[bone_name[x]]
-        boneRefPoseMtx = poseBone.bone.matrix_local.copy()
-        parentRefPoseMtx = poseBone.parent.bone.matrix_local.copy()
-        parentPoseMtx = poseBone.parent.matrix.copy()
-        bonePoseMtx = poseBone.matrix.copy()
-        #print(bonePoseMtx)
-        # print("############ " + bone_name[x] + "  #############")
-        start_point_bone = Vector(skel_coords[begin[x]])
-        end_point_bone = Vector(skel_coords[end[x]])
-        goal_point_end_bone = Vector(goal_pts[end[x]])
-        #q2 = compute_rotation(poseBone, start_point_bone, end_point_bone, goal_point_end_bone)
-        q2 = compute_rotation(bonePoseMtx.to_3x3(), start_point_bone, end_point_bone, goal_point_end_bone)
-        poseBone.rotation_mode = "QUATERNION"
-        poseBone.rotation_quaternion = q2
-        q_list.append(q2)
-        #mat_final = parentRefPoseMtx * parentPoseMtx.inverted() * bonePoseMtx * q2.to_matrix().to_4x4() * boneRefPoseMtx.inverted()
-        mat_final = parentRefPoseMtx.to_3x3() @ parentPoseMtx.to_3x3().inverted() @ bonePoseMtx.to_3x3() @ q2.to_matrix().to_3x3() @ boneRefPoseMtx.to_3x3().inverted()
-        #p = [degrees(mat_final.to_euler().z), degrees(mat_final.to_euler().y), degrees(mat_final.to_euler().x)]
-        p =  [mat_final.to_euler().z,mat_final.to_euler().y,mat_final.to_euler().x]
-        newp = [x - y for x, y in zip(p, correction_params[x])]
-        rotation.append(newp)
-
-
-
-
-    skel_params.append(p_hips_loc)
-    skel_params.append(p_hips_rot)
-    skel_params.append(rotation[0])
-    skel_params.append(rotation[1])
-    skel_params.append([0,0,0])
-    skel_params.append(rotation[2])
-    skel_params.append(rotation[3])
-    skel_params.append([0,0,0])
-    skel_params.append([0,0,0])
-    skel_params.append(rotation[4])
-    skel_params.append(rotation[5])
-    skel_params.append(rotation[6])
-    skel_params.append(rotation[7])
-    skel_params.append(rotation[8])
-    skel_params.append(rotation[9])
-    skel_params.append(rotation[10])
-
-
-
-    ## SKEL PARAMS ARE QUITE IMPORTANT TOO. THERE ARE THE ROTATIONS OF THE BONES (INVERSE CAN BE COMPUTED EZI)
-
-    return q_list, initial_rotation
-
-
-def get_skeleton_parameters_correction_BVH(skel_basis, goal_pts, correction_params,extra):
-    skel_params = []
-    ref_arm = get_skeleton_joints(skel_basis)
-    ref_skel = np.array(ref_arm)
-    q_list = []
-    provisional_list=[]
-    Deg2Rad = pi/180
-
-    for vector in goal_pts:
-        provisional_list.append([vector.x,vector.y,vector.z])
-    goal_pts = np.array(provisional_list)
-
-
-    A = np.mat((ref_skel[14,:], ref_skel[8,:], ref_skel[11,:], ref_skel[1,:]))
-    B = np.mat((goal_pts[14,:], goal_pts[8,:], goal_pts[11,:], goal_pts[1,:]))
-    R, T = rigid_transform_3D(A,B)
-
-    mR = Matrix([[R[0,0],R[0,1],R[0,2]], [R[1,0],R[1,1],R[1,2]], [R[2,0],R[2,1],R[2,2]]])
-    vT = Vector(T)
-
-    # move arm2 to orient with pts_skel
-    pts_r1 = []
-    for vec in ref_skel: pts_r1.append(mR @ Vector(vec))
-    pts_tr1 = []
-    for vec in pts_r1: pts_tr1.append(vT+Vector(vec))
-    skel_coords = pts_tr1
-    #apply translation and first rotation to all skeleton
-    bpy.context.view_layer.update()
-    #mR.resize_4x4()
-    poseBone = skel_basis.pose.bones["Hips"]
-    boneRefPoseMtx = poseBone.bone.matrix_local.copy()
-    bonePoseMtx = poseBone.matrix.to_3x3().copy()
-    vT = Vector(getcoords(skel_coords)[-1])
-    bone_translate_matrix = Matrix.Translation(vT)
-    loc = (boneRefPoseMtx.inverted() @ bone_translate_matrix).to_translation()
-    poseBone.location = loc
-    rotMtx = boneRefPoseMtx.to_3x3().inverted() @ mR @ boneRefPoseMtx.to_3x3()
-    initial_rotation = rotMtx.to_quaternion()
-    poseBone.rotation_mode = "QUATERNION"
-    poseBone.rotation_quaternion = rotMtx.to_quaternion()
-    p_hips_rot = [degrees(mR.to_euler().z), degrees(mR.to_euler().y), degrees(mR.to_euler().x)]
-    p_hips_loc = [vT.x, vT.y, vT.z]
-    reference = get_skeleton_joints(skel_basis)
-    #compute other rotations[
-    bone_name = ["Neck","LHipJoint","LeftUpLeg", "LeftLeg", "RHipJoint", "RightUpLeg", "RightLeg", "LeftShoulder", "LeftArm", "LeftForeArm", "RightShoulder", "RightArm", "RightForeArm"]
-    begin = [1, 14, 11, 12, 14, 8, 9, 1, 5, 6, 1, 2, 3]
-    end = [0, 11, 12, 13, 8, 9, 10, 5, 6, 7, 2, 3, 4]
-    rotation = []
-    previous_q = Quaternion([1,0,0,0])
-    skel_coords = get_skeleton_joints(skel_basis)
-    for x in range(len(bone_name)):
-        bpy.context.view_layer.update()
-        #skel_coords = get_skeleton_coords(skel_basis)
-        skel_coords = get_skeleton_joints(skel_basis)
-        poseBone = skel_basis.pose.bones[bone_name[x]]
-        boneRefPoseMtx = poseBone.bone.matrix_local.copy()
-        parentRefPoseMtx = poseBone.parent.bone.matrix_local.copy()
-        parentPoseMtx = poseBone.parent.matrix.copy()
-        bonePoseMtx = poseBone.matrix.copy()
-        #print(bonePoseMtx)
-        # print("############ " + bone_name[x] + "  #############")
-        start_point_bone = Vector(skel_coords[begin[x]])
-        end_point_bone = Vector(skel_coords[end[x]])
-        goal_point_end_bone = Vector(goal_pts[end[x]])
-        #q2 = compute_rotation(poseBone, start_point_bone, end_point_bone, goal_point_end_bone)
-        q2 = compute_rotation(bonePoseMtx.to_3x3(), start_point_bone, end_point_bone, goal_point_end_bone)
-        poseBone.rotation_mode = "QUATERNION"
-        poseBone.rotation_quaternion = q2
-        q_list.append(q2)
-        #mat_final = parentRefPoseMtx * parentPoseMtx.inverted() * bonePoseMtx * q2.to_matrix().to_4x4() * boneRefPoseMtx.inverted()
-        mat_final = parentRefPoseMtx.to_3x3() @ parentPoseMtx.to_3x3().inverted() @ bonePoseMtx.to_3x3() @ q2.to_matrix().to_3x3() @ boneRefPoseMtx.to_3x3().inverted()
-        #p = [degrees(mat_final.to_euler().z), degrees(mat_final.to_euler().y), degrees(mat_final.to_euler().x)]
-        p =  [mat_final.to_euler().z,mat_final.to_euler().y,mat_final.to_euler().x]
-        newp = [x - y for x, y in zip(p, correction_params[x])]
-        rotation.append(newp)
-
-
-
-
-    skel_params.append(p_hips_loc)
-    skel_params.append(p_hips_rot)
-    skel_params.append(rotation[0])
-    skel_params.append(rotation[1])
-    skel_params.append([0,0,0])
-    skel_params.append(rotation[2])
-    skel_params.append(rotation[3])
-    skel_params.append([0,0,0])
-    skel_params.append([0,0,0])
-    skel_params.append(rotation[4])
-    skel_params.append(rotation[5])
-    skel_params.append(rotation[6])
-    skel_params.append(rotation[7])
-    skel_params.append(rotation[8])
-    skel_params.append(rotation[9])
-    skel_params.append(rotation[10])
-
-
-
-    ## SKEL PARAMS ARE QUITE IMPORTANT TOO. THERE ARE THE ROTATIONS OF THE BONES (INVERSE CAN BE COMPUTED EZI)
-
-    return q_list, initial_rotation
-
-def transition_to_desired_motion_BVH(q_list,initial_rotation,skel_basis,correction_iteration,mesh, initial_quaternion,offset):
-
-    list_of_rotations = []
-
-    bone_name = ["Hips","Neck","LHipJoint","LeftUpLeg", "LeftLeg", "RHipJoint", "RightUpLeg", "RightLeg", "LeftShoulder", "LeftArm", "LeftForeArm", "RightShoulder", "RightArm", "RightForeArm"]
-
-    initial = slerp(initial_quaternion,initial_rotation,np.arange(0,1,1/(offset+1)))
-    list_of_rotations.append(initial)
-    for i in range(len(q_list)):
-        movements = slerp(initial_quaternion,q_list[i],np.arange(0,1,1/(offset+1)))
-        list_of_rotations.append(movements)
-
-    scene = bpy.context.scene
-    bones = ["Hips","LHipJoint","LeftUpLeg","LeftLeg","LeftFoot","LeftToeBase","LowerBack","Spine","Spine1","LeftShoulder","LeftArm","LeftForeArm","LeftHand","LThumb","LeftFingerBase","LeftHandFinger1","Neck","Neck1","Head","RightShoulder","RightArm","RightForeArm","RightHand","RThumb","RightFingerBase","RightHandFinger1","RHipJoint","RightUpLeg","RightLeg","RightFoot","RightToeBase"]
-    for step in range(len(list_of_rotations[0])):
-        for i in range(len(bone_name)):
-            #bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-            poseBone = skel_basis.pose.bones[bone_name[i]]
-            poseBone.rotation_mode = "QUATERNION"
-            poseBone.rotation_quaternion = list_of_rotations[i][step]
-
-        #bpy.context.scene.frame_set(2+correction_iteration)
-        skel_basis.keyframe_insert(data_path = "location", frame = correction_iteration)
-        for bone in bones:
-            skel_basis.pose.bones[bone].keyframe_insert(data_path = "rotation_quaternion", frame = correction_iteration)
-        correction_iteration+=1
-    return correction_iteration
