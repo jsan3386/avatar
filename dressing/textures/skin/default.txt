@@ -1,3 +1,3 @@
-tex00.png
+Aksel_Skin_diffuse.png
 norm00.jpg
 spec00.jpg

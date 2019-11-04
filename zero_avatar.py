@@ -137,6 +137,7 @@ def update_weights (self, context):
     mAvt.val_armslegs = self.val_limbs
     mAvt.val_weight = - self.val_weight
     mAvt.val_strength = self.val_strength
+    mAvt.val_belly = self.val_belly
 
     mAvt.refresh_shape()
 
@@ -147,6 +148,16 @@ def update_weights (self, context):
         if ((object.type == 'MESH') and (object.name != "Standard:Body")):
             mAvt.deform_cloth(cloth_name=str(object.name))
 
+
+def load_model_from_blend_file(filename):
+
+    with bpy.data.libraries.load(filename) as (data_from, data_to):
+        data_to.objects = [name for name in data_from.objects]
+        # print('These are the objs: ', data_to.objects)
+
+    # Objects have to be linked to show up in a scene
+    for obj in data_to.objects:
+        bpy.context.scene.collection.objects.link(obj) 
 
 
 class AVATAR_OT_LoadModel(bpy.types.Operator):
@@ -164,6 +175,8 @@ class AVATAR_OT_LoadModel(bpy.types.Operator):
         # load makehuman model
         model_file = "%s/body/models/standard.mhx2" % avt_path
         bpy.ops.import_scene.makehuman_mhx2(filepath=model_file)
+        # model_file = "%s/body/models/base_human.blend" % avt_path
+        # load_model_from_blend_file(model_file)
 
         mAvt.load_shape_model()
         mAvt.body = bpy.data.objects["Standard:Body"]
@@ -231,6 +244,7 @@ class AVATAR_OT_ResetParams(bpy.types.Operator):
         mAvt.val_armslegs = self.val_limbs = 0.0
         mAvt.val_weight = self.val_weight = 0.0
         mAvt.val_strength = self.val_strength = 0.0
+        mAvt.val_belly = self.val_belly = 0.0
 
         mAvt.refresh_shape()
 
@@ -263,6 +277,8 @@ class AVATAR_PT_LoadPanel(bpy.types.Panel):
                                                 min=-0.5, max=1.5, precision=2, update=update_weights)
     bpy.types.Object.val_strength = FloatProperty(name="Strength", description="Body Strength", default=0, 
                                                   min=0.0, max=0.5, precision=2, update=update_weights)
+    bpy.types.Object.val_belly = FloatProperty(name="Belly", description="Body Belly", default=0, 
+                                                  min=-10.0, max=10.0, precision=2, update=update_weights)
     
 
     def draw(self, context):
@@ -283,6 +299,7 @@ class AVATAR_PT_LoadPanel(bpy.types.Panel):
         layout.prop(obj, "val_hips")
         layout.prop(obj, "val_weight")
         layout.prop(obj, "val_strength")
+        layout.prop(obj, "val_belly")
         layout.separator()
         row = layout.row()
         row.operator('avt.reset_params', text="Reset parameters")		

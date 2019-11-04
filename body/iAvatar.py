@@ -54,7 +54,7 @@ class Avatar:
         self.increment_radius = 0.2
 
         # weights and means to control shape
-        self.val_breast = self.val_torso = self.val_hips = 0.0
+        self.val_breast = self.val_torso = self.val_belly = self.val_hips = 0.0 
         self.val_armslegs = self.val_weight = self.val_strength = 0.0
 
         self.vertices_breast, self.vertices_torso, self.vertices_strength = [], [], []
@@ -105,11 +105,19 @@ class Avatar:
         pca_vec = weights - mean_model
         self.vertices_strength = shape_utils.compose_vertices_eigenmat(pca_vec)
 
+        # TEST: load weights/mean belly
+        file_eigen_weights = "%s/body/PCA/Eigenbodies/parts/belly/eigenbody0.txt" % (self.addon_path)
+        weights = shape_utils.read_eigenbody(file_eigen_weights)
+        pca_vec = weights - mean_model
+        self.vertices_belly = shape_utils.compose_vertices_eigenmat(pca_vec)
+
+
 
     def refresh_shape(self):
         verts = self.body.data.vertices
         for i in range(0,len(verts)):
             verts[i].co = Vector((# X
+                                  self.vertices_belly[i][0] * self.val_belly + 
                                   self.vertices_weight[i][0] * self.val_weight + 
                                   self.vertices_breast[i][0] * self.val_breast + 
                                   self.vertices_armslegs[i][0] * self.val_armslegs + 
@@ -118,6 +126,7 @@ class Avatar:
                                   self.vertices_torso[i][0] * self.val_torso + 
                                   self.vertices_model[i][0],
                                   # Y 
+                                  self.vertices_belly[i][0] * self.val_belly + 
                                   self.vertices_weight[i][1] * self.val_weight + 
                                   self.vertices_breast[i][1] * self.val_breast +
                                   self.vertices_armslegs[i][1] * self.val_armslegs + 
@@ -126,6 +135,7 @@ class Avatar:
                                   self.vertices_torso[i][1] * self.val_torso + 
                                   self.vertices_model[i][1],
                                   # Z 
+                                  self.vertices_belly[i][0] * self.val_belly + 
                                   self.vertices_weight[i][2] * self.val_weight + 
                                   self.vertices_breast[i][2] * self.val_breast + 
                                   self.vertices_armslegs[i][2] * self.val_armslegs + 

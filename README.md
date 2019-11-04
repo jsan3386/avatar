@@ -1,6 +1,11 @@
 IRIsAvatar: Project Avatar for Blender
 ======================================
 
+# List TODOs, things to fix
+
+- skin normal norm00.png is not correct, this provokes some transparent faces on rendered image
+- problems when appending model and skeleton from blend file 
+
 
 # Pre-requisites
 
