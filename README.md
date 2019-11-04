@@ -41,3 +41,7 @@ This makes the whole algorithm quite slow
 - The final solution consists in to use world matrices for every bone. These matrices also contains the bone head positions. However, in order to compute rotations is necessary to know also the bone tail. Since bone tail is the same as child bone head, we use that as value for tail. Only problem could be in termination bones. To fix that will be necessary to create new bones, this way blender can keep updated the values of everything. For CPM skeletons this is not necessary.
     - For this last solution I encountered several things to take into account:
     - 1) For some reason in my first attemps to solve rotations I used neck head position as left/right shoulder positions
+
+![Alt text](./figures/skeletons.jpg?raw=true "Skeletons")
+
+For a better motion transfer in our skeleton we should format the CPM points to match better our standard skeleton joints. This is specially problematic in shoulders and head. If we observe in our skeleton shoulders are in the middle of the bone, for now they are approximated using neck position. Also now, head is attached to the neck bone, this should not be like this. If we observe our skeleton, head should be detached from bone neck.
