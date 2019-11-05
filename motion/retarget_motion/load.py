@@ -348,7 +348,8 @@ def addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector,
                         newangle = angle
                         if name == "Hips" and str(axis) == "Y":
 
-                            body = bpy.data.objects["Standard"]
+                            #body = bpy.data.objects["Standard"]
+                            body = bpy.context.active_object
                             body.rotation_mode = "XYZ"
                             body.rotation_euler[2] = extra * Deg2Rad
                         mats.append(Matrix.Rotation(newangle, 3, axis))
