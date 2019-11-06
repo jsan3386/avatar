@@ -232,7 +232,7 @@ def readBvhFile(context, filepath, scn, scan, original_position,frame_start,orig
             if (frame >= startFrame and frame <= endFrame and frame % ssFactor == 0 and frame < nFrames):
                 if frameno ==1:
                     for node in nodes:
-                        if node.name == "Hips":
+                        if node.name == "Hips" or node.name == 'mixamorig:Hips':
                             for (mode,indices) in node.channels:
                                 if mode == Location:
                                     vec = Vector((0,0,0))
@@ -248,7 +248,10 @@ def readBvhFile(context, filepath, scn, scan, original_position,frame_start,orig
                                     mat = node.inverse @ flipMatrix @ mats[0] @ mats[1] @ mats[2] @ flipInv @ node.matrix
                 start_rotation = mat
                 translation_vector = vec
-                addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector,start_rotation,origin)
+                # start_rotation = original_position
+                # translation_vector = Vector((0,0,0))
+                addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector, 
+                                                                            start_rotation, origin)
                 showProgress(frameno, frame, nFrames, step=200)
                 frameno += 1
             frame += 1

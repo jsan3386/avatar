@@ -625,6 +625,42 @@ def drawObjectProblems(self):
 #   showProgress(n, frame):
 #
 
+def selectAndSetRestPose(rig, scn):
+    reallySelect(rig, scn)
+    bpy.ops.object.mode_set(mode='POSE')
+    bpy.ops.pose.select_all(action='SELECT')
+    bpy.ops.pose.rot_clear()
+    bpy.ops.pose.loc_clear()
+    bpy.ops.pose.scale_clear()
+
+
+def reallySelect(ob, scn):
+    # ob.hide_viewport = False
+    # visible = False
+    # for n,vis in enumerate(ob.layers):
+    #     if vis and scn.layers[n]:
+    #         visible = True
+    #         break
+    # if not visible:
+    #     for n,vis in enumerate(ob.layers):
+    #         if vis:
+    #             scn.layers[n] = True
+    #             visible = True
+    #             break
+    # if not visible:
+    #     for n,vis in enumerate(scn.layers):
+    #         if vis:
+    #             ob.layers[n] = True
+    #             visible = True
+    #             break
+    # if not visible:
+    #     ob.layers[0] = scn.layers[0] = True
+    # scn.objects.active = ob
+    bpy.context.view_layer.objects.active = ob
+
+
+
+
 def startProgress(string):
     print("%s (0 pct)" % string)
 

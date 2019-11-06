@@ -121,28 +121,38 @@ def findSrcArmature(context, rig):
     if not scn.McpAutoSourceRig:
         _srcArmature = _sourceArmatures[scn.McpSourceRig]
     else:
+
         amt = _srcArmature = CArmature()
-        #original = []
-        #names = []
-        #for pb in rig.pose.bones:
-        #    matrix = pb.matrix
-        #    original.append(matrix)
-        #    names.append(pb.name)
-
-        #putInRestPose(rig, True)
+        selectAndSetRestPose(rig, scn)
         amt.findArmature(rig)
-        #t_pose.autoTPose(rig, context)
-
+        t_pose.autoTPose(rig, scn)
         t_pose.defineTPose(rig)
-
         _sourceArmatures["Automatic"] = amt
         amt.display("Source")
 
-        #for i in range(len(names)):
-        #    pb = rig.pose.bones[names[i]]
-        #    pb.rotation_mode = "QUATERNION"
-        #    pb.rotation_quaternion = original[i].to_quaternion()
-        #bpy.context.view_layer.update()
+
+        # amt = _srcArmature = CArmature()
+        # #original = []
+        # #names = []
+        # #for pb in rig.pose.bones:
+        # #    matrix = pb.matrix
+        # #    original.append(matrix)
+        # #    names.append(pb.name)
+
+        # #putInRestPose(rig, True)
+        # amt.findArmature(rig)
+        # #t_pose.autoTPose(rig, context)
+
+        # t_pose.defineTPose(rig)
+
+        # _sourceArmatures["Automatic"] = amt
+        # amt.display("Source")
+
+        # #for i in range(len(names)):
+        # #    pb = rig.pose.bones[names[i]]
+        # #    pb.rotation_mode = "QUATERNION"
+        # #    pb.rotation_quaternion = original[i].to_quaternion()
+        # #bpy.context.view_layer.update()
 
     rig.McpArmature = _srcArmature.name
     print("Using matching armature %s." % rig.McpArmature)
