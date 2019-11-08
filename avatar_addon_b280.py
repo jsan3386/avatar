@@ -30,12 +30,10 @@ import signal
 
 #from numpy import *
 
-#from bpy.props import (BoolProperty,
-#                       IntProperty,
-#                      )
+from bpy.props import BoolProperty, IntProperty, FloatProperty, StringProperty, EnumProperty
 
 import mathutils 
-from bpy.props import * 
+#from bpy.props import * 
 import bpy.utils.previews 
 
 for p in bpy.utils.script_paths():
@@ -222,6 +220,35 @@ class AVATAR_OT_LoadModel(bpy.types.Operator):
 
         return {'FINISHED'}
 
+class AVATAR_OT_SetBodyShape(bpy.types.Operator):
+    
+    bl_idname = "avt.set_body_shape"
+    bl_label = "Set Body Shape"
+    bl_description = "Set Body Shape"
+    
+    # This operator is only to use for external program to generate bodies with different shapes
+
+    def execute(self, context):	
+        global mAvt
+
+        obj = mAvt.body
+
+        # set previous mesh vertices values
+        cp_vals = obj.data.copy()
+        mAvt.np_mesh_prev = mAvt.read_verts(cp_vals)
+
+        mAvt.refresh_shape()
+
+        mAvt.np_mesh = mAvt.read_verts(obj.data)
+        mAvt.np_mesh_diff = mAvt.np_mesh - mAvt.np_mesh_prev
+
+        for object in bpy.data.objects:
+            if ((object.type == 'MESH') and (object.name != "Standard:Body")):
+                mAvt.deform_cloth(cloth_name=str(object.name))
+
+        return {'FINISHED'}
+
+
 class AVATAR_OT_ResetParams(bpy.types.Operator):
     
     bl_idname = "avt.reset_params"
@@ -237,15 +264,9 @@ class AVATAR_OT_ResetParams(bpy.types.Operator):
         cp_vals = obj.data.copy()
         mAvt.np_mesh_prev = mAvt.read_verts(cp_vals)
 
-    
         # calculate new shape with PCA shapes
-        mAvt.val_breast = self.val_breast = 0.0
-        mAvt.val_torso = self.val_torso = 0.0
-        mAvt.val_hips = self.val_hips = 0.0
-        mAvt.val_armslegs = self.val_limbs = 0.0
-        mAvt.val_weight = self.val_weight = 0.0
-        mAvt.val_strength = self.val_strength = 0.0
-        mAvt.val_belly = self.val_belly = 0.0
+        obj.val_breast = obj.val_torso = obj.val_hips = obj.val_limbs = 0.0
+        obj.val_weight = obj.val_strength = obj.val_belly = 0.0
 
         mAvt.refresh_shape()
 
@@ -684,6 +705,7 @@ classes  = (
             AVATAR_PT_LoadPanel, 
             AVATAR_OT_LoadModel,
             AVATAR_OT_ResetParams,
+            AVATAR_OT_SetBodyShape,
             AVATAR_PT_DressingPanel,
             AVATAR_OT_WearCloth,
             AVATAR_OT_CreateStudio,
