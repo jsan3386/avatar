@@ -670,10 +670,6 @@ class AVATAR_PT_MotionPanel(bpy.types.Panel):
         wm = context.window_manager
         
         row = layout.row()
-        if not wm.socket_connected:
-            layout.operator("avt.streaming_pose")  # , text="Connect Socket"
-        else:
-            layout.operator("avt.streaming_pose", text="Disconnect Socket")
 
 #        row = layout.row()
         layout.operator("avt.set_rest_pose", text="Reset pose")
@@ -681,6 +677,11 @@ class AVATAR_PT_MotionPanel(bpy.types.Panel):
         layout.operator("avt.load_bvh", text="Load BVH")
         layout.prop(obj, "bvh_offset", text="Motion offset")
         layout.prop(obj, "bvh_start_origin", text="Start origin")
+
+        if not wm.socket_connected:
+            layout.operator("avt.streaming_pose")  # , text="Connect Socket"
+        else:
+            layout.operator("avt.streaming_pose", text="Disconnect Socket")
 
         if not wm.socket_connected:
             return
