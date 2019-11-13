@@ -11,12 +11,16 @@ import os
 import numpy as np 
 import time
 import cv2
-import tensorflow as tf
+# import tensorflow as tf
 import math
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+from matplotlib.patches import Rectangle
 
-#sys.path.insert(1, '/Users/jsanchez/Software/gitprojects/avatar/motion/net_models/cpm_pose')
-from net_models.cpm_pose import cpm_body_slim
-#import cpm_body_slim
+
+# #sys.path.insert(1, '/Users/jsanchez/Software/gitprojects/avatar/motion/net_models/cpm_pose')
+# from net_models.cpm_pose import cpm_body_slim
+# #import cpm_body_slim
 
 context = zmq.Context()
 socket = context.socket(zmq.PUB)
@@ -51,6 +55,44 @@ limbs = [[0, 1],
          [11, 12],
          [12, 13]]
 
+
+cpm_indices = [0, 4, 5, 10, 11, 12, 34, 35, 36, 57, 58, 59, 62, 63, 64]
+addon_bone_order = [2, 1, 6, 7, 8, 3, 4, 5, 12, 13, 14, 9, 10, 11, 0]
+
+def read_joints_file (filename):
+
+    fjoints = open(filename, 'r')
+
+    # skipt 2 lines
+    fjoints.readline()
+    fjoints.readline()
+
+    # read bounding box
+    line = fjoints.readline()
+    line_split = line.split()
+    bbx = np.zeros(4)
+    bbx[0] = int(line_split[0])
+    bbx[1] = int(line_split[1])
+    bbx[2] = int(line_split[2])
+    bbx[3] = int(line_split[3])
+
+    pts_2d = []
+    pts_3d = []
+    vis = []
+    depth = []
+
+    for line in fjoints.readlines():
+
+        line_split = line.split()
+        vis.append(int(line_split[0]))
+        pts_2d.append([float(line_split[1]), float(line_split[2])])
+        depth.append(float(line_split[3]))
+        pts_3d.append([float(line_split[4]), float(line_split[5]), float(line_split[6])])
+
+
+    return bbx, np.array(vis), np.array(pts_2d), np.array(depth), np.array(pts_3d)
+
+
 def send_array(socket, A, flags=0, copy=True, track=False):
     """send a numpy array with metadata"""
     md = dict(
@@ -65,7 +107,7 @@ def recv_array(socket, flags=0, copy=True, track=False):
     md = socket.recv_json(flags=flags)
     msg = socket.recv(flags=flags, copy=copy, track=track)
     buf = memoryview(msg)
-    A = numpy.frombuffer(buf, dtype=md['dtype'])
+    A = np.frombuffer(buf, dtype=md['dtype'])
     return A.reshape(md['shape'])
 
 def visualize_result(test_img, stage_heatmap_np, hmap_size, joints):
@@ -214,7 +256,7 @@ if __name__ == "__main__":
         cv2.destroyAllWindows()
 
     # option read frame files
-    elif sys.argv[1] == '-frames':
+    elif sys.argv[1] == '-frames_humaneva':
         frames_folder = sys.argv[2]
         fps = int(sys.argv[3])
         #print(frames_folder)
@@ -234,6 +276,67 @@ if __name__ == "__main__":
             #print("Packages sent: ", num_packg)
             num_packg += 1
             time.sleep(max(1./fps - (time.time() - start), 0))
+
+    elif sys.argv[1] == '-frames_mixamo':
+        frames_folder = sys.argv[2]
+        fps = int(sys.argv[3])
+
+        # asynchronize plots
+        fig = plt.figure()
+        plt.ion()
+
+        # read files in folder
+        jpg_files = [f for f in os.listdir(frames_folder) if f.endswith('.jpg')]
+        txt_files = [f for f in os.listdir(frames_folder) if f.endswith('.txt')]
+
+        jpg_files.sort()
+        txt_files.sort()
+
+        for f in range(1, len(jpg_files)):
+            start = time.time()
+
+            jpg_file = jpg_files[f]
+            txt_file = txt_files[f]
+
+            # read joints
+            bbx, vis, pts_2d, depth, pts_3d = read_joints_file(frames_folder + "/" + txt_file)
+
+            # plot image
+            img = mpimg.imread(frames_folder + "/" + jpg_file)
+
+            ax = plt.gca()
+
+            rect = Rectangle((bbx[0], bbx[1]), bbx[2] - bbx[0], bbx[3] - bbx[1], linewidth=1, edgecolor='r', facecolor='none')
+            ax.add_patch(rect)
+
+            cpm_points = []
+            # plot cpm joints
+            for i in cpm_indices:
+                cpm_points.append([pts_3d[i][0], pts_3d[i][1], pts_3d[i][2]])
+                plt.plot(pts_2d[i][0], pts_2d[i][1], 'rx', linewidth=1, markersize=4)
+
+            # Send 3D points to socket
+            # Change order to check with order prepared in addon
+            cpm_sorted = []
+            for i in range(0, len(cpm_points)):
+                idx_sorted = addon_bone_order[i]
+                cpm_sorted.append(cpm_points[idx_sorted])
+            pts_skel = np.array(cpm_sorted)
+
+            pts_skel *= 10.0  # our ref skeleton is 10x from the rendered images
+
+            send_array(socket, pts_skel)
+            time.sleep(max(1./fps - (time.time() - start), 0))
+
+
+            plt.axis('off')
+            plt.imshow(img)
+
+            plt.show()
+            plt.pause(0.01)
+            #time.sleep(max(1./fps - (time.time() - start), 0))
+            plt.clf()
+
 
 
 

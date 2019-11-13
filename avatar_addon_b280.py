@@ -499,8 +499,10 @@ class AVATAR_OT_StreamingPose(bpy.types.Operator):
                 # get the message
                 points3d = recv_array(socket_sub)
                 #print(points3d)
-                M_mb = motion_utils.get_trans_mat_blend_to_matlab()
-                pts_skel = np.matmul(points3d, M_mb)
+                # When using points obtained from Matlab
+                # M_mb = motion_utils.get_trans_mat_blend_to_matlab()
+                # pts_skel = np.matmul(points3d, M_mb)
+                pts_skel = points3d
                 if mAvt.start_origin:
                     # translate points
                     new_pts_skel = []
@@ -546,9 +548,10 @@ class AVATAR_OT_StreamingPublisher(bpy.types.Operator):
 
         if not context.window_manager.streaming:
             str_fps = str(context.window_manager.fps)
-            path_frames = "%s/motion/frames" % avt_path
+            # path_frames = "%s/motion/frames" % avt_path
+            path_frames = "/mnt/data/jsanchez/Blender/Renders/sequence_animation/goalie_throw/seq"
             prog = "%s/motion/server.py" % avt_path
-            proc = subprocess.Popen(["python", prog, "-frames", path_frames, str_fps]) 
+            proc = subprocess.Popen(["python", prog, "-frames_mixamo", path_frames, str_fps]) 
             context.window_manager.pid = proc.pid
             context.window_manager.streaming = True
             mAvt.start_origin = context.window_manager.start_origin

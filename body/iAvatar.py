@@ -165,15 +165,11 @@ class Avatar:
         
         cloth_verts = None
         
-        print("DEFORMING CLOTH")
-        print(cloth_name)
         cloth_mesh = bpy.data.objects[cloth_name]
         cloth_verts = cloth_mesh.data.vertices
         cloth_mat_world = bpy.data.objects[cloth_name].matrix_world
         cloth_mat_world_inv  = bpy.data.objects[cloth_name].matrix_world.inverted()
         
-        ##···················· SEGUIR AQUIIIIIIIIIIII
-            
         total_vertices = len(cloth_verts)
             
         # all vertices in destination mesh

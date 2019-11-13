@@ -31,6 +31,70 @@ def get_trans_mat_blend_to_matlab ():
 
     return M_mb
 
+def ralign(X,Y):
+    m, n = X.shape
+
+    mx = X.mean(1)
+    my = Y.mean(1)
+    Xc =  X - np.tile(mx, (n, 1)).T
+    Yc =  Y - np.tile(my, (n, 1)).T
+
+    sx = np.mean(np.sum(Xc*Xc, 0))
+    sy = np.mean(np.sum(Yc*Yc, 0))
+
+    Sxy = np.dot(Yc, Xc.T) / n
+
+    U,D,V = np.linalg.svd(Sxy,full_matrices=True,compute_uv=True)
+    V=V.T.copy()
+    #print U,"\n\n",D,"\n\n",V
+    r = np.rank(Sxy)
+    d = np.linalg.det(Sxy)
+    S = np.eye(m)
+    if r > (m - 1):
+        if ( np.det(Sxy) < 0 ):
+            S[m, m] = -1
+        elif (r == m - 1):
+            if (np.det(U) * np.det(V) < 0):
+                S[m, m] = -1  
+        else:
+            R = np.eye(2)
+            c = 1
+            t = np.zeros(2)
+            return R,c,t
+
+    R = np.dot( np.dot(U, S ), V.T)
+
+    c = np.trace(np.dot(np.diag(D), S)) / sx
+    t = my - c * np.dot(R, mx)
+
+    return c, R, t
+
+def umeyama(P, Q):
+    assert P.shape == Q.shape
+    n, dim = P.shape
+
+    centeredP = P - P.mean(axis=0)
+    centeredQ = Q - Q.mean(axis=0)
+
+    C = np.dot(np.transpose(centeredP), centeredQ) / n
+
+    V, S, W = np.linalg.svd(C)
+    d = (np.linalg.det(V) * np.linalg.det(W)) < 0.0
+
+    if d:
+        S[-1] = -S[-1]
+        V[:, -1] = -V[:, -1]
+
+    R = np.dot(V, W)
+
+    varP = np.var(S, axis=0).sum()
+    c = 1/varP * np.sum(S) # scale factor
+
+    t = Q.mean(axis=0) - P.mean(axis=0).dot(c*R)
+
+    return c, R, t
+
+
 
 def rigid_transform_3D(A, B):
     assert len(A) == len(B)
