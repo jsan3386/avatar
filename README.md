@@ -19,7 +19,28 @@ https://blender.stackexchange.com/questions/56011/how-to-install-pip-for-blender
 # Shape Panel
 
 
-#Motion Panel
+# Motion Panel
+
+- Motion from 3D points
+
+Note: Makehuman loaded in 2.79 is 1x while in 2.8 is 10x. This means 3D point coordinates must be resized accordingly. 
+Also note 3D coordinates coming from matlab have different axis orientations, a transformation must be applied to correct that. Matlab Y up X forward. Blender Z up  Y forward.
+
+Current status:
+
+1. Some blender sequences are generated to simulate 2D and 3D points.
+    1.1. If we pass 3D points to the algorithm, the motion is correct
+2. In jordi_tf user there are the training files to detect 2D pose and to find 2D - 3D conversions
+    2.1. 2D-3D conversions use Julieta's code (https://github.com/una-dinosauria/3d-pose-baseline)
+         go to /home/jordi_tf/Software/3d-pose-baseline/src, activate venv_cpm
+         training_avatar.py is for training, inference_avatar.py is for inference
+    2.2. 2D detections
+         Openpose can't make it work. Some problems with google protobuf when installing caffe
+         AlphaPose-master: can calculate poses from images (working) 
+            in /home/jordi_tf/Software/AlphaPose-master/examples/demo are my generated synthetic images
+            in /home/jordi_tf/Software/AlphaPose-master/results are the results
+         AlphaPose: this code should work for webcam, but it can't detect camera when using code with ssh
+            some other error with cuda version (not sure I can fix). Needs python3.6 to run 
 
 
 #Dressing Panel
