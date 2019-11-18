@@ -299,21 +299,23 @@ if __name__ == "__main__":
             txt_file = txt_files[f]
 
             # read joints
-            bbx, vis, pts_2d, depth, pts_3d = read_joints_file(frames_folder + "/" + txt_file)
+            # bbx, vis, pts_2d, depth, pts_3d = read_joints_file(frames_folder + "/" + txt_file) # gt
+            cpm_points = np.loadtxt(frames_folder + "/" + txt_file) # computed with 2d-3d net
 
             # plot image
             img = mpimg.imread(frames_folder + "/" + jpg_file)
 
             ax = plt.gca()
 
-            rect = Rectangle((bbx[0], bbx[1]), bbx[2] - bbx[0], bbx[3] - bbx[1], linewidth=1, edgecolor='r', facecolor='none')
-            ax.add_patch(rect)
+            # rect = Rectangle((bbx[0], bbx[1]), bbx[2] - bbx[0], bbx[3] - bbx[1], linewidth=1, edgecolor='r', facecolor='none')
+            # ax.add_patch(rect)
 
-            cpm_points = []
-            # plot cpm joints
-            for i in cpm_indices:
-                cpm_points.append([pts_3d[i][0], pts_3d[i][1], pts_3d[i][2]])
-                plt.plot(pts_2d[i][0], pts_2d[i][1], 'rx', linewidth=1, markersize=4)
+            # Convert mixamo points to cpm points
+            # cpm_points = []
+            # # plot cpm joints
+            # for i in cpm_indices:
+            #     cpm_points.append([pts_3d[i][0], pts_3d[i][1], pts_3d[i][2]])
+            #     plt.plot(pts_2d[i][0], pts_2d[i][1], 'rx', linewidth=1, markersize=4)
 
             # Send 3D points to socket
             # Change order to check with order prepared in addon

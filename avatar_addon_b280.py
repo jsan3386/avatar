@@ -549,7 +549,8 @@ class AVATAR_OT_StreamingPublisher(bpy.types.Operator):
         if not context.window_manager.streaming:
             str_fps = str(context.window_manager.fps)
             # path_frames = "%s/motion/frames" % avt_path
-            path_frames = "/mnt/data/jsanchez/Blender/Renders/sequence_animation/goalie_throw/seq"
+            # path_frames = "/mnt/data/jsanchez/Blender/Renders/sequence_animation/goalie_throw/seq"
+            path_frames = "/mnt/data/jordi_tf/Projects/Avatar/Results-Avatar"
             prog = "%s/motion/server.py" % avt_path
             proc = subprocess.Popen(["python", prog, "-frames_mixamo", path_frames, str_fps]) 
             context.window_manager.pid = proc.pid
