@@ -358,6 +358,8 @@ def calculate_rotations_fast(skel_basis, bvh_nodes, goal_pts):
     # blender skeleton update matrices of bodies, but when reading values of skeleton are not updated
     # only way to update is to use scene_update function which makes calculations very slow
     # for this reason we need to update skeleton joints in a different structure
+    # Other way to update matrices
+    # https://stackoverflow.com/questions/13840418/force-matrix-world-to-be-recalculated-in-blender
 
     ref_arm = bvh_utils.get_skeleton_bvh_joints(bvh_nodes)
     ref_skel = np.array(ref_arm)
