@@ -512,6 +512,7 @@ def isLocation(mode):
 #
 
 def setRotation(pb, rot, frame, group):
+    print(rot)
     if pb.rotation_mode == 'QUATERNION':
         try:
             quat = rot.to_quaternion()

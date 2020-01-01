@@ -349,6 +349,36 @@ def addFrame(words, frame, nodes, pbones, scale, flipMatrix, translation_vector,
                     for (axis, sign) in indices:
                         angle = sign*float(words[m])*Deg2Rad
                         newangle = angle
+                        # Temporal fix: only works with mixamo bvh files
+                        if name == "mixamorig:LeftArm" and str(axis) == "X":
+                            newangle += 0.2*Deg2Rad
+                        if name == "mixamorig:LeftArm" and str(axis) == "Y":
+                            newangle += 0.9*Deg2Rad
+                        if name == "mixamorig:LeftArm" and str(axis) == "Z":
+                            newangle += 50.6*Deg2Rad
+
+                        if name == "mixamorig:LeftForeArm" and str(axis) == "X":
+                            newangle -= 40.8*Deg2Rad
+                        if name == "mixamorig:LeftForeArm" and str(axis) == "Y":
+                            newangle += 0.92*Deg2Rad
+                        if name == "mixamorig:LeftForeArm" and str(axis) == "Z":
+                            newangle -= 4.58*Deg2Rad
+
+                        if name == "mixamorig:RightArm" and str(axis) == "X":
+                            newangle += 1.97*Deg2Rad
+                        if name == "mixamorig:RightArm" and str(axis) == "Y":
+                            newangle += 3.26*Deg2Rad
+                        if name == "mixamorig:RightArm" and str(axis) == "Z":
+                            newangle -= 50.4*Deg2Rad
+
+                        if name == "mixamorig:RightForeArm" and str(axis) == "X":
+                            newangle -= 40.5*Deg2Rad
+                        if name == "mixamorig:RightForeArm" and str(axis) == "Y":
+                            newangle -= 2.22*Deg2Rad
+                        if name == "mixamorig:RightForeArm" and str(axis) == "Z":
+                            newangle += 4.84*Deg2Rad
+
+
                         if name == "Hips" and str(axis) == "Y":
 
                             #body = bpy.data.objects["Standard"]

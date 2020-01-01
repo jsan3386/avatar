@@ -172,10 +172,10 @@ class AVATAR_OT_LoadModel(bpy.types.Operator):
         obj = context.active_object
         
         # load makehuman model
-        model_file = "%s/body/models/standard.mhx2" % avt_path
-        bpy.ops.import_scene.makehuman_mhx2(filepath=model_file)
-        # model_file = "%s/body/models/base_human.blend" % avt_path
-        # load_model_from_blend_file(model_file)
+        # model_file = "%s/body/models/standard.mhx2" % avt_path
+        # bpy.ops.import_scene.makehuman_mhx2(filepath=model_file)
+        model_file = "%s/body/models/standard.blend" % avt_path
+        load_model_from_blend_file(model_file)
 
         mAvt.load_shape_model()
         mAvt.body = bpy.data.objects["Standard:Body"]
