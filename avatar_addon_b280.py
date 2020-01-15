@@ -214,7 +214,7 @@ class AVATAR_OT_LoadModel(bpy.types.Operator):
         # Create skin material
         skin_material = importlib.import_module('skin_material')
         importlib.reload(skin_material)
-        skin_mat = skin_material.create_material('skin', 0)
+        skin_mat = skin_material.create_material('skin', 0, 1)
         tex_img, tex_norm, tex_spec = dressing.read_file_textures(avt_path, 'skin')
         skin_material.assign_textures(mAvt.body, skin_mat, tex_img, tex_norm, tex_spec)
 
@@ -346,11 +346,14 @@ class AVATAR_OT_WearCloth (bpy.types.Operator):
     bl_description = "Dress human with selected cloth"
     
     def execute(self, context):
-        global iconname
+        #global iconname
         global avt_path
         scn = context.scene
         obj = context.active_object
         #
+        iconname = bpy.context.scene.my_thumbnails
+        iconname = iconname.split(".")[0]
+
         # Unselect everything to make sure changes are applied to iconname object
         for o in bpy.context.scene.objects:
             o.select_set(False)
@@ -359,14 +362,12 @@ class AVATAR_OT_WearCloth (bpy.types.Operator):
         cloth = bpy.data.objects[iconname]
         cloth.select_set(True)
 
-        # Create skin material
+        # Create cloth material
         cloth_material = importlib.import_module(iconname)
         importlib.reload(cloth_material)
-        cloth_mat = cloth_material.create_material(iconname, 0)
+        mat_id = dressing.get_material_id (iconname)
+        cloth_mat = cloth_material.create_material(iconname, 0, mat_id)
         tex_img, tex_norm, tex_spec = dressing.read_file_textures(avt_path, iconname)
-        print(tex_img)
-        print(tex_norm)
-        print(tex_spec)
         cloth_material.assign_textures(cloth, cloth_mat, tex_img, tex_norm, tex_spec)
                             
         return {'FINISHED'}
@@ -384,7 +385,7 @@ class AVATAR_PT_DressingPanel(bpy.types.Panel):
         layout = self.layout
         obj = context.object
         scn = context.scene
-        global iconname
+        # global iconname
 
         row = layout.row()
         #Presets
@@ -392,8 +393,8 @@ class AVATAR_PT_DressingPanel(bpy.types.Panel):
         row = layout.row()
 
         # Just a way to access which one is selected
-        iconname = bpy.context.scene.my_thumbnails
-        iconname = iconname.split(".")[0]
+        # iconname = bpy.context.scene.my_thumbnails
+        # iconname = iconname.split(".")[0]
         #print(iconname)
         col = row.column()
         cols = col.row()  #True
