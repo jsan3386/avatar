@@ -4,7 +4,7 @@
 import bpy
 import os
 
-def create_material_generic(matname, index):
+def create_material_generic(matname, index, matid):
     
     # Everytime we load and object a Default material is created
     # we force to remove this materials
@@ -14,6 +14,7 @@ def create_material_generic(matname, index):
 
     mat_name = '%s_mat%02d' % (matname, index)
     skinMat = (bpy.data.materials.get(mat_name) or bpy.data.materials.new(mat_name))
+    skinMat.pass_index = matid
 
     skinMat.use_nodes= True
 

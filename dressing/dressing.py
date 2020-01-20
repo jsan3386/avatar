@@ -3,6 +3,29 @@
 import bpy
 import math
 
+# clothes used in avatar
+clthlst = ['dress01', 'dress02', 'dress03', 'dress04', 'dress05', 'dress06', 'dress07',
+           'glasses01', 'glasses02',
+           'hat01', 'hat02', 'hat03', 'hat04',
+           'jacket01', 'jacket02',
+           'pants01', 'pants02', 'pants03', 'pants04', 'pants05', 'pants06',
+           'shirt01', 'shirt02', 'shirt03', 'shirt04', 'shirt05', 'shirt06', 'shirt07',
+           'shoes01', 'shoes02', 'shoes03', 'shoes04',
+           'skirt01', 'skirt02',
+           'suit01',
+           'swimming01', 'swimming02', 'swimming03', 'swimming04']
+
+# id 1 is for the skin
+# for now we classify easy with dresses (2), tops (3), bottoms (4), shoes(5), hats(6), glasses(7)
+cloth_class = [2, 2, 2, 2, 2, 2, 2, 7, 7, 6, 6, 6, 6, 3, 3, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 5, 5, 5, 5,
+               4, 4, 2, 4, 4, 4, 3]
+
+def get_material_id (name_cloth):
+
+    idx_list = clthlst.index(name_cloth)
+
+    return cloth_class[idx_list]
+
 def load_cloth (cloth_file, cloth_name):
 
     bpy.ops.import_scene.obj(filepath=cloth_file)
