@@ -178,6 +178,7 @@ class AVATAR_OT_LoadModel(bpy.types.Operator):
         load_model_from_blend_file(model_file)
 
         mAvt.load_shape_model()
+        mAvt.eyes = bpy.data.objects["Standard:High-poly"]
         mAvt.body = bpy.data.objects["Standard:Body"]
         mAvt.skel = bpy.data.objects["Standard"]
         mAvt.armature = bpy.data.armatures["Standard"]
@@ -211,12 +212,17 @@ class AVATAR_OT_LoadModel(bpy.types.Operator):
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.modifier_add(type='COLLISION')
 
-        # Create skin material
+        # Create skin material: eyes material should be created too
         skin_material = importlib.import_module('skin_material')
         importlib.reload(skin_material)
         skin_mat = skin_material.create_material('skin', 0, 1)
         tex_img, tex_norm, tex_spec = dressing.read_file_textures(avt_path, 'skin')
         skin_material.assign_textures(mAvt.body, skin_mat, tex_img, tex_norm, tex_spec)
+        eyes_material = importlib.import_module('eyes_material')
+        importlib.reload(eyes_material)
+        eyes_mat = eyes_material.create_material('eyes', 0, 1)
+        tex_img, tex_norm, tex_spec = dressing.read_file_textures(avt_path, 'eyes')
+        eyes_material.assign_textures(mAvt.eyes, eyes_mat, tex_img, tex_norm, tex_spec)
 
         return {'FINISHED'}
 

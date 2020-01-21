@@ -23,7 +23,7 @@ class Avatar:
                            "RightForeArm", "RightHand", "RThumb", "RightFingerBase", "RightHandFinger1", "RHipJoint",
                            "RightUpLeg", "RightLeg", "RightFoot", "RightToeBase"]
 
-
+        self.eyes = None
         self.body = None
         self.skel = None
         self.armature = None
