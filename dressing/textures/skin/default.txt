@@ -1,3 +1,1 @@
-tex00.png
-norm00.jpg
-spec00.jpg
+middleage_lightskinned_female_diffuse.png

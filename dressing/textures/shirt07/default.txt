@@ -1,0 +1,3 @@
+shirt.png
+shirtnormal.png
+shirtAO.png
