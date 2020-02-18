@@ -4,7 +4,7 @@ import importlib
 from mathutils import Quaternion, Matrix, Vector
 import numpy as np
 
-sys.path.append("/Users/jsanchez/Software/gitprojects/avatar/motion")
+sys.path.append("/home/jsanchez/Software/gitprojects/avatar/motion")
 
 
 import bvh_utils
@@ -16,7 +16,7 @@ importlib.reload(bvh_utils)
 
 
 #bvh_file = "/Users/jsanchez/Software/gitprojects/avatar/body/Reference.bvh"
-bvh_file = "/Users/jsanchez/BlenderAssets/mocaps/mixamo/walking.bvh"
+bvh_file = "/mnt/data/jsanchez/BlenderAssets/mocaps/mixamo/walking.bvh"
 
 bvh_nodes, _, _ = bvh_utils.read_bvh(bpy.context, bvh_file)
 bvh_nodes_list = bvh_utils.sorted_nodes(bvh_nodes)
@@ -83,7 +83,7 @@ def find_bone_match(list_bones, bone_name):
             break
     return bone_match
 
-file_bone_correspondences = "/Users/jsanchez/Software/gitprojects/avatar/bone_correspondance_mixamo.txt"
+file_bone_correspondences = "/home/jsanchez/Software/gitprojects/avatar/bone_correspondance_mixamo.txt"
 bone_corresp = read_text_lines(file_bone_correspondences)
 
 bmatch = find_bone_match(bone_corresp, "LeftFoot")
