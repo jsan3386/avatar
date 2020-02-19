@@ -13,8 +13,8 @@ LowerBack               mixamorig:Spine
 Spine                   mixamorig:Spine1
 Spine1                  mixamorig:Spine2
 Neck                    mixamorig:Neck
-Neck1
-Head                    mixamorig:Head
+Neck1                   mixamorig:Head
+Head
 HeadTop                 mixamorig:HeadTop_End
 RightShoulder           mixamorig:RightShoulder
 RightArm                mixamorig:RightArm
