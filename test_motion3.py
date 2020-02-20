@@ -4,8 +4,8 @@ import importlib
 from mathutils import Quaternion, Matrix, Vector
 import numpy as np
 
-#sys.path.append("/home/jsanchez/Software/gitprojects/avatar/motion")
-sys.path.append("/Users/jsanchez/Software/gitprojects/avatar/motion")
+sys.path.append("/home/jsanchez/Software/gitprojects/avatar/motion")
+#sys.path.append("/Users/jsanchez/Software/gitprojects/avatar/motion")
 
 
 import bvh_utils
@@ -16,8 +16,8 @@ importlib.reload(bvh_utils)
 
 
 
-bvh_file = "/Users/jsanchez/Software/gitprojects/avatar/body/Reference.bvh"
-#bvh_file = "/mnt/data/jsanchez/BlenderAssets/mocaps/mixamo/walking.bvh"
+#bvh_file = "/Users/jsanchez/Software/gitprojects/avatar/body/Reference.bvh"
+bvh_file = "/mnt/data/jsanchez/BlenderAssets/mocaps/mixamo/walking.bvh"
 
 bvh_nodes, _, _ = bvh_utils.read_bvh(bpy.context, bvh_file)
 bvh_nodes_list = bvh_utils.sorted_nodes(bvh_nodes)
