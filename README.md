@@ -1,5 +1,4 @@
 # Avatar: 3D human addon for Blender >= 2.8
-===========================================
 
 Human 3D model avatar based on Makehuman. 
 
