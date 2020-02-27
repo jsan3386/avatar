@@ -609,8 +609,10 @@ class AVATAR_OT_LoadBVH (bpy.types.Operator):
             original_position.append(b.matrix.copy())
             
         file_path = self.filepath 
-        
-        retarget.loadRetargetSimplify(context, file_path, original_position, obj.bvh_offset, obj.bvh_start_origin) 
+
+        retarget.loadRetargetSimplify(context, file_path, original_position, 0, False) 
+
+#        retarget.loadRetargetSimplify(context, file_path, original_position, obj.bvh_offset, obj.bvh_start_origin) 
 
         return {'FINISHED'}
 
@@ -681,7 +683,7 @@ class AVATAR_PT_MotionPanel(bpy.types.Panel):
         obj = context.object
         wm = context.window_manager
         
-        row = layout.row()
+        #row = layout.row()
 
 #        row = layout.row()
         layout.operator("avt.set_rest_pose", text="Reset pose")

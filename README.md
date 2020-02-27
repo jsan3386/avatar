@@ -1,25 +1,29 @@
-IRIsAvatar: Project Avatar for Blender
-======================================
+# Avatar: 3D human addon for Blender >= 2.8
+===========================================
 
-# List TODOs, things to fix
+Human 3D model avatar based on Makehuman. 
 
-- skin normal norm00.png is not correct, this provokes some transparent faces on rendered image
-- problems when appending model and skeleton from blend file 
+### List TODOs, things to fix
+
+- [] skin normal norm00.png is not correct, this provokes some transparent faces on rendered image
+- [] problems when appending model and skeleton from blend file 
+- [] ported makewalk not working for mixamo neither cmu actions
+- [] need complete clothes masks
+- [] make real time 3D pose detection
+- [] shape parameter belly is wrong 
 
 
-# Pre-requisites
+### Shape Panel
 
-- Need to install addon in Blender. Follow instructions in: http://www.makehumancommunity.org/content/downloads.html
+There are several parameters to control the shape of the body. Each one of the parameters is a PCA from several bodies created when modifying the correspondent parameter in Makehuman.
+
+
+### Motion Panel
+
 - Need to install zmq outside and inside Blender (pyzmq). Outside Blender normal install with pip. Inside blender follow: 
 https://blender.stackexchange.com/questions/56011/how-to-install-pip-for-blenders-bundled-python
 
 
-
-
-# Shape Panel
-
-
-# Motion Panel
 
 - Motion from 3D points
 
@@ -43,10 +47,16 @@ Current status:
             some other error with cuda version (not sure I can fix). Needs python3.6 to run 
 
 
-#Dressing Panel
+### Dressing Panel
 
-- Download textures from https://drive.google.com/open?id=133n9ZpfK3DGlQIPOhnC94tbTFBDR_b3U
+There is a set of clothes downloaded from Makehuman website. These clothes are slightly modified to fit the makehuman body without having to remove vertices from the model.
 
+Original textures can be downloaded in the Makehuman website or [here](https://drive.google.com/open?id=133n9ZpfK3DGlQIPOhnC94tbTFBDR_b3U)
+
+If you want to use your own texture in one of the clothes:
+    1. Set the image or images in the cloth folder > avatar_path/dressing/textures/cloth_folder
+    2. Change the image name in file > default.txt
+    3. Default file assumes: 1st line texture image; 2nd line normal map; 3rd line specular map. If your texture has no normal map neither specular map, you can leave the line in blank.
 
 
 # Extras
@@ -71,3 +81,11 @@ This makes the whole algorithm quite slow
 ![Alt text](./figures/skeletons.jpg?raw=true "Skeletons")
 
 For a better motion transfer in our skeleton we should format the CPM points to match better our standard skeleton joints. This is specially problematic in shoulders and head. If we observe in our skeleton shoulders are in the middle of the bone, for now they are approximated using neck position. Also now, head is attached to the neck bone, this should not be like this. If we observe our skeleton, head should be detached from bone neck.
+
+### Credits
+
+- [Makehuman](http://www.makehumancommunity.org/)
+    - Clothes mostly on Mindfront, punkduck 
+- Marta Altarriba Fatsini - Motion transfer from set of 3D points
+- Aniol Civit Bertran - Human model shape parameters
+- [Blender Stack Exchange](https://blender.stackexchange.com/)
