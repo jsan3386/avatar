@@ -11,7 +11,7 @@ import numpy as np
 def rigid_transform_3D(A, B):
 	assert len(A) == len(B)
 
-	N = A.shape[0]; # total points
+	N = A.shape[0] # total points
 
 	centroid_A = np.mean(A, axis=0)
 	centroid_B = np.mean(B, axis=0)
