@@ -1,7 +1,7 @@
 import bpy
 from mathutils import *
 
-file_bone_correspondences = "/home/jsanchez/Software/gitprojects/avatar/bone_correspondance_cmu.txt"
+file_bone_correspondences = "/home/jsanchez/Software/gitprojects/avatar/motion/retarget_motion_mine/bone_correspondance_cmu.txt"
 #file_bone_correspondences = "/home/jsanchez/Software/gitprojects/avatar/bone_correspondance_mixamo.txt"
 #file_bone_correspondences = "/Users/jsanchez/Software/gitprojects/avatar/bone_correspondance_mixamo.txt"
 

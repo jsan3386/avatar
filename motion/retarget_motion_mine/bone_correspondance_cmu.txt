@@ -1,10 +1,10 @@
 Hips                    hip
-RHipJoint               rButtock
+RHipJoint               
 RightUpLeg              rThigh
 RightLeg                rShin
 RightFoot               rFoot
 RightToeBase            
-LHipJoint               lButtock
+LHipJoint               
 LeftUpLeg               lThigh
 LeftLeg                 lShin
 LeftFoot                lFoot

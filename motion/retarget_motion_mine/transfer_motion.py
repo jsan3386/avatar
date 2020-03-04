@@ -5,7 +5,7 @@ import numpy as np
 source = bpy.data.objects["02_01_walk"]
 target = bpy.data.objects["Standard"]
 
-file_bone_correspondences = "/home/jsanchez/Software/gitprojects/avatar/bone_correspondance_cmu.txt"
+file_bone_correspondences = "/home/jsanchez/Software/gitprojects/avatar/motion/retarget_motion_mine/bone_correspondance_cmu.txt"
 #file_bone_correspondences = "/home/jsanchez/Software/gitprojects/avatar/bone_correspondance_mixamo.txt"
 #file_bone_correspondences = "/Users/jsanchez/Software/gitprojects/avatar/bone_correspondance_mixamo.txt"
 
@@ -65,6 +65,9 @@ def find_bone_match(list_bones, bone_name):
             break
     return bone_match
 
+def get_bone_head_position(obj, bone_name):
+    return (obj.matrix_world @ Matrix.Translation(obj.pose.bones[bone_name].head)).to_translation()
+
 
 # create target animation
 target.animation_data_clear()
@@ -96,10 +99,28 @@ matrices_source = {}
 for bone in source.data.bones:
     matrices_source[bone.name] = bone.matrix_local
 
+
+# target bones in rest position
+trg_bone_loc_hips = get_bone_head_position(target, "Hips")
+trg_bone_loc_lefthips = get_bone_head_position(target, "LeftUpLeg")
+trg_bone_loc_righthips = get_bone_head_position(target, "RightUpLeg")
+trg_bone_loc_neck = get_bone_head_position(target, "Neck")
+
+
 # read source animation
 for f in range(nfirst, nlast):
 
     bpy.context.scene.frame_set(f)
+
+    # get bvh bone locations
+    source_bone_name = find_bone_match(bone_corresp, "Hips")
+    src_bone_loc_hips = get_bone_head_position(source, source_bone_name)
+    source_bone_name = find_bone_match(bone_corresp, "LeftUpLeg")
+    src_bone_loc_lefthips = get_bone_head_position(source, source_bone_name)
+    source_bone_name = find_bone_match(bone_corresp, "RightUpLeg")
+    src_bone_loc_righthips = get_bone_head_position(source, source_bone_name)
+    source_bone_name = find_bone_match(bone_corresp, "Neck")
+    src_bone_loc_neck = get_bone_head_position(source, source_bone_name)
 
     # read source motion
     for pb in target.pose.bones:
@@ -124,16 +145,17 @@ for f in range(nfirst, nlast):
                 pb.keyframe_insert('location', frame=f, group=pb.name)
 
                 # compute translation and first rotation between rest position and desired points
-                A = np.mat((ref_skel[14,:], ref_skel[8,:], ref_skel[11,:], ref_skel[1,:]))
-                B = np.mat((pts_skel[14,:], pts_skel[8,:], pts_skel[11,:], pts_skel[1,:]))
+                A = np.mat((trg_bone_loc_hips, trg_bone_loc_lefthips, trg_bone_loc_righthips, trg_bone_loc_neck)) # my skeleton
+                B = np.mat((src_bone_loc_hips, src_bone_loc_lefthips, src_bone_loc_righthips, src_bone_loc_neck)) # bvh skeleton
                 R, T = rigid_transform_3D(A,B)
 
                 mR = Matrix([[R[0,0],R[0,1],R[0,2]], [R[1,0],R[1,1],R[1,2]], [R[2,0],R[2,1],R[2,2]]])
+                mR.resize_4x4()
 
                 boneRefPoseMtx = pb.bone.matrix_local.copy()
-                rotMtx = boneRefPoseMtx.inverted() * mR * boneRefPoseMtx
+                rotMtx = boneRefPoseMtx.inverted() @ mR @ boneRefPoseMtx
                 pb.rotation_mode = 'XYZ'
-                pb.rotation_euler = rot.to_euler()
+                pb.rotation_euler = rotMtx.to_euler()
                 pb.keyframe_insert('rotation_euler', frame=f, group=pb.name)
 
                 # spb.rotation_mode = 'XYZ'
