@@ -104,18 +104,19 @@ skel.location = (0,0,0)
 target.location = (0,0,0)
 set_rest_pose(skel)
 set_rest_pose(target)
-#set_hips_origin(skel, "mixamorig:Hips")
-set_hips_origin(skel, "hip")
-set_hips_origin(target, "Hips")
-bpy.context.view_layer.update()
-bbox_corners_skel = [skel.matrix_world @ Vector(corner) for corner in skel.bound_box]
-bbox_corners_target = [target.matrix_world @ Vector(corner) for corner in target.bound_box]
-dist_skel = bbox_corners_skel[1][2] - bbox_corners_skel[0][2]
-dist_target = bbox_corners_target[1][2] - bbox_corners_target[0][2]
-fscale = dist_target / dist_skel
-print(bbox_corners_skel)
-print(bbox_corners_target)
+# #set_hips_origin(skel, "mixamorig:Hips")
+# set_hips_origin(skel, "hip")
+# set_hips_origin(target, "Hips")
+# bpy.context.view_layer.update()
+# bbox_corners_skel = [skel.matrix_world @ Vector(corner) for corner in skel.bound_box]
+# bbox_corners_target = [target.matrix_world @ Vector(corner) for corner in target.bound_box]
+# dist_skel = bbox_corners_skel[1][2] - bbox_corners_skel[0][2]
+# dist_target = bbox_corners_target[1][2] - bbox_corners_target[0][2]
+# fscale = dist_target / dist_skel
+# print(bbox_corners_skel)
+# print(bbox_corners_target)
 #fscale = find_scale_factor (skel, target, hips_name_skel, hips_name_target)
+fscale = 0.062
 skel.scale = (fscale, fscale, fscale)
 a = (skel.matrix_world @ Matrix.Translation(skel.pose.bones[hips_name_skel].head)).to_translation()
 print(a)

@@ -97,7 +97,7 @@ for bone in target.pose.bones:
 
 matrices_source = {}
 for bone in source.data.bones:
-    matrices_source[bone.name] = bone.matrix_local
+    matrices_source[bone.name] = bone.matrix_local.copy()
 
 
 # target bones in rest position
@@ -183,9 +183,10 @@ for f in range(nfirst, nlast):
             # pb.location = spb.location
             # pb.keyframe_insert('location', frame=f, group=pb.name)
         
-                spb.rotation_mode = 'XYZ'
+                #spb.rotation_mode = 'XYZ'
                 pb.rotation_mode = 'XYZ'
                 #rot = spb.rotation_euler
-                rot = (spb.matrix_basis @ matrices_target[pb.name]).to_euler()
-                pb.rotation_euler = rot
+                rot = matrices_target[pb.name] @ spb.matrix_basis.copy()
+                #rot = spb.matrix_basis.copy()
+                pb.rotation_euler = rot.to_euler()
                 pb.keyframe_insert('rotation_euler', frame=f, group=pb.name)
