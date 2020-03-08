@@ -1,9 +1,8 @@
 import bpy
 from mathutils import *
 
-file_bone_correspondences = "/home/jsanchez/Software/gitprojects/avatar/motion/retarget_motion_mine/bone_correspondance_cmu.txt"
 #file_bone_correspondences = "/home/jsanchez/Software/gitprojects/avatar/bone_correspondance_mixamo.txt"
-#file_bone_correspondences = "/Users/jsanchez/Software/gitprojects/avatar/bone_correspondance_mixamo.txt"
+file_bone_correspondences = "/Users/jsanchez/Software/gitprojects/avatar/motion/skeletons/mixamo.txt"
 
 
 def read_text_lines(filename):
@@ -59,6 +58,15 @@ def matrix_the_hard_way(pose_bone, ao):
         E_p = ao.data.bones[pose_bone.parent.name].matrix_local
         return m2 @ E_p.inverted() @ E @ m1
 
+def worldMatrix(ArmatureObject,Bone):
+# simplified version of the matrix_the_hard_way
+# To Test
+# Probably can't use without update of the bones, since bone.matrix does not updates
+# automatically
+    _bone = ArmatureObject.pose.bones[Bone]
+    _obj = ArmatureObject
+    return _obj.matrix_world * _bone.matrix
+
 def pose_to_match(arm, goal, bc):
     """
     pose arm so that its bones line up with the REST pose of goal
@@ -69,8 +77,10 @@ def pose_to_match(arm, goal, bc):
     for bone in arm.data.bones:
         bone_match = find_bone_match(bc, bone.name)
         if bone_match is not "none":
-            matrix_os[bone_match] = goal.data.bones[bone_match].matrix_local
-            print([ "matrix", bone_match, matrix_os[bone_match] ] )
+            #matrix_os[bone_match] = goal.data.bones[bone_match].matrix_local # if we want to match rest pose
+            ebp = goal.pose.bones[bone_match]
+            matrix_os[bone_match] = matrix_the_hard_way(ebp, goal)
+            #print([ "matrix", bone_match, matrix_os[bone_match] ] )
 
     #xyz' = s * m * m(parent) * xyz
 
@@ -83,20 +93,22 @@ def pose_to_match(arm, goal, bc):
             if to_pose.parent is None:
                 len2 = arm.data.bones[to_pose.name].length
                 len1 = goal.data.bones[goal_bone].length
-                #to_pose.matrix = matrix_os[goal_bone] # @ Matrix.Scale(len1/len2, 4)
-                # loc,rot,scale = matrix_os[goal_bone].decompose()
-                # print(rot.to_euler())
+                print(goal_bone)
+                #to_pose.matrix = matrix_os[goal_bone] @ Matrix.Scale(0.076, 4)
+                m1 = arm.matrix_world @ matrix_os[goal_bone] @ to_pose.bone.matrix_local
+                loc,rot,scale = m1.decompose()
                 # # to_pose.location = loc
-                # if 'QUATERNION' == to_pose.rotation_mode:
-                #     to_pose.rotation_quaternion = rot
-                # else:
-                #     to_pose.rotation_euler = rot.to_euler(to_pose.rotation_mode)
+                if 'QUATERNION' == to_pose.rotation_mode:
+                    to_pose.rotation_quaternion = rot
+                else:
+                    to_pose.rotation_euler = rot.to_euler(to_pose.rotation_mode)
 
             else:
                 # we can not set .matrix, because a lot of stuff behind the scenes has not yet
                 # caught up with our alterations, and it ends up doing math on outdated numbers
                 mp = matrix_the_hard_way(to_pose.parent, arm) @ matrix_for_bone_from_parent(to_pose, arm)
                 m2 = mp.inverted() @ matrix_os[goal_bone] # @ Matrix.Scale(goal.data.bones[goal_bone].length, 4)
+                #m2 = matrix_os[goal_bone] # @ Matrix.Scale(goal.data.bones[goal_bone].length, 4)
                 loc,rot,scale = m2.decompose()
                 # to_pose.location = loc
                 if 'QUATERNION' == to_pose.rotation_mode:
@@ -113,4 +125,4 @@ def pose_to_match(arm, goal, bc):
 
 bone_corresp = read_text_lines(file_bone_correspondences)
 
-pose_to_match(bpy.data.objects['Standard'], bpy.data.objects['02_01_walk'], bone_corresp)
+pose_to_match(bpy.data.objects['Standard'], bpy.data.objects['aerial_evade'], bone_corresp)
