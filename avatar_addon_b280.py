@@ -119,6 +119,8 @@ def generate_previews():
 
     return enum_items
 
+
+
 def update_weights (self, context):
     #obj = context.active_object
     global mAvt
@@ -656,6 +658,7 @@ class AVATAR_OT_LoadBVH (bpy.types.Operator):
 
 #         return {'FINISHED'}
 
+
 class AVATAR_PT_MotionPanel(bpy.types.Panel):
     
     bl_idname = "AVATAR_PT_MotionPanel"
@@ -688,7 +691,8 @@ class AVATAR_PT_MotionPanel(bpy.types.Panel):
 #        row = layout.row()
         layout.operator("avt.set_rest_pose", text="Reset pose")
 #        layout.prop(wm, "write_bvh", text="Write BVH file")
-        layout.template_list(context.scene, "skeletontype")
+        #layout.prop(context.scene, 'test_enum', text='enum property', icon='NLA')
+        layout.prop(context.scene, 'skel_rig', text='')
         layout.operator("avt.load_bvh", text="Load BVH")
         layout.prop(obj, "bvh_offset", text="Motion offset")
         layout.prop(obj, "bvh_start_origin", text="Start origin")
@@ -717,26 +721,6 @@ class AVATAR_PT_MotionPanel(bpy.types.Panel):
 # def set_source_skeleton(self, context):
 #     skel = self.skel_type
 
-def find_skeletons():
-    enum_items = []
-
-    skel_set = ['cmu', 'mixamo']
-
-    enum_items.append('cmu')
-    enum_items.append('mixamo')
-    # a = 0
-    # for i in gallery:
-    #     a = a + 1
-    #     #print(i)
-    #     imagename = i.split(".")[0]
-    #     #print(imagename)
-    #     filepath = image_location + '/' + i
-    #     #print(filepath)
-    #     thumb = pcoll.load(filepath, filepath, 'IMAGE')
-    #     enum_items.append((i, i, imagename, thumb.icon_id, a))
-
-    return enum_items    
-
 
 classes  = (
             AVATAR_PT_LoadPanel, 
@@ -753,6 +737,15 @@ classes  = (
             AVATAR_OT_LoadBVH,
 )
 
+def enum_menu_items():
+    aenum_menu_items = [
+                ('OPT1','Option 1','',1),
+                ('OPT2','Option 2','',2),
+                ('OPT3','Option 3','',3),
+                ('OPT4','Option 4','',4),
+                ]
+    return aenum_menu_items
+
 def register():
 
     # Create a new preview collection (only upon register)
@@ -767,9 +760,7 @@ def register():
         items=generate_previews(),
         )
 
-    bpy.types.Scene.skeletontype = EnumProperty(
-        items=find_skeletons(),
-    )
+    bpy.types.Scene.skel_rig = bpy.props.EnumProperty(items=enum_menu_items())
 
     from bpy.utils import register_class  
     for clas in classes:
@@ -785,7 +776,7 @@ def unregister():
     preview_collections.clear()
 
     del bpy.types.Scene.my_thumbnails
-    del bpy.types.Scene.skeletontype
+    del bpy.types.Scene.skel_rig
 
 
 
