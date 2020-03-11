@@ -1,8 +1,8 @@
 import bpy
 from mathutils import *
 
-#file_bone_correspondences = "/home/jsanchez/Software/gitprojects/avatar/bone_correspondance_mixamo.txt"
-file_bone_correspondences = "/Users/jsanchez/Software/gitprojects/avatar/motion/skeletons/mixamo.txt"
+file_bone_correspondences = "/home/jsanchez/Software/gitprojects/avatar/motion/skeletons/mixamo.txt"
+#file_bone_correspondences = "/Users/jsanchez/Software/gitprojects/avatar/motion/skeletons/mixamo.txt"
 
 
 def read_text_lines(filename):
@@ -83,6 +83,7 @@ def pose_to_match(arm, goal, bc):
             #print([ "matrix", bone_match, matrix_os[bone_match] ] )
 
     #xyz' = s * m * m(parent) * xyz
+    print("DEBUG")
 
     for to_pose in arm.pose.bones:
             
@@ -107,6 +108,7 @@ def pose_to_match(arm, goal, bc):
                 # we can not set .matrix, because a lot of stuff behind the scenes has not yet
                 # caught up with our alterations, and it ends up doing math on outdated numbers
                 mp = matrix_the_hard_way(to_pose.parent, arm) @ matrix_for_bone_from_parent(to_pose, arm)
+                print(mp)
                 m2 = mp.inverted() @ matrix_os[goal_bone] # @ Matrix.Scale(goal.data.bones[goal_bone].length, 4)
                 #m2 = matrix_os[goal_bone] # @ Matrix.Scale(goal.data.bones[goal_bone].length, 4)
                 loc,rot,scale = m2.decompose()
@@ -117,6 +119,10 @@ def pose_to_match(arm, goal, bc):
                     to_pose.rotation_euler = rot.to_euler(to_pose.rotation_mode)
                 # to_pose.scale = scale / arm.data.bones[to_pose.name].length
 
+                print("last debug")
+                print(rot)
+
+                to_pose.keyframe_insert('rotation_euler', frame=1, group=to_pose.name)
 
 
 #

@@ -606,13 +606,20 @@ class AVATAR_OT_LoadBVH (bpy.types.Operator):
         #     matrix = arm2.pose.bones[bone].matrix
         #     original_position.append(matrix)
 
-        original_position = []
-        for b in obj.pose.bones:
-            original_position.append(b.matrix.copy())
+        # original_position = []
+        # for b in obj.pose.bones:
+        #     original_position.append(b.matrix.copy())
             
-        file_path = self.filepath 
+        file_path_bvh = self.filepath 
+        
+        bone_corresp_file = "%s/motion/skeletons/%s.txt" % (avt_path, scn.skel_rig)
 
-        retarget.loadRetargetSimplify(context, file_path, original_position, 0, False) 
+        if obj is not None:
+            retarget.retarget_skeleton(bone_corresp_file, file_path_bvh, obj)
+        else:
+            print("Please, select a model to transfer the bvh action")
+
+#        retarget.loadRetargetSimplify(context, file_path, original_position, 0, False) 
 
 #        retarget.loadRetargetSimplify(context, file_path, original_position, obj.bvh_offset, obj.bvh_start_origin) 
 
@@ -738,13 +745,29 @@ classes  = (
 )
 
 def enum_menu_items():
-    aenum_menu_items = [
-                ('OPT1','Option 1','',1),
-                ('OPT2','Option 2','',2),
-                ('OPT3','Option 3','',3),
-                ('OPT4','Option 4','',4),
-                ]
-    return aenum_menu_items
+    global avt_path
+
+    rigs_folder = "%s/motion/skeletons" % avt_path
+
+    rigs_names = [f for f in os.listdir(rigs_folder) if f.endswith('.txt')]
+
+    menu_items = []
+    i = 0
+    for rig in rigs_names:
+
+        i = i + 1
+        rigsplit = rig.split('.')
+        name = rigsplit[0]
+
+        menu_items.append((name, name, '', i))
+
+    # aenum_menu_items = [
+    #             ('OPT1','Option 1','',1),
+    #             ('OPT2','Option 2','',2),
+    #             ('OPT3','Option 3','',3),
+    #             ('OPT4','Option 4','',4),
+    #             ]
+    return menu_items
 
 def register():
 

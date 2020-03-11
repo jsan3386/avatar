@@ -72,7 +72,7 @@ def matrix_the_hard_way(pose_bone, ao):
         mr = pose_bone.rotation_quaternion.to_matrix().to_4x4()
     else:
         mr = pose_bone.rotation_euler.to_matrix().to_4x4()
-    m1 = Matrix.Translation(pose_bone.location) @ mr @ matrix_scale(pose_bone.scale)
+    m1 = Matrix.Translation(pose_bone.location) @ mr # @ matrix_scale(pose_bone.scale)
 
     E = ao.data.bones[pose_bone.name].matrix_local
     if pose_bone.parent is None:
@@ -81,6 +81,14 @@ def matrix_the_hard_way(pose_bone, ao):
         m2 = matrix_the_hard_way(pose_bone.parent, ao)
         E_p = ao.data.bones[pose_bone.parent.name].matrix_local
         return m2 @ E_p.inverted() @ E @ m1
+
+
+def matrix_scale(scale_vec):
+    return Matrix([[scale_vec[0],0,0,0],
+                   [0,scale_vec[1],0,0],
+                   [0,0,scale_vec[2],0],
+                   [0,0,0,1]
+    ])
 
 def worldMatrix(ArmatureObject,Bone):
 # simplified version of the matrix_the_hard_way
@@ -95,7 +103,7 @@ def retarget_skeleton(source_skel_type, action, target):
 
     # load bvh file
     bvh_file = action
-    bvh_obj = bpy.ops.import_anim.bvh(filepath="", axis_up='Y', axis_forward='-Z', filter_glob="*.bvh",
+    bpy.ops.import_anim.bvh(filepath=bvh_file, axis_up='Y', axis_forward='-Z', filter_glob="*.bvh",
                                     target='ARMATURE', global_scale=1.0, frame_start=1, use_fps_scale=False,
                                     use_cyclic=False, rotate_mode='NATIVE')
 
@@ -103,8 +111,11 @@ def retarget_skeleton(source_skel_type, action, target):
     target.animation_data_clear()
 
     # get frames of action
+    fbvh = bpy.path.basename(bvh_file)
+    spbvh = fbvh.split('.')
+    bvh_obj_name = spbvh[0]
+    bvh_obj = bpy.data.objects[bvh_obj_name]
     act_size = bvh_obj.animation_data.action.frame_range
-    print(act_size)
 
     nfirst = int(act_size[0])
     nlast = int(act_size[1])
@@ -122,7 +133,7 @@ def retarget_skeleton(source_skel_type, action, target):
     dist_skel = bbox_corners_skel[1][2] - bbox_corners_skel[0][2]
     dist_target = bbox_corners_target[1][2] - bbox_corners_target[0][2]
     fscale = dist_target / dist_skel
-    fscale = 0.062
+    #fscale = 0.062
     bvh_obj.scale = (fscale, fscale, fscale)    
 
 
@@ -139,40 +150,44 @@ def retarget_skeleton(source_skel_type, action, target):
 
         # get bvh bone locations
         source_bone_name = find_bone_match(bone_corresp, "Hips")
-        src_bone_loc_hips = get_bone_head_position(source, source_bone_name)
+        src_bone_loc_hips = get_bone_head_position(bvh_obj, source_bone_name)
         source_bone_name = find_bone_match(bone_corresp, "LeftUpLeg")
-        src_bone_loc_lefthips = get_bone_head_position(source, source_bone_name)
+        src_bone_loc_lefthips = get_bone_head_position(bvh_obj, source_bone_name)
         source_bone_name = find_bone_match(bone_corresp, "RightUpLeg")
-        src_bone_loc_righthips = get_bone_head_position(source, source_bone_name)
+        src_bone_loc_righthips = get_bone_head_position(bvh_obj, source_bone_name)
         source_bone_name = find_bone_match(bone_corresp, "Neck")
-        src_bone_loc_neck = get_bone_head_position(source, source_bone_name)
+        src_bone_loc_neck = get_bone_head_position(bvh_obj, source_bone_name)
 
         matrix_os= {}
         #for to_match in goal.data.bones:
-        for bone in arm.data.bones:
-            bone_match = find_bone_match(bc, bone.name)
+        for bone in target.data.bones:
+            bone_match = find_bone_match(bone_corresp, bone.name)
             if bone_match is not "none":
                 #matrix_os[bone_match] = goal.data.bones[bone_match].matrix_local # if we want to match rest pose
-                ebp = goal.pose.bones[bone_match]
-                matrix_os[bone_match] = matrix_the_hard_way(ebp, goal)
+                ebp = bvh_obj.pose.bones[bone_match]
+                matrix_os[bone_match] = matrix_the_hard_way(ebp, bvh_obj)
                 #print([ "matrix", bone_match, matrix_os[bone_match] ] )
+
+        hips_match_name = find_bone_match(bone_corresp, "Hips")
+
+        print("DEBUG2")
 
         # read source motion
         for pb in target.pose.bones:
         
             bone_name = find_bone_match(bone_corresp, pb.name)
             if bone_name is not "none":
-                goal_bone = bone_match
+                goal_bone = bone_name
             
                 # source bone
-                spb = source.pose.bones[bone_name]
+                spb = bvh_obj.pose.bones[bone_name]
         
-                # insert keyframe
-                loc = spb.location
+                # # insert keyframe
+                # loc = spb.location
 
                 if pb.parent is None:
                     #loc = source.matrix_world @ source.pose.bones["mixamorig:Hips"].head
-                    loc = source.matrix_world @ source.pose.bones["hip"].head
+                    loc = bvh_obj.matrix_world @ bvh_obj.pose.bones[hips_match_name].head
                     pb.location = target.matrix_world.inverted() @ pb.bone.matrix_local.inverted() @ loc
                     pb.keyframe_insert('location', frame=f, group=pb.name)
 
@@ -202,14 +217,16 @@ def retarget_skeleton(source_skel_type, action, target):
                     #     pb.rotation_quaternion = rot
                     # else:
                     #     pb.rotation_euler = pb.to_euler(pb.rotation_mode)
+                    pass
 
                 else:
-                    pb.location = loc
-                    pb.keyframe_insert('location', frame=f, group=pb.name)
+                    # pb.location = loc
+                    # pb.keyframe_insert('location', frame=f, group=pb.name)
 
                     # we can not set .matrix, because a lot of stuff behind the scenes has not yet
                     # caught up with our alterations, and it ends up doing math on outdated numbers
                     mp = matrix_the_hard_way(pb.parent, target) @ matrix_for_bone_from_parent(pb, target)
+                    print(mp)
                     m2 = mp.inverted() @ matrix_os[goal_bone] # @ Matrix.Scale(goal.data.bones[goal_bone].length, 4)
                     #m2 = matrix_os[goal_bone] # @ Matrix.Scale(goal.data.bones[goal_bone].length, 4)
                     loc,rot,scale = m2.decompose()
@@ -220,15 +237,16 @@ def retarget_skeleton(source_skel_type, action, target):
                     #     pb.rotation_euler = rot.to_euler(pb.rotation_mode)
                     # # pb.scale = scale / target.data.bones[pb.name].length
 
+                    # print("last debug 2")
+                    # print(rot)
+
                     pb.rotation_mode = 'XYZ'
                     #rot = matrices_target[pb.name] @ spb.matrix_basis.copy()
                     pb.rotation_euler = rot.to_euler(pb.rotation_mode)
                     pb.keyframe_insert('rotation_euler', frame=f, group=pb.name)
 
 
-
-
     # Remove bvh skeleton (bvh_obj)
-    # TODO
+    bpy.data.objects.remove(bvh_obj)
 
 
