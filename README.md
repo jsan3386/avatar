@@ -1,4 +1,4 @@
-# Avatar: 3D human addon for Blender >= 2.8
+#Avatar: 3D human addon for Blender >= 2.8
 
 Human 3D model avatar based on Makehuman. 
 
@@ -45,6 +45,9 @@ Current status:
          AlphaPose: this code should work for webcam, but it can't detect camera when using code with ssh
             some other error with cuda version (not sure I can fix). Needs python3.6 to run 
 
+
+another way to retarget motion
+https://github.com/pohjan/Motion-capture-connector
 
 ### Dressing Panel
 
