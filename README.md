@@ -1,53 +1,53 @@
-#Avatar: 3D human addon for Blender >= 2.8
+### Avatar: 3D human modeler suite
 
-Human 3D model avatar based on Makehuman. 
+Human 3D model avatar based on Makehuman. I created this project with the intention to accelerate human dataset
+creation. The project has a set of elements to give some variance to 3D human model in shape as well as in clothes.
+
+The code has many parts that can be improved and the project also has the potential to grow including more clothes, new shape controls, increasing performance or work in collaboration with other addons. (mocap, correct bvh)
+
+If you are programmer, graphic designer or just think you can collaborate to improve the project you are wellcome to message me. (email)
+
+Enjoy Avatar!!
 
 ### List TODOs, things to fix
 
 - [] skin normal norm00.png is not correct, this provokes some transparent faces on rendered image
-- [] problems when appending model and skeleton from blend file 
 - [] ported makewalk not working for mixamo neither cmu actions
 - [] need complete clothes masks
-- [] make real time 3D pose detection
 - [] shape parameter belly is wrong 
+- [] change names for cloth icon collection (in code), to not overlap with ClothWeaver
 
+### Installation
+
+Requirements: Blender >= 2.8
+
+1) Create a file in the avatar github folder named config.py with the following content:
+    # path variable
+    avt_path = "/path/of/root/avatar/github/project"
+
+2) Go to Edit>Preferences>FilePaths and add to Scripts the path to the github avatar folder
+
+3) Go to Edit>Preferences>Add-ons>Install and choose the file avatar_addon_b280.py 
+
+The new addon should appear in the right tab (press N on the 3Dviewer screen)
 
 ### Shape Panel
 
 There are several parameters to control the shape of the body. Each one of the parameters is a PCA from several bodies created when modifying the correspondent parameter in Makehuman.
 
+Reset parameters, change the body weights to set the original body shape
+
 
 ### Motion Panel
 
-- Need to install zmq outside and inside Blender (pyzmq). Outside Blender normal install with pip. Inside blender follow: 
-https://blender.stackexchange.com/questions/56011/how-to-install-pip-for-blenders-bundled-python
+Before loading a motion file, you need to select which kind of rig is defined in the BVH file. Currently, only CMU and Mixamo skeleton rigs are available. If you have a file with different rig, you need to create a .txt file
+with the bone correspondences manually and add it to $avatar_path/motion/rigs
 
+Note that the file can take some time to load. Calculations are very slow because update() function needs to be called quite often.
 
+Note that usual function to load a motion file in Makehuman provided in Makewalk addon, is working only in Blender 2.79. Even I modified some parts of the code to make it compatible with Blender 2.80, there are a lot of mistakes when importing motions. Probably is due to the fact that now frame 0 is not Tpose anymore.
+Finally, I decided to implement my own function. Is not optimal and I'm sure it can be greatly improved, but it works for all the cases I've tried.
 
-- Motion from 3D points
-
-Note: Makehuman loaded in 2.79 is 1x while in 2.8 is 10x. This means 3D point coordinates must be resized accordingly. 
-Also note 3D coordinates coming from matlab have different axis orientations, a transformation must be applied to correct that. Matlab Y up X forward. Blender Z up  Y forward.
-
-Current status:
-
-1. Some blender sequences are generated to simulate 2D and 3D points.
-    1.1. If we pass 3D points to the algorithm, the motion is correct
-2. In jordi_tf user there are the training files to detect 2D pose and to find 2D - 3D conversions
-    2.1. 2D-3D conversions use Julieta's code (https://github.com/una-dinosauria/3d-pose-baseline)
-         go to /home/jordi_tf/Software/3d-pose-baseline/src, activate venv_cpm
-         training_avatar.py is for training, inference_avatar.py is for inference
-    2.2. 2D detections
-         Openpose can't make it work. Some problems with google protobuf when installing caffe
-         AlphaPose-master: can calculate poses from images (working) 
-            in /home/jordi_tf/Software/AlphaPose-master/examples/demo are my generated synthetic images
-            in /home/jordi_tf/Software/AlphaPose-master/results are the results
-         AlphaPose: this code should work for webcam, but it can't detect camera when using code with ssh
-            some other error with cuda version (not sure I can fix). Needs python3.6 to run 
-
-
-another way to retarget motion
-https://github.com/pohjan/Motion-capture-connector
 
 ### Dressing Panel
 
@@ -56,20 +56,20 @@ There is a set of clothes downloaded from Makehuman website. These clothes are s
 Original textures can be downloaded in the Makehuman website or [here](https://drive.google.com/open?id=133n9ZpfK3DGlQIPOhnC94tbTFBDR_b3U)
 
 If you want to use your own texture in one of the clothes:
-    1. Set the image or images in the cloth folder > avatar_path/dressing/textures/cloth_folder
+    1. Set the image or images in the cloth folder > $avatar_path/dressing/textures/cloth_folder
     2. Change the image name in file > default.txt
     3. Default file assumes: 1st line texture image; 2nd line normal map; 3rd line specular map. If your texture has no normal map neither specular map, you can leave the line in blank.
 
 
-# Extras
+<!-- # Extras
 
 Pot funcionar aixo en comptes de la instruccio per a forcar el drawing.
 
 for area in bpy.context.screen.areas:
     if area.type in ['IMAGE_EDITOR', 'VIEW_3D']:
-        area.tag_redraw()
+        area.tag_redraw() -->
 
-# Notes and comments
+<!-- # Notes and comments
 
 #On 3D points transfer motion
 
@@ -82,7 +82,7 @@ This makes the whole algorithm quite slow
 
 ![Alt text](./figures/skeletons.jpg?raw=true "Skeletons")
 
-For a better motion transfer in our skeleton we should format the CPM points to match better our standard skeleton joints. This is specially problematic in shoulders and head. If we observe in our skeleton shoulders are in the middle of the bone, for now they are approximated using neck position. Also now, head is attached to the neck bone, this should not be like this. If we observe our skeleton, head should be detached from bone neck.
+For a better motion transfer in our skeleton we should format the CPM points to match better our standard skeleton joints. This is specially problematic in shoulders and head. If we observe in our skeleton shoulders are in the middle of the bone, for now they are approximated using neck position. Also now, head is attached to the neck bone, this should not be like this. If we observe our skeleton, head should be detached from bone neck. -->
 
 ### Credits
 
