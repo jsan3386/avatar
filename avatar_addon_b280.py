@@ -146,7 +146,7 @@ def update_weights (self, context):
     mAvt.np_mesh_diff = mAvt.np_mesh - mAvt.np_mesh_prev
 
     for object in bpy.data.objects:
-        if ((object.type == 'MESH') and (object.name != "Standard:Body")):
+        if ((object.type == 'MESH') and (object.name != "Avatar:Body")):
             mAvt.deform_cloth(cloth_name=str(object.name))
 
 
@@ -176,14 +176,14 @@ class AVATAR_OT_LoadModel(bpy.types.Operator):
         # load makehuman model
         # model_file = "%s/body/models/standard.mhx2" % avt_path
         # bpy.ops.import_scene.makehuman_mhx2(filepath=model_file)
-        model_file = "%s/body/models/standard.blend" % avt_path
+        model_file = "%s/body/models/avatar.blend" % avt_path
         load_model_from_blend_file(model_file)
 
         mAvt.load_shape_model()
-        mAvt.eyes = bpy.data.objects["Standard:High-poly"]
-        mAvt.body = bpy.data.objects["Standard:Body"]
-        mAvt.skel = bpy.data.objects["Standard"]
-        mAvt.armature = bpy.data.armatures["Standard"]
+        mAvt.eyes = bpy.data.objects["Avatar:High-poly"]
+        mAvt.body = bpy.data.objects["Avatar:Body"]
+        mAvt.skel = bpy.data.objects["Avatar"]
+        mAvt.armature = bpy.data.armatures["Avatar"]
         mAvt.skel_ref = motion_utils.get_rest_pose(mAvt.skel, mAvt.list_bones)
         mAvt.hips_pos = (mAvt.skel.matrix_world @ Matrix.Translation(mAvt.skel.pose.bones["Hips"].head)).to_translation()
 
@@ -251,7 +251,7 @@ class AVATAR_OT_SetBodyShape(bpy.types.Operator):
         mAvt.np_mesh_diff = mAvt.np_mesh - mAvt.np_mesh_prev
 
         for object in bpy.data.objects:
-            if ((object.type == 'MESH') and (object.name != "Standard:Body")):
+            if ((object.type == 'MESH') and (object.name != "Avatar:Body")):
                 mAvt.deform_cloth(cloth_name=str(object.name))
 
         return {'FINISHED'}
@@ -282,7 +282,7 @@ class AVATAR_OT_ResetParams(bpy.types.Operator):
         mAvt.np_mesh_diff = mAvt.np_mesh - mAvt.np_mesh_prev
 
         for object in bpy.data.objects:
-            if ((object.type == 'MESH') and (object.name != "Standard:Body")):
+            if ((object.type == 'MESH') and (object.name != "Avatar:Body")):
                 mAvt.deform_cloth(cloth_name=str(object.name))
 
         return {'FINISHED'}
