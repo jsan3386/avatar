@@ -1,13 +1,21 @@
 import bpy
-from mathutils import Matrix, Vector
+from mathutils import Matrix, Vector, Quaternion
 import numpy as np
+import math
 
-source = bpy.data.objects["02_01_walk"]
+source = bpy.data.objects["walking"]
 target = bpy.data.objects["Standard"]
+me_cp = target.data.copy()
 
-file_bone_correspondences = "/home/jsanchez/Software/gitprojects/avatar/motion/retarget_motion_mine/bone_correspondance_cmu.txt"
+target_cp = bpy.data.objects.new("Skel_cp", me_cp)
+target_cp.location = target.location
+
+bpy.context.scene.collection.objects.link(target_cp)
+bpy.context.view_layer.update()
+
+#file_bone_correspondences = "/home/jsanchez/Software/gitprojects/avatar/motion/retarget_motion_mine/bone_correspondance_cmu.txt"
 #file_bone_correspondences = "/home/jsanchez/Software/gitprojects/avatar/bone_correspondance_mixamo.txt"
-#file_bone_correspondences = "/Users/jsanchez/Software/gitprojects/avatar/bone_correspondance_mixamo.txt"
+file_bone_correspondences = "/Users/jsanchez/Software/gitprojects/avatar/motion/skeletons/mixamo.txt"
 
 
 def rigid_transform_3D(A, B):
@@ -68,9 +76,92 @@ def find_bone_match(list_bones, bone_name):
 def get_bone_head_position(obj, bone_name):
     return (obj.matrix_world @ Matrix.Translation(obj.pose.bones[bone_name].head)).to_translation()
 
+def get_pose_bone_head_position(obj, pose_bone):
+    return (obj.matrix_world @ Matrix.Translation(pose_bone.head)).to_translation()
+
+def get_pose_bone_tail_position(obj, pose_bone):
+    return (obj.matrix_world @ Matrix.Translation(pose_bone.tail)).to_translation()
+
+def matrix_scale(scale_vec):
+    return Matrix([[scale_vec[0],0,0,0],
+                   [0,scale_vec[1],0,0],
+                   [0,0,scale_vec[2],0],
+                   [0,0,0,1]
+    ])
+
+def matrix_for_bone_from_parent(bone, ao):
+    eb1 = ao.data.bones[bone.name]
+    E = eb1.matrix_local # * Matrix.Scale(eb1.length,4)
+    ebp = ao.data.bones[bone.name].parent
+    E_p = ebp.matrix_local # * Matrix.Scale(ebp.length,4)
+    return E_p.inverted() @ E
+
+def matrix_the_hard_way(pose_bone, ao):
+    if pose_bone.rotation_mode == 'QUATERNION':
+        mr = pose_bone.rotation_quaternion.to_matrix().to_4x4()
+    else:
+        mr = pose_bone.rotation_euler.to_matrix().to_4x4()
+    m1 = Matrix.Translation(pose_bone.location) @ mr @ matrix_scale(pose_bone.scale)
+
+    E = ao.data.bones[pose_bone.name].matrix_local
+    if pose_bone.parent is None:
+        return E @ m1
+    else:
+        m2 = matrix_the_hard_way(pose_bone.parent, ao)
+        E_p = ao.data.bones[pose_bone.parent.name].matrix_local
+        return m2 @ E_p.inverted() @ E @ m1
+
+
+def trans_coord_system(p1, o1, o2, M1, M2):
+
+    # note is necessary to use a copy version of the matrix
+    # otherwise it modifies the content of M2 outside the function
+    # Actually it transposes matrix M2 outside the function. Must be the way
+    # Blender handles the transform operators
+    M2t = M2.copy()
+    M2t.transpose()
+    return M2t @ (o1 - o2 + M1 @ p1)
+
+def compute_rotation(poseBone, pt0, pt1, pt2):
+
+    M1 = Matrix([[1,0,0], [0,1,0], [0,0,1]])
+    M2 = poseBone.matrix.copy() 
+
+    v1 = trans_coord_system(pt1, Vector((0,0,0)), pt0, M1, M2)
+    v2 = trans_coord_system(pt2, Vector((0,0,0)), pt0, M1, M2)
+
+    a = v1.normalized()
+    b = v2.normalized()
+
+    c = a.cross(b)
+
+    # c.magnitude from normalized vectors should not be greater than 1 ?
+    # in some cases c.magnitude > 1 then asin fails [-1,+1]
+
+    # check for cases > 1 and round to 1
+    v_magnitude = c.magnitude
+    if (v_magnitude > 1):
+        v_magnitude = 1
+
+    # to determine if angle in [0, pi/2] or in [pi/2, pi]
+    l = np.linalg.norm(pt1 - pt0)
+    dist = np.linalg.norm(pt1 - pt2)
+    dist_max = math.sqrt(2*l*l)
+
+    if (dist < dist_max): theta = math.asin(v_magnitude) 
+    else: theta = theta = math.pi - math.asin(v_magnitude)
+
+    if (c.magnitude>0):
+        axis = c.normalized()
+        st2 = math.sin(theta/2)
+        q = Quaternion( [math.cos(theta/2), st2*axis.x, st2*axis.y, st2*axis.z] )
+    else:
+        q = Quaternion( [1,0,0,0] )
+
+    return q
 
 # create target animation
-target.animation_data_clear()
+target_cp.animation_data_clear()
 
 # get frames of action
 act_size = source.animation_data.action.frame_range
@@ -101,10 +192,10 @@ for bone in source.data.bones:
 
 
 # target bones in rest position
-trg_bone_loc_hips = get_bone_head_position(target, "Hips")
-trg_bone_loc_lefthips = get_bone_head_position(target, "LeftUpLeg")
-trg_bone_loc_righthips = get_bone_head_position(target, "RightUpLeg")
-trg_bone_loc_neck = get_bone_head_position(target, "Neck")
+trg_bone_loc_hips = get_bone_head_position(target_cp, "Hips")
+trg_bone_loc_lefthips = get_bone_head_position(target_cp, "LeftUpLeg")
+trg_bone_loc_righthips = get_bone_head_position(target_cp, "RightUpLeg")
+trg_bone_loc_neck = get_bone_head_position(target_cp, "Neck")
 
 
 # read source animation
@@ -122,26 +213,38 @@ for f in range(nfirst, nlast):
     source_bone_name = find_bone_match(bone_corresp, "Neck")
     src_bone_loc_neck = get_bone_head_position(source, source_bone_name)
 
+
+    matrix_os= {}
+    #for to_match in goal.data.bones:
+    for bone in target_cp.data.bones:
+        bone_match = find_bone_match(bone_corresp, bone.name)
+        if bone_match is not "none":
+            #matrix_os[bone_match] = goal.data.bones[bone_match].matrix_local # if we want to match rest pose
+            ebp = source.pose.bones[bone_match]
+            matrix_os[bone_match] = matrix_the_hard_way(ebp, source)
+            #print([ "matrix", bone_match, matrix_os[bone_match] ] )
+
     # read source motion
-    for pb in target.pose.bones:
+    for pb in target_cp.pose.bones:
         
         bone_name = find_bone_match(bone_corresp, pb.name)
         if bone_name is not "none":
+            goal_bone = bone_name
             
-            # source bone
-            spb = source.pose.bones[bone_name]
+            # # source bone
+            # spb = source.pose.bones[bone_name]
         
-            # insert keyframe
-            loc = spb.location
+            # # insert keyframe
+            # loc = spb.location
 
             if pb.parent is None:
                 # print(f, (source.pose.bones["mixamorig:Hips"].matrix_basis).to_translation())
                 # bone_translate_matrix = Matrix.Translation(source.pose.bones["mixamorig:Hips"].matrix_basis).to_translation()
                 # loca = (source.data.bones["mixamorig:Hips"].matrix_local.inverted() @ Vector(bone_translate_matrix)).to_translation()
                 # print(f, loca)
-                #loc = source.matrix_world @ source.pose.bones["mixamorig:Hips"].head
-                loc = source.matrix_world @ source.pose.bones["hip"].head
-                pb.location = target.matrix_world.inverted() @ pb.bone.matrix_local.inverted() @ loc
+                loc = source.matrix_world @ source.pose.bones["mixamorig:Hips"].head
+                # loc = source.matrix_world @ source.pose.bones["hip"].head
+                pb.location = target_cp.matrix_world.inverted() @ pb.bone.matrix_local.inverted() @ loc
                 pb.keyframe_insert('location', frame=f, group=pb.name)
 
                 # compute translation and first rotation between rest position and desired points
@@ -168,25 +271,85 @@ for f in range(nfirst, nlast):
 
 
             else:
-                pb.location = loc
-                pb.keyframe_insert('location', frame=f, group=pb.name)
-
-            # if pb.parent is None:        
-            #     pb.location = matrices_source[bone_name].to_translation()
-            #     print(f, loc)
-            #     print(f, pb.location)
-            #     pb.keyframe_insert('location', frame=f, group=pb.name)
-            # else:
             #     pb.location = loc
             #     pb.keyframe_insert('location', frame=f, group=pb.name)
+
+            # # if pb.parent is None:        
+            # #     pb.location = matrices_source[bone_name].to_translation()
+            # #     print(f, loc)
+            # #     print(f, pb.location)
+            # #     pb.keyframe_insert('location', frame=f, group=pb.name)
+            # # else:
+            # #     pb.location = loc
+            # #     pb.keyframe_insert('location', frame=f, group=pb.name)
                 
-            # pb.location = spb.location
-            # pb.keyframe_insert('location', frame=f, group=pb.name)
+            # # pb.location = spb.location
+            # # pb.keyframe_insert('location', frame=f, group=pb.name)
         
-                #spb.rotation_mode = 'XYZ'
-                pb.rotation_mode = 'XYZ'
-                #rot = spb.rotation_euler
-                rot = matrices_target[pb.name] @ spb.matrix_basis.copy()
-                #rot = spb.matrix_basis.copy()
-                pb.rotation_euler = rot.to_euler()
-                pb.keyframe_insert('rotation_euler', frame=f, group=pb.name)
+            #     #spb.rotation_mode = 'XYZ'
+            #     pb.rotation_mode = 'XYZ'
+            #     #rot = spb.rotation_euler
+            #     rot = matrices_target[pb.name] @ spb.matrix_basis.copy()
+            #     #rot = spb.matrix_basis.copy()
+            #     pb.rotation_euler = rot.to_euler()
+            #     pb.keyframe_insert('rotation_euler', frame=f, group=pb.name)
+
+                # we can not set .matrix, because a lot of stuff behind the scenes has not yet
+                # caught up with our alterations, and it ends up doing math on outdated numbers
+                mp = matrix_the_hard_way(pb.parent, target_cp) @ matrix_for_bone_from_parent(pb, target_cp)
+                m2 = mp.inverted() @ matrix_os[goal_bone] # @ Matrix.Scale(goal.data.bones[goal_bone].length, 4)
+                #m2 = matrix_os[goal_bone] # @ Matrix.Scale(goal.data.bones[goal_bone].length, 4)
+                loc,rot,scale = m2.decompose()
+                # to_pose.location = loc
+                if 'QUATERNION' == pb.rotation_mode:
+                    pb.rotation_quaternion = rot
+                    pb.keyframe_insert('rotation_quaternion', frame=f, group=pb.name)
+                else:
+                    pb.rotation_euler = rot.to_euler(pb.rotation_mode)
+                    pb.keyframe_insert('rotation_euler', frame=f, group=pb.name)
+                # to_pose.scale = scale / arm.data.bones[to_pose.name].length
+
+                print("last debug")
+                print(rot)
+
+
+# copy rotations from 3d points
+# now skeletons are equal (same name bones, same length bones)
+for f in range(nfirst, nlast):
+#for f in range(1, 2):
+
+    # set target in rest position
+    for bone in target.pose.bones:
+        bone.rotation_mode = 'XYZ'
+        bone.rotation_euler = (0, 0, 0)
+
+    bpy.context.scene.frame_set(f)
+
+    for pb in target.pose.bones:
+
+        pb_cp = target_cp.pose.bones[pb.name]
+
+        if pb.parent is None:
+
+            pb.location = pb_cp.location
+            pb.keyframe_insert('location', frame=f, group=pb.name)
+
+            pb_cp.rotation_mode = 'XYZ'
+            pb.rotation_mode = 'XYZ'
+            pb.rotation_euler = pb_cp.rotation_euler
+            pb.keyframe_insert('rotation_euler', frame=f, group=pb.name)
+
+        else:
+            # recalculate rotations to avoid strange mesh deformations
+            pt0 = get_pose_bone_head_position(target, pb)
+            pt1 = get_pose_bone_tail_position(target, pb)
+            pt2 = get_pose_bone_tail_position(target_cp, pb_cp)
+
+            q2 = compute_rotation(pb, pt0, pt1, pt2)
+
+            pb.rotation_mode = 'QUATERNION'
+            pb.rotation_quaternion = q2
+            pb.keyframe_insert('rotation_quaternion', frame=f, group=pb.name)
+
+        bpy.context.view_layer.update()
+

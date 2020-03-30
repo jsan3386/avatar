@@ -1,8 +1,8 @@
 import bpy
 from mathutils import *
 
-file_bone_correspondences = "/home/jsanchez/Software/gitprojects/avatar/motion/skeletons/mixamo.txt"
-#file_bone_correspondences = "/Users/jsanchez/Software/gitprojects/avatar/motion/skeletons/mixamo.txt"
+#file_bone_correspondences = "/home/jsanchez/Software/gitprojects/avatar/motion/skeletons/mixamo.txt"
+file_bone_correspondences = "/Users/jsanchez/Software/gitprojects/avatar/motion/skeletons/mixamo.txt"
 
 
 def read_text_lines(filename):
@@ -66,6 +66,8 @@ def worldMatrix(ArmatureObject,Bone):
     _bone = ArmatureObject.pose.bones[Bone]
     _obj = ArmatureObject
     return _obj.matrix_world * _bone.matrix
+
+
 
 def pose_to_match(arm, goal, bc):
     """
@@ -131,4 +133,4 @@ def pose_to_match(arm, goal, bc):
 
 bone_corresp = read_text_lines(file_bone_correspondences)
 
-pose_to_match(bpy.data.objects['Standard'], bpy.data.objects['aerial_evade'], bone_corresp)
+pose_to_match(bpy.data.objects['Standard'], bpy.data.objects['walking'], bone_corresp)
