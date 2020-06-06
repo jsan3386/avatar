@@ -3,19 +3,35 @@ from mathutils import Matrix, Vector, Quaternion
 import numpy as np
 import math
 
+# Try to make faster the retargeting.
+# The algorithm is based in 2 parts.
+# 1. From unkonwn armature transfer bone rotations to a known armature. Since sometimes this rotation transfer
+# has rotations that mess with the associated mesh of the armature
+# 2. Once armatures are equal, use a function to align 2 vectors. This function guarantees shortest rotations.
+
+# The method is slow due to compute vectors, we need current position of bones and this can only be done using
+# view_layer.update() which at the same time, slows down loops a lot!
+
+# Ideas to improve and make it faster. Try to remove bvh skeleton between steps 1 and 2, when bvh skeleton is
+# not needed anymore.
+# Use matrix_world.to_translation() instead of get_bone_head_position. Matrix world compute all matrices. The
+# problem with this function or equivalents is that the positions obtained are slightly different. This causes
+# method to fail. The different positions probably comes from the precision of the matrices in Blender. Not sure.
+
 source = bpy.data.objects["walking"]
-target = bpy.data.objects["Standard"]
-me_cp = target.data.copy()
+target = bpy.data.objects["Avatar"]
+target_cp = bpy.data.objects["Skel_cp"]
+# me_cp = target.data.copy()
 
-target_cp = bpy.data.objects.new("Skel_cp", me_cp)
-target_cp.location = target.location
+# target_cp = bpy.data.objects.new("Skel_cp", me_cp)
+# target_cp.location = target.location
 
-bpy.context.scene.collection.objects.link(target_cp)
-bpy.context.view_layer.update()
+# bpy.context.scene.collection.objects.link(target_cp)
+# bpy.context.view_layer.update()
 
 #file_bone_correspondences = "/home/jsanchez/Software/gitprojects/avatar/motion/retarget_motion_mine/bone_correspondance_cmu.txt"
 #file_bone_correspondences = "/home/jsanchez/Software/gitprojects/avatar/bone_correspondance_mixamo.txt"
-file_bone_correspondences = "/Users/jsanchez/Software/gitprojects/avatar/motion/skeletons/mixamo.txt"
+file_bone_correspondences = "/Users/jsanchez/Software/gitprojects/avatar/motion/rigs/mixamo.txt"
 
 
 def rigid_transform_3D(A, B):
@@ -111,6 +127,26 @@ def matrix_the_hard_way(pose_bone, ao):
         E_p = ao.data.bones[pose_bone.parent.name].matrix_local
         return m2 @ E_p.inverted() @ E @ m1
 
+def matrix_world(armature_ob, bone_name):
+    local = armature_ob.data.bones[bone_name].matrix_local
+    basis = armature_ob.pose.bones[bone_name].matrix_basis
+
+    parent = armature_ob.pose.bones[bone_name].parent
+    if parent == None:
+        return  local @ basis
+    else:
+        parent_local = armature_ob.data.bones[parent.name].matrix_local
+        return matrix_world(armature_ob, parent.name) @ (parent_local.inverted() @ local) @ basis
+
+
+def worldMatrix(ArmatureObject,Bone):
+# simplified version of the matrix_the_hard_way
+# To Test
+# Probably can't use without update of the bones, since bone.matrix does not updates
+# automatically
+    _bone = ArmatureObject.pose.bones[Bone]
+    _obj = ArmatureObject
+    return _obj.matrix_world @ _bone.matrix
 
 def trans_coord_system(p1, o1, o2, M1, M2):
 
@@ -160,8 +196,8 @@ def compute_rotation(poseBone, pt0, pt1, pt2):
 
     return q
 
-# create target animation
-target_cp.animation_data_clear()
+# # create target animation
+# target_cp.animation_data_clear()
 
 # get frames of action
 act_size = source.animation_data.action.frame_range
@@ -312,11 +348,14 @@ for f in range(nfirst, nlast):
                 print("last debug")
                 print(rot)
 
+ept0 = bpy.data.objects["ept0"]
+ept1 = bpy.data.objects["ept1"]
+ept2 = bpy.data.objects["ept2"]
 
 # copy rotations from 3d points
 # now skeletons are equal (same name bones, same length bones)
-for f in range(nfirst, nlast):
-#for f in range(1, 2):
+#for f in range(nfirst, nlast):
+for f in range(1, 2):
 
     # set target in rest position
     for bone in target.pose.bones:
@@ -325,7 +364,14 @@ for f in range(nfirst, nlast):
 
     bpy.context.scene.frame_set(f)
 
-    for pb in target.pose.bones:
+    pb_list = ["Hips", "LowerBack", "Spine", "Spine1", "RightShoulder", "RightArm", "RightForeArm", "RightHand"]
+
+    # for pb in target.pose.bones:
+    for pbname in pb_list:
+        pb = target.pose.bones[pbname]
+        print(pbname)
+
+        # bpy.context.view_layer.update()
 
         pb_cp = target_cp.pose.bones[pb.name]
 
@@ -340,16 +386,64 @@ for f in range(nfirst, nlast):
             pb.keyframe_insert('rotation_euler', frame=f, group=pb.name)
 
         else:
-            # recalculate rotations to avoid strange mesh deformations
-            pt0 = get_pose_bone_head_position(target, pb)
-            pt1 = get_pose_bone_tail_position(target, pb)
-            pt2 = get_pose_bone_tail_position(target_cp, pb_cp)
 
-            q2 = compute_rotation(pb, pt0, pt1, pt2)
+            if pb.children:
 
-            pb.rotation_mode = 'QUATERNION'
-            pb.rotation_quaternion = q2
-            pb.keyframe_insert('rotation_quaternion', frame=f, group=pb.name)
+                # recalculate rotations to avoid strange mesh deformations
+                pt0 = get_pose_bone_head_position(target, pb)
+                pt1 = get_pose_bone_tail_position(target, pb)
+                pt2 = get_pose_bone_tail_position(target_cp, pb_cp)
+                print("points blender update")
+                print(pt0)
+                print(pt1)
+                print(pt2)
 
-        bpy.context.view_layer.update()
+                # print(pb.children)
+                pb_child = pb.children[0]   # we assume each bone only have one children !!
+                pb_cp_child = pb_cp.children[0]
+                pt0 = matrix_world(target, pb.name).to_translation()
+                pt1 = matrix_world(target, pb_child.name).to_translation()
+                pt2 = matrix_world(target_cp, pb_cp_child.name).to_translation()
+                print("points matrix_world update")
+                print(pt0)
+                print(pt1)
+                print(pt2)
+
+                # print(pb.children)
+                pb_child = pb.children[0]   # we assume each bone only have one children !!
+                pb_cp_child = pb_cp.children[0]
+                # pt0 = worldMatrix(target, pb.name).to_translation()
+                # pt1 = worldMatrix(target, pb_child.name).to_translation()
+                pt0 = matrix_the_hard_way(pb, target).to_translation()
+                pt1 = matrix_the_hard_way(pb_child, target).to_translation()
+                pt2 = matrix_the_hard_way(pb_cp_child, target_cp).to_translation()
+                print("points matrix_the_hard_way update")
+                print(pt0)
+                print(pt1)
+                print(pt2)
+
+                # print(pb.children)
+                pb_child = pb.children[0]   # we assume each bone only have one children !!
+                pb_cp_child = pb_cp.children[0]
+                pt0 = worldMatrix(target, pb.name).to_translation()
+                pt1 = worldMatrix(target, pb_child.name).to_translation()
+                # pt0 = matrix_world(target, pb.name).to_translation()
+                # pt1 = matrix_world(target, pb_child.name).to_translation()
+                pt2 = worldMatrix(target_cp, pb_cp_child.name).to_translation()
+                print("points worldMatrix update")
+                print(pt0)
+                print(pt1)
+                print(pt2)
+
+
+                ept0.location = pt0
+                ept1.location = pt1
+                ept2.location = pt2
+
+                q2 = compute_rotation(pb, pt0, pt1, pt2)
+
+                pb.rotation_mode = 'QUATERNION'
+                pb.rotation_quaternion = q2
+                pb.keyframe_insert('rotation_quaternion', frame=f, group=pb.name)
+
 

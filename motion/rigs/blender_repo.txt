@@ -1,0 +1,32 @@
+Hips                    Hips
+RHipJoint               
+RightUpLeg              RightUpLeg
+RightLeg                RightLowLeg
+RightFoot               
+RightToeBase            
+LHipJoint               
+LeftUpLeg               LeftUpLeg
+LeftLeg                 LeftLowLeg
+LeftFoot                
+LeftToeBase             
+LowerBack               
+Spine                   
+Spine1                  Chest
+Neck                    Neck
+Neck1                   Head
+Head                    
+HeadTop                 
+RightShoulder           RightCollar
+RightArm                RightUpArm
+RightForeArm            RightLowArm
+RightHand               RightHand
+RThumb                  
+RightFingerBase         
+RightHandFinger1
+LeftShoulder            LeftCollar
+LeftArm                 LeftUpArm
+LeftForeArm             LeftLowArm
+LeftHand                LeftHand
+LThumb                  
+LeftFingerBase
+LeftHandFinger1

@@ -113,8 +113,13 @@ class Avatar:
 
 
 
-    def refresh_shape(self):
-        verts = self.body.data.vertices
+    def refresh_shape(self, body_mesh):
+        # # reload vertices in case they are not initiallized
+        # if not self.vertices_weight:
+        #     self.load_shape_model()
+
+        verts = body_mesh.data.vertices
+        # verts = self.body.data.vertices
         for i in range(0,len(verts)):
             verts[i].co = Vector((# X
                                   self.vertices_belly[i][0] * self.val_belly + 

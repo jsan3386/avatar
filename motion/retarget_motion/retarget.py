@@ -156,6 +156,9 @@ def compute_rotation(poseBone, pt0, pt1, pt2):
 
 def retarget_skeleton(source_skel_type, action, target):
 
+    # This is a very slow version. An attempt to debug the code and make it faster, check file
+    # transfer_motion.py
+
     # load bvh file
     bvh_file = action
     bpy.ops.import_anim.bvh(filepath=bvh_file, axis_up='Y', axis_forward='-Z', filter_glob="*.bvh",
@@ -235,8 +238,6 @@ def retarget_skeleton(source_skel_type, action, target):
 
         hips_match_name = find_bone_match(bone_corresp, "Hips")
 
-        print("DEBUG2")
-
         # read source motion
         for pb in target_cp.pose.bones:
         
@@ -282,7 +283,6 @@ def retarget_skeleton(source_skel_type, action, target):
                     #     pb.rotation_quaternion = rot
                     # else:
                     #     pb.rotation_euler = pb.to_euler(pb.rotation_mode)
-                    pass
 
                 else:
                     # pb.location = loc
@@ -291,7 +291,6 @@ def retarget_skeleton(source_skel_type, action, target):
                     # we can not set .matrix, because a lot of stuff behind the scenes has not yet
                     # caught up with our alterations, and it ends up doing math on outdated numbers
                     mp = matrix_the_hard_way(pb.parent, target_cp) @ matrix_for_bone_from_parent(pb, target_cp)
-                    print(mp)
                     m2 = mp.inverted() @ matrix_os[goal_bone] # @ Matrix.Scale(goal.data.bones[goal_bone].length, 4)
                     #m2 = matrix_os[goal_bone] # @ Matrix.Scale(goal.data.bones[goal_bone].length, 4)
                     loc,rot,scale = m2.decompose()
@@ -322,6 +321,7 @@ def retarget_skeleton(source_skel_type, action, target):
             bone.rotation_euler = (0, 0, 0)
 
         bpy.context.scene.frame_set(f)
+        # bpy.context.view_layer.update()
 
         for pb in target.pose.bones:
 
@@ -338,10 +338,24 @@ def retarget_skeleton(source_skel_type, action, target):
                 pb.keyframe_insert('rotation_euler', frame=f, group=pb.name)
 
             else:
+                # we only recalculate bones that have children
+                # if pb.children:
+
+                # Using view_layer.update() . Very slow !!!
                 # recalculate rotations to avoid strange mesh deformations
                 pt0 = get_pose_bone_head_position(target, pb)
                 pt1 = get_pose_bone_tail_position(target, pb)
                 pt2 = get_pose_bone_tail_position(target_cp, pb_cp)
+
+                # # Update matrices ourselves . Faster
+                # # recalculate rotations to avoid strange mesh deformations
+                # pb_child = pb.children[0]   # we assume each bone only have one children !!
+                # pb_cp_child = pb_cp.children[0]
+                # # pt0 = matrix_the_hard_way(pb, target).to_translation()
+                # # pt1 = matrix_the_hard_way(pb_child, target).to_translation()
+                # pt0 = get_pose_bone_head_position(target, pb)
+                # pt1 = get_pose_bone_tail_position(target, pb)
+                # pt2 = matrix_the_hard_way(pb_cp_child, target_cp).to_translation()
 
                 q2 = compute_rotation(pb, pt0, pt1, pt2)
 

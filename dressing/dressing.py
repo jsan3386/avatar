@@ -39,8 +39,8 @@ def load_cloth (cloth_file, cloth_name):
     bpy.context.view_layer.objects.active = b
     bpy.ops.object.mode_set(mode='OBJECT')
     
-    if bpy.data.objects.get("Standard") is not None:
-        a = bpy.data.objects["Standard"]
+    if bpy.data.objects.get("Avatar") is not None:
+        a = bpy.data.objects["Avatar"]
         b = bpy.data.objects[cloth_name]
         a.select_set(True)
         b.select_set(True)

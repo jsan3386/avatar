@@ -13,8 +13,8 @@ LowerBack
 Spine                   abdomen
 Spine1                  chest
 Neck                    neck
-Neck1                   
-Head                    head
+Neck1                   head
+Head                    
 HeadTop                 
 RightShoulder           rCollar
 RightArm                rShldr

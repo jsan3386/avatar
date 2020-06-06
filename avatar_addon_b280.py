@@ -50,8 +50,8 @@ sys.path.append(avt_path + "/motion")
 sys.path.append(avt_path + "/motion/net_models/cpm_pose")
 sys.path.append(avt_path + "/motion/retarget_motion")
 
-#import load as load
-import zmq
+# #import load as load
+# import zmq
 
 import importlib
 
@@ -98,7 +98,7 @@ def generate_previews():
                'hat01.png', 'hat02.png', 'hat03.png', 'hat04.png',
                'jacket01.png', 'jacket02.png',
                'pants01.png', 'pants02.png', 'pants03.png', 'pants04.png', 'pants05.png', 'pants06.png',
-               'shirt01.png', 'shirt02.png', 'shirt03.png', 'shirt04.png', 'shirt05.png', 'shirt06.png', 'shirt07.png',
+               'shirt01.png', 'shirt02.png', 'shirt03.png', 'shirt04.png', 'shirt05.png', 'shirt06.png', 'shirt07.png', 'shirt08.png',
                'shoes01.png', 'shoes02.png', 'shoes03.png', 'shoes04.png',
                'skirt01.png', 'skirt02.png',
                'suit01.png',
@@ -123,7 +123,13 @@ def update_weights (self, context):
     #obj = context.active_object
     global mAvt
 
-    obj = mAvt.body
+    print("UpDATE WEIGHTS")
+    if mAvt.body is not None:
+        obj = mAvt.body
+        print(mAvt.body)
+    else:
+        obj = context.active_object
+        print(obj)
 
     # set previous mesh vertices values
     cp_vals = obj.data.copy()
@@ -138,7 +144,7 @@ def update_weights (self, context):
     mAvt.val_strength = self.val_strength
     mAvt.val_belly = self.val_belly
 
-    mAvt.refresh_shape()
+    mAvt.refresh_shape(obj)
 
     mAvt.np_mesh = mAvt.read_verts(obj.data)
     mAvt.np_mesh_diff = mAvt.np_mesh - mAvt.np_mesh_prev

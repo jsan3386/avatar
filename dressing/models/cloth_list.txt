@@ -36,7 +36,8 @@ Spaghetti strap tank top   -- shirt04.png
 Lace up blouse             -- shirt05.png
 Camisole top               -- shirt06.png
 --
-tshirt (from somwhere)     -- shirt07.png
+tshirt (superman tshirt?)  -- shirt07.png
+sweater_fisherman 	   -- shirt08.png
 
 
 Skirt
