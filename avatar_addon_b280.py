@@ -249,7 +249,7 @@ class AVATAR_OT_SetBodyShape(bpy.types.Operator):
         cp_vals = obj.data.copy()
         mAvt.np_mesh_prev = mAvt.read_verts(cp_vals)
 
-        mAvt.refresh_shape()
+        mAvt.refresh_shape(obj)
 
         mAvt.np_mesh = mAvt.read_verts(obj.data)
         mAvt.np_mesh_diff = mAvt.np_mesh - mAvt.np_mesh_prev
@@ -270,7 +270,8 @@ class AVATAR_OT_ResetParams(bpy.types.Operator):
     def execute(self, context):	
         global mAvt
 
-        obj = mAvt.body
+        # obj = mAvt.body
+        obj = bpy.data.objects["Avatar:Body"]
 
         # set previous mesh vertices values
         cp_vals = obj.data.copy()
@@ -280,7 +281,7 @@ class AVATAR_OT_ResetParams(bpy.types.Operator):
         obj.val_breast = obj.val_torso = obj.val_hips = obj.val_limbs = 0.0
         obj.val_weight = obj.val_strength = obj.val_belly = 0.0
 
-        mAvt.refresh_shape()
+        mAvt.refresh_shape(obj)
 
         mAvt.np_mesh = mAvt.read_verts(obj.data)
         mAvt.np_mesh_diff = mAvt.np_mesh - mAvt.np_mesh_prev
@@ -705,8 +706,8 @@ class AVATAR_PT_MotionPanel(bpy.types.Panel):
         #layout.prop(context.scene, 'test_enum', text='enum property', icon='NLA')
         layout.prop(context.scene, 'skel_rig', text='')
         layout.operator("avt.load_bvh", text="Load BVH")
-        layout.prop(obj, "bvh_offset", text="Motion offset")
-        layout.prop(obj, "bvh_start_origin", text="Start origin")
+        # layout.prop(obj, "bvh_offset", text="Motion offset")
+        # layout.prop(obj, "bvh_start_origin", text="Start origin")
 
         # if not wm.socket_connected:
         #     layout.operator("avt.streaming_pose")  # , text="Connect Socket"

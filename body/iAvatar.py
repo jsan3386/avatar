@@ -59,6 +59,7 @@ class Avatar:
 
         self.vertices_breast, self.vertices_torso, self.vertices_strength = [], [], []
         self.vertices_armslegs, self.vertices_hips, self.vertices_weight = [], [], []
+        self.vertices_belly = []
 
         self.vertices_model = []
         
