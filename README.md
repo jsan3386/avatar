@@ -12,7 +12,6 @@ Enjoy Avatar!!
 ### List TODOs, things to fix
 
 - [] skin normal norm00.png is not correct, this provokes some transparent faces on rendered image
-- [] ported makewalk not working for mixamo neither cmu actions
 - [] need complete clothes masks
 - [] shape parameter belly is wrong 
 - [] change names for cloth icon collection (in code), to not overlap with ClothWeaver
@@ -21,8 +20,7 @@ Enjoy Avatar!!
 
 Requirements: Blender >= 2.8
 
-1) Create a file in the avatar github folder named config.py with the following content:
-    # path variable
+1) Create a file in the avatar github folder named config.py with the following content:  
     avt_path = "/path/of/root/avatar/github/project"
 
 2) Go to Edit>Preferences>FilePaths and add to Scripts the path to the github avatar folder
@@ -46,7 +44,9 @@ with the bone correspondences manually and add it to $avatar_path/motion/rigs
 Note that the file can take some time to load. Calculations are very slow because update() function needs to be called quite often.
 
 Note that usual function to load a motion file in Makehuman provided in Makewalk addon, is working only in Blender 2.79. Even I modified some parts of the code to make it compatible with Blender 2.80, there are a lot of mistakes when importing motions. Probably is due to the fact that now frame 0 is not Tpose anymore.
-Finally, I decided to implement my own function. Is not optimal and I'm sure it can be greatly improved, but it works for all the cases I've tried.
+Finally, I decided to implement my own function. Is not optimal and I'm sure it can be greatly improved, but it works for all the cases I've tried.  
+
+Another way to load an action to Avatar model is to use the Blender Addon [BHV Retargeter](http://diffeomorphic.blogspot.com/p/bvh-retargeter.html).  
 
 
 ### Dressing Panel
