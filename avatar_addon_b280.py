@@ -126,14 +126,18 @@ def update_weights (self, context):
     print("UpDATE WEIGHTS")
     if mAvt.body is not None:
         obj = mAvt.body
+        print("body none")
         print(mAvt.body)
     else:
-        obj = context.active_object
-        print(obj)
+        print("else")
+        # for now assume avatar already there
+        reload_avatar()
+        # obj = context.active_object
+        # print(obj)
 
-    # set previous mesh vertices values
-    cp_vals = obj.data.copy()
-    mAvt.np_mesh_prev = mAvt.read_verts(cp_vals)
+    # # set previous mesh vertices values
+    # cp_vals = obj.data.copy()
+    # mAvt.np_mesh_prev = mAvt.read_verts(cp_vals)
     
     # calculate new shape with PCA shapes
     mAvt.val_breast = self.val_breast
@@ -163,6 +167,43 @@ def load_model_from_blend_file(filename):
     # Objects have to be linked to show up in a scene
     for obj in data_to.objects:
         bpy.context.scene.collection.objects.link(obj) 
+
+
+def reload_avatar():
+    global mAvt
+
+    mAvt.load_shape_model()
+    mAvt.eyes = bpy.data.objects["Avatar:High-poly"]
+    mAvt.body = bpy.data.objects["Avatar:Body"]
+    mAvt.skel = bpy.data.objects["Avatar"]
+    mAvt.armature = bpy.data.armatures["Avatar"]
+    mAvt.skel_ref = motion_utils.get_rest_pose(mAvt.skel, mAvt.list_bones)
+    mAvt.hips_pos = (mAvt.skel.matrix_world @ Matrix.Translation(mAvt.skel.pose.bones["Hips"].head)).to_translation()
+
+    # Info to be used to compute body rotations is a faster manner
+    list_matrices2 = []
+    for bone in mAvt.skel.pose.bones:
+        list_matrices2.append(bone.matrix_basis.copy())
+    mAvt.list_matrices_basis = list_matrices2
+
+    list_matrices3 = []
+    for bone in mAvt.skel.data.bones:
+        list_matrices3.append(bone.matrix_local.copy())
+    mAvt.list_matrices_local = list_matrices3 
+
+    bvh_file = "%s/body/Reference.bvh" % avt_path
+    bvh_nodes, _, _ = bvh_utils.read_bvh(bpy.context, bvh_file)
+    mAvt.list_nodes = bvh_utils.sorted_nodes(bvh_nodes)
+
+    # Info to compute deformation of clothes in fast manner
+    size = len(mAvt.body.data.vertices)
+    mAvt.body_kdtree = mathutils.kdtree.KDTree(size)
+    for i, v in enumerate (mAvt.body.data.vertices):
+        mAvt.body_kdtree.insert(v.co, i)
+    mAvt.body_kdtree.balance()
+
+
+
 
 
 class AVATAR_OT_LoadModel(bpy.types.Operator):
