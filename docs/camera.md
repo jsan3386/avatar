@@ -5,7 +5,7 @@ The camera script is taken from [here](https://blender.stackexchange.com/questio
 
 The camera projection matrix is calculated from P = K [R|T], where K is the intrinsics matrix and R, T the rotation and translation matrices.
 
-
+```
 def get_calibration_matrix_K_from_blender(camd):
 
     scene = bpy.context.scene
@@ -31,3 +31,4 @@ def get_calibration_matrix_K_from_blender(camd):
 
 
     return K
+```
