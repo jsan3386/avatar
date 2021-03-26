@@ -7,10 +7,10 @@ Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://j
 
 ### Blender python scripts
 
-[Camera](camera.md)
-[Body](shape.md)
-[Materials](materials.md)
-[Scene](scene.md)
+1. [Camera](camera.md)
+2. [Body](shape.md)
+3. [Materials](materials.md)
+4. [Scene](scene.md)
 
 ### Markdown
 
