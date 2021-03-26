@@ -9,6 +9,8 @@ If you are programmer, graphic designer or just think you can collaborate to imp
 
 Enjoy Avatar!!
 
+[![Avatar](http://img.youtube.com/vi/RLZ4DafZ9JM/0.jpg)](http://www.youtube.com/watch?v=RLZ4DafZ9JM "Avatar")
+
 ### List TODOs, things to fix
 
 - [] skin normal norm00.png is not correct, this provokes some transparent faces on rendered image
