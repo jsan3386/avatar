@@ -2,11 +2,38 @@
 
 #### Load
 
-# Save
+```
+def load_model_to_scene(model_file, s=1.0):
+    # We assume that the model name is Armature, need to change the name if it's different
+    
+    bpy.ops.import_scene.fbx(filepath=model_file, axis_forward='Y', axis_up='Z')
 
-# Shape
+    hmodel = bpy.data.objects["Armature"]
+    hmodel.scale = Vector((s,s,s))		
 
-# Pose
+    return hmodel
+```
+
+
+
+#### Shape
+
+```
+bpy.ops.avt.reset_params()
+```
+
+```
+model.val_breast = val   # breast values goes from 0 to 1
+model.val_torso = np.random.exponential(2, 1)  # torso values goes from -0.3 to 0.3
+model.val_limbs = val  # limbs values goes from 0 to 1
+model.val_hips = val # hips values goes from 0 to 1
+model.val_strength = val # strength values goes from 0 to 0.5
+model.val_weight = val # weight values goes from -0.5 to 1.5
+
+bpy.ops.avt.set_body_shape()
+```
+
+#### Pose
 
 List of Avatar joints. For some reason, if you save different models and load them again, blender modifies the joint order, so it is important to read them from a list or sort joints to obtain them always in the same order.
 
@@ -24,4 +51,13 @@ def get_bone_head_position(obj, bone_name):
 ```
 def get_bone_tail_position(obj, bone_name):
     return (obj.matrix_world @ Matrix.Translation(obj.pose.bones[bone_name].tail)).to_translation()
+```
+
+Load BVH file with avatar addon. First if you are using avatar functions. Second if you use BVH add-on.
+
+```
+bpy.ops.avt.load_bvh(filepath=motion_file)
+```
+```
+bpy.ops.mcp.load_and_retarget(filepath=action_file)
 ```
