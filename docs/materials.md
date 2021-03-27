@@ -123,7 +123,7 @@ def assign_tex_floor_mat (floor_obj, floor_mat, col_img, norm_img, rough_img):
 
     # unselect object
     floor_obj.select_set(False)    
-
+```
 
     
 3. In the case we want to load many textures in our script, these textures will accumulate on the Blender memory making execution slower or even lead to a segmentation fault. 
