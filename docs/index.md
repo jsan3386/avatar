@@ -7,7 +7,7 @@ Integration of Makehuman inside Blender with a intuitive interface for a fast pr
 - A new version integrating SMPL model for researchers will be made public soon.
 
 
-### Blender python scripts
+### Useful python code
 
 1. [Camera](camera.md)
 2. [Body](body.md)
