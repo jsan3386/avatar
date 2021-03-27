@@ -12,7 +12,6 @@ Integration of Makehuman inside Blender with a intuitive interface for a fast pr
 1. [Camera](camera.md)
 2. [Body](body.md)
 3. [Materials](materials.md)
-4. [Scene](scene.md)
 
 
 
