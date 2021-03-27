@@ -11,9 +11,11 @@ We set an example assuming we have a Plane mesh and we want to apply some textur
 
 ```
 def create_floor_material (index, mat_id):
+    # index: defines the material index in case we want to assign same material to different meshes
+    # mat_id: defines the material id  used in render layer passes, this is useful in case we want to generate mesh labels
 
     # Everytime we load and object a Default material is created
-    # we force to remove this materials
+    # we force to remove this material
     for m in bpy.data.materials:
         if "Default" in m.name:
             bpy.data.materials.remove(m)
@@ -67,10 +69,14 @@ def create_floor_material (index, mat_id):
     return floorMat
 ```
 
-asñdlkjfañsldkjf
 
 ```
 def assign_tex_floor_mat (floor_obj, floor_mat, col_img, norm_img, rough_img):
+    # floor_obj: mesh object
+    # floor_mat: name of the material we want to apply to the object
+    # col_img: path to RGB texture image
+    # norm_img: path to normal map
+    # rough_img: path to roughness map or specular map
 
     floor_obj.select_set(True)
     #bpy.context.scene.objects.active = floor_obj
@@ -125,8 +131,6 @@ def assign_tex_floor_mat (floor_obj, floor_mat, col_img, norm_img, rough_img):
     floor_obj.select_set(False)    
 ```
 
-    
-3. In the case we want to load many textures in our script, these textures will accumulate on the Blender memory making execution slower or even lead to a segmentation fault. 
 
 ```
 def release_texture(texture_name):
