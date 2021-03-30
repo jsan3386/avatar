@@ -16,23 +16,8 @@ Integration of Makehuman inside Blender with a intuitive interface for a fast pr
 
 ### Avatar: 3D human modeler suite
 
-Human 3D model avatar based on Makehuman. I created this project with the intention to accelerate human dataset
-creation. The project has a set of elements to give some variance to 3D human model in shape as well as in clothes.
-
-The code has many parts that can be improved and the project also has the potential to grow including more clothes, new shape controls, increasing performance or work in collaboration with other addons. (mocap, correct bvh)
-
-If you are programmer, graphic designer or just think you can collaborate to improve the project you are wellcome to message me. (email)
-
-Enjoy Avatar!!
-
 [![Avatar](http://img.youtube.com/vi/RLZ4DafZ9JM/0.jpg)](http://www.youtube.com/watch?v=RLZ4DafZ9JM "Avatar")
 
-### List TODOs, things to fix
-
-- [] skin normal norm00.png is not correct, this provokes some transparent faces on rendered image
-- [] need complete clothes masks
-- [] shape parameter belly is wrong 
-- [] change names for cloth icon collection (in code), to not overlap with ClothWeaver
 
 ### Installation
 
