@@ -1,4 +1,4 @@
-[Wellcome to Avatar Blender Add-on](https://jsan3386.github.io/avatar/)
+[Avatar Blender Add-on Docs](https://jsan3386.github.io/avatar/)
 
 ### Citation
 
