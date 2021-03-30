@@ -23,12 +23,12 @@ Integration of Makehuman inside Blender with a intuitive interface for a fast pr
 
 Requirements: Blender >= 2.8
 
-1) Create a file in the avatar github folder named config.py with the following content:  
+1. Create a file in the avatar github folder named config.py with the following content:  
     avt_path = "/path/of/root/avatar/github/project"
 
-2) Go to Edit>Preferences>FilePaths and add to Scripts the path to the github avatar folder
+2. Go to Edit>Preferences>FilePaths and add to Scripts the path to the github avatar folder
 
-3) Go to Edit>Preferences>Add-ons>Install and choose the file avatar_addon_b280.py 
+3. Go to Edit>Preferences>Add-ons>Install and choose the file avatar_addon_b280.py 
 
 The new addon should appear in the right tab (press N on the 3Dviewer screen)
 
@@ -59,9 +59,9 @@ There is a set of clothes downloaded from Makehuman website. These clothes are s
 Original textures can be downloaded in the Makehuman website or [here](https://drive.google.com/open?id=133n9ZpfK3DGlQIPOhnC94tbTFBDR_b3U)
 
 If you want to use your own texture in one of the clothes:
-    1. Set the image or images in the cloth folder > $avatar_path/dressing/textures/cloth_folder
-    2. Change the image name in file > default.txt
-    3. Default file assumes: 1st line texture image; 2nd line normal map; 3rd line specular map. If your texture has no normal map neither specular map, you can leave the line in blank.
+1. Set the image or images in the cloth folder > $avatar_path/dressing/textures/cloth_folder
+2. Change the image name in file > default.txt
+3. Default file assumes: 1st line texture image; 2nd line normal map; 3rd line specular map. If your texture has no normal map neither specular map, you can leave the line in blank.
 
 
 <!-- # Extras
