@@ -9,8 +9,8 @@ LeftUpLeg               lThigh
 LeftLeg                 lShin
 LeftFoot                lFoot
 LeftToeBase             
-LowerBack               
-Spine                   abdomen
+LowerBack  		abdomen             
+Spine                   
 Spine1                  chest
 Neck                    neck
 Neck1                   head

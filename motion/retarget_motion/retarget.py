@@ -154,6 +154,122 @@ def compute_rotation(poseBone, pt0, pt1, pt2):
 
     return q
 
+def retarget_constrains(bone_corresp_file, action, trg_skel, act_x, act_y, act_z):
+
+    # load bvh file
+    bvh_file = action
+    bpy.ops.import_anim.bvh(filepath=bvh_file, axis_up='Y', axis_forward='-Z', filter_glob="*.bvh",
+                                    target='ARMATURE', global_scale=1.0, frame_start=1, use_fps_scale=True,
+                                    use_cyclic=False, update_scene_duration=True, rotate_mode='NATIVE')
+
+    # create target animation
+    trg_skel.animation_data_clear()
+
+    # get frames of action
+    fbvh = bpy.path.basename(bvh_file)
+    spbvh = fbvh.split('.')
+    bvh_obj_name = spbvh[0]
+    bvh_obj = bpy.data.objects[bvh_obj_name]
+    act_size = bvh_obj.animation_data.action.frame_range
+
+    nfirst = int(act_size[0])
+    nlast = int(act_size[1])
+
+    # read correspondence bones
+    list_bones_src = []
+    list_bones_trg = []
+    with open(bone_corresp_file, 'r') as f:
+        content = f.readlines()
+    # you may also want to remove whitespace characters like `\n` at the end of each line
+    content = [x.strip() for x in content] 
+
+    for text in content:
+        line = text.split()
+        if len(line) == 2:
+            list_bones_trg.append(line[0])
+            list_bones_src.append(line[1])
+
+    # Scale bvh skeleton to match size of our model
+    # This step is important to transfer correctly translations to target, otherwise human steps
+    # are too big or too small
+    bbox_corners_skel = [bvh_obj.matrix_world @ Vector(corner) for corner in bvh_obj.bound_box]
+    bbox_corners_target = [trg_skel.matrix_world @ Vector(corner) for corner in trg_skel.bound_box]
+    dist_skel = bbox_corners_skel[1][2] - bbox_corners_skel[0][2]
+    dist_target = bbox_corners_target[1][2] - bbox_corners_target[0][2]
+    fscale = dist_target / dist_skel
+    #fscale = 0.062
+    bvh_obj.scale = (fscale, fscale, fscale) 
+
+    # create constraints for all bones
+    for bone_idx, bone in enumerate(list_bones_trg):
+        pb_trg = trg_skel.pose.bones[bone]
+
+        if bone == "Hips":
+            if not pb_trg.constraints.get("Copy Location"):
+                pb_trg.constraints.new("COPY_LOCATION")
+                pb_trg.constraints['Copy Location'].target = bvh_obj
+                pb_trg.constraints['Copy Location'].subtarget = list_bones_src[bone_idx]
+            if not pb_trg.constraints.get("Copy Rotation"):
+                pb_trg.constraints.new("COPY_ROTATION")
+                pb_trg.constraints['Copy Rotation'].target = bvh_obj
+                pb_trg.constraints['Copy Rotation'].subtarget = list_bones_src[bone_idx]
+                if act_x:
+                    pb_trg.constraints['Copy Rotation'].use_x = False
+                if act_y:
+                    pb_trg.constraints['Copy Rotation'].use_x = False
+                if act_z:
+                    pb_trg.constraints['Copy Rotation'].use_x = False
+        else:
+            if not pb_trg.constraints.get("Copy Rotation"):
+                pb_trg.constraints.new("COPY_ROTATION")
+                pb_trg.constraints['Copy Rotation'].target = bvh_obj
+                pb_trg.constraints['Copy Rotation'].subtarget = list_bones_src[bone_idx]
+
+
+    for bone in list_bones_trg:
+
+        pb_trg = trg_skel.pose.bones[bone]
+
+        mats = []
+        for f in range(nfirst, nlast):
+            bpy.context.scene.frame_set(f)
+            mats.append([pb_trg.matrix.copy()])
+
+        # transfer matrices to bone
+        for f in range(nfirst, nlast):
+            bpy.context.scene.frame_set(f)
+            if bone == "Hips":
+                # pb_trg.constraints['Copy Location'].influence = 0
+                # pb_trg.constraints['Copy Rotation'].influence = 0
+                pb_trg.matrix = mats[f-1][0]
+                pb_trg.keyframe_insert(data_path='location', frame=f)
+                pb_trg.keyframe_insert(data_path='rotation_quaternion', frame=f)
+            else:
+                # pb_trg.constraints['Copy Rotation'].influence = 0
+                pb_trg.matrix = mats[f-1][0]
+                pb_trg.keyframe_insert(data_path='rotation_quaternion', frame=f)
+
+    # remove all bone constraints
+    for bone in list_bones_trg:
+        pb_trg = trg_skel.pose.bones[bone]
+        if bone == "Hips":
+            pb_ct = pb_trg.constraints.get('Copy Location')
+            pb_trg.constraints.remove(pb_ct)
+            pb_ct = pb_trg.constraints.get('Copy Rotation')
+            pb_trg.constraints.remove(pb_ct)
+        else:
+            pb_ct = pb_trg.constraints.get('Copy Rotation')
+            pb_trg.constraints.remove(pb_ct)
+
+    bpy.data.objects.remove(bvh_obj)
+    for block in bpy.data.armatures:
+        if block.users == 0:
+            bpy.data.armatures.remove(block)
+    for block in bpy.data.actions:
+        if block.users == 0:
+            bpy.data.actions.remove(block)
+
+
 def retarget_skeleton(source_skel_type, action, target):
 
     # This is a very slow version. An attempt to debug the code and make it faster, check file

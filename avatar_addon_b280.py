@@ -8,7 +8,7 @@ bl_info = {
     'location': "View3D",
     'description': "Create and move a simple avatar",
     'warning': '',
-    'wiki_url': '',
+    'wiki_url': 'https://jsan3386.github.io/avatar/',
     'category': 'Avatar'
 }
 
@@ -83,13 +83,13 @@ from bpy_extras.io_utils import axis_conversion
 
 mAvt = iAvatar.Avatar(addon_path=avt_path)
 
-preview_collections = {}
+avt_preview_collections = {}
 
 def generate_previews():
 
     # We are accessing all of the information that we generated in the register function below
-    pcoll = preview_collections["thumbnail_previews"]
-    image_location = pcoll.images_location
+    gcoll = avt_preview_collections["thumbnail_previews"]
+    image_location = gcoll.images_location
 
     enum_items = []
 
@@ -112,7 +112,7 @@ def generate_previews():
         #print(imagename)
         filepath = image_location + '/' + i
         #print(filepath)
-        thumb = pcoll.load(filepath, filepath, 'IMAGE')
+        thumb = gcoll.load(filepath, filepath, 'IMAGE')
         enum_items.append((i, i, imagename, thumb.icon_id, a))
 
     return enum_items
@@ -405,7 +405,7 @@ class AVATAR_OT_WearCloth (bpy.types.Operator):
         scn = context.scene
         obj = context.active_object
         #
-        iconname = bpy.context.scene.my_thumbnails
+        iconname = bpy.context.scene.avt_thumbnails
         iconname = iconname.split(".")[0]
 
         # Unselect everything to make sure changes are applied to iconname object
@@ -443,11 +443,11 @@ class AVATAR_PT_DressingPanel(bpy.types.Panel):
 
         row = layout.row()
         #Presets
-        row.template_icon_view(context.scene, "my_thumbnails")
+        row.template_icon_view(context.scene, "avt_thumbnails")
         row = layout.row()
 
         # Just a way to access which one is selected
-        # iconname = bpy.context.scene.my_thumbnails
+        # iconname = bpy.context.scene.avt_thumbnails
         # iconname = iconname.split(".")[0]
         #print(iconname)
         col = row.column()
@@ -627,7 +627,11 @@ class AVATAR_OT_LoadBVH (bpy.types.Operator):
     bl_label = "Load BVH"
     bl_description = "Transfer motion to human model"
 
-    filepath = bpy.props.StringProperty(subtype="FILE_PATH") 
+    filepath: bpy.props.StringProperty(subtype="FILE_PATH") 
+
+    act_x: bpy.props.BoolProperty(name="X")
+    act_y: bpy.props.BoolProperty(name="Y")
+    act_z: bpy.props.BoolProperty(name="Z")
 
     def invoke(self, context, event):
         bpy.context.window_manager.fileselect_add(self)
@@ -661,7 +665,10 @@ class AVATAR_OT_LoadBVH (bpy.types.Operator):
         bone_corresp_file = "%s/motion/rigs/%s.txt" % (avt_path, scn.skel_rig)
 
         if obj is not None:
-            retarget.retarget_skeleton(bone_corresp_file, file_path_bvh, obj)
+            # retarget calculating rotaions from 3D positions: very slow
+            # retarget.retarget_skeleton(bone_corresp_file, file_path_bvh, obj)
+            # retarget copying the bvh constraints: very slow
+            retarget.retarget_constrains(bone_corresp_file, file_path_bvh, obj, self.act_x, self.act_y, self.act_z)
         else:
             print("Please, select a model to transfer the bvh action")
 
@@ -818,14 +825,14 @@ def enum_menu_items():
 def register():
 
     # Create a new preview collection (only upon register)
-    pcoll = bpy.utils.previews.new()
-    pcoll.images_location = "%s/dressing/cloth_previews" % (avt_path)
+    gcoll = bpy.utils.previews.new() # garment collections
+    gcoll.images_location = "%s/dressing/cloth_previews" % (avt_path)
 
     # Enable access to our preview collection outside of this function
-    preview_collections["thumbnail_previews"] = pcoll
+    avt_preview_collections["thumbnail_previews"] = gcoll
 
     # This is an EnumProperty to hold all of the images
-    bpy.types.Scene.my_thumbnails = EnumProperty(
+    bpy.types.Scene.avt_thumbnails = EnumProperty(
         items=generate_previews(),
         )
 
@@ -840,11 +847,11 @@ def unregister():
     for clas in classes:
         unregister_class(clas)
 
-    for pcoll in preview_collections.values():
-        bpy.utils.previews.remove(pcoll)
-    preview_collections.clear()
+    for gcoll in avt_preview_collections.values():
+        bpy.utils.previews.remove(gcoll)
+    avt_preview_collections.clear()
 
-    del bpy.types.Scene.my_thumbnails
+    del bpy.types.Scene.avt_thumbnails
     del bpy.types.Scene.skel_rig
 
 
