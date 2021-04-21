@@ -14,7 +14,7 @@ Integration of Makehuman inside Blender with a intuitive interface for a fast pr
 3. [Materials](materials.md)
 
 
-### Avatar: 3D human modeler suite
+### Avatar: 3D human modeler suite (youtube video)
 
 [![Avatar](http://img.youtube.com/vi/RLZ4DafZ9JM/0.jpg)](http://www.youtube.com/watch?v=RLZ4DafZ9JM "Avatar")
 
@@ -41,15 +41,24 @@ Reset parameters, change the body weights to set the original body shape
 
 ### Motion Panel
 
-Before loading a motion file, you need to select which kind of rig is defined in the BVH file. Currently, only CMU and Mixamo skeleton rigs are available. If you have a file with different rig, you need to create a .txt file
-with the bone correspondences manually and add it to $avatar_path/motion/rigs
+There are currently 3 different ways to import an action to Avatar model
 
-Note that the file can take some time to load. Calculations are very slow because update() function needs to be called quite often.
+  1. Using blender Location/Rotation constraints (default)
+  2. Using 3D points (implemented but not activated)
+  3. Using external addon [BHV Retargeter](http://diffeomorphic.blogspot.com/p/bvh-retargeter.html) (recommended)
 
-Note that usual function to load a motion file in Makehuman provided in Makewalk addon, is working only in Blender 2.79. Even I modified some parts of the code to make it compatible with Blender 2.80, there are a lot of mistakes when importing motions. Probably is due to the fact that now frame 0 is not Tpose anymore.
-Finally, I decided to implement my own function. Is not optimal and I'm sure it can be greatly improved, but it works for all the cases I've tried.  
+Methods 1, and 2 are very slow, and they need a list of bone correspondences between the target and source. There are examples in the ``$avatar_path/motion/rigs`` folder. Might be necessary to mark "x", "y" or "z" in the select file windown when loading the BVH file depending on how is defined the skeleton in that file.
+Method 3 is completely automatic and the recommended method.
 
-Another way to load an action to Avatar model is to use the Blender Addon [BHV Retargeter](http://diffeomorphic.blogspot.com/p/bvh-retargeter.html).  
+#### Motion file resources
+
+ 1. [CMU](https://sites.google.com/a/cgspeed.com/cgspeed/motion-capture/cmu-bvh-conversion)
+ 2. [Mixamo](https://www.mixamo.com/)
+ 3. [SFU Mocap](http://mocap.cs.sfu.ca/)
+ 4. [OHIO](https://accad.osu.edu/research/motion-lab/mocap-system-and-data)
+ 5. [DanceDB](http://dancedb.eu/main/performances)
+
+ 
 
 
 ### Dressing Panel
