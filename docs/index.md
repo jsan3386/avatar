@@ -3,8 +3,7 @@
 Integration of Makehuman inside Blender with a intuitive interface for a fast prototyping of dressed human models. The add-on includes a small subset of assets available in Makehuman. The 3D model shape can be slightly modified by a set of different parameters. The purpose of this add-on is to have a ready to use tool to generate large datasets that can be used to train neural networks. Everything can be scripted in python, most useful functions and explanations are given below.
 
 
-- There is also available a MoCap software using this add-on.
-- A new version integrating SMPL model for researchers will be made public soon.
+- There is also available a MoCap software using this add-on. (to release soon)
 
 
 ### Useful python code
@@ -24,10 +23,8 @@ Integration of Makehuman inside Blender with a intuitive interface for a fast pr
 Requirements: Blender >= 2.8
 
 1. Create a file in the avatar github folder named config.py with the following content:  
-    avt_path = "/path/of/root/avatar/github/project"
-
+    ``avt_path = "/path/of/root/avatar/github/project"``
 2. Go to Edit>Preferences>FilePaths and add to Scripts the path to the github avatar folder
-
 3. Go to Edit>Preferences>Add-ons>Install and choose the file avatar_addon_b280.py 
 
 The new addon should appear in the right tab (press N on the 3Dviewer screen)
