@@ -1,4 +1,26 @@
+### Documentation
+
 [Avatar Blender Add-on Docs](https://jsan3386.github.io/avatar/)
+
+### List TODOs, things to fix
+
+- correct belly shape parameter; better create new global model for shape parameters 
+- load bvh very slow; find other methods to properly retarget action
+- need complete clothes masks
+- improve MH vertex weights; some deformations are strange
+- re-implement class avatar; now easy to lose variables, and can't use multiple human models
+
+
+### Credits
+
+- [Makehuman](http://www.makehumancommunity.org/)
+    - Clothes mostly on Mindfront, punkduck 
+- Marta Altarriba Fatsini - Motion transfer from set of 3D points
+- Aniol Civit Bertran - Human model shape parameters
+- Code and help from:
+    - [Blender Stack Exchange](https://blender.stackexchange.com/)
+    - [Blender Artists](https://blenderartists.org/)
+
 
 ### Citation
 
@@ -12,19 +34,3 @@
       primaryClass={cs.GR}
 }
 ```
-
-### Credits
-
-- [Makehuman](http://www.makehumancommunity.org/)
-    - Clothes mostly on Mindfront, punkduck 
-- Marta Altarriba Fatsini - Motion transfer from set of 3D points
-- Aniol Civit Bertran - Human model shape parameters
-- [Blender Stack Exchange](https://blender.stackexchange.com/)
-
-
-### List TODOs, things to fix
-
-- [] skin normal norm00.png is not correct, this provokes some transparent faces on rendered image
-- [] need complete clothes masks
-- [] shape parameter belly is wrong 
-- [] change names for cloth icon collection (in code), to not overlap with ClothWeaver
