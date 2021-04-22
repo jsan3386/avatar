@@ -43,12 +43,12 @@ for p in bpy.utils.script_paths():
 from config import avt_path
 
 # add extra paths
-sys.path.append(avt_path + "/body")
-sys.path.append(avt_path + "/dressing")
-sys.path.append(avt_path + "/dressing/materials")
-sys.path.append(avt_path + "/motion")
-sys.path.append(avt_path + "/motion/net_models/cpm_pose")
-sys.path.append(avt_path + "/motion/retarget_motion")
+sys.path.append(os.path.join(avt_path, "body"))
+sys.path.append(os.path.join(avt_path, "dressing"))
+sys.path.append(os.path.join(avt_path, "dressing", "materials"))
+sys.path.append(os.path.join(avt_path, "motion"))
+# sys.path.append(os.path.join(avt_path, "motion", "net_models", "cpm_pose")
+sys.path.append(os.path.join(avt_path, "motion", "retarget_motion"))
 
 # #import load as load
 # import zmq
