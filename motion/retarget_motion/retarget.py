@@ -154,7 +154,7 @@ def compute_rotation(poseBone, pt0, pt1, pt2):
 
     return q
 
-def retarget_constrains(bone_corresp_file, action, trg_skel, act_x, act_y, act_z):
+def retarget_constraints(bone_corresp_file, action, trg_skel, act_x, act_y, act_z):
 
     # load bvh file
     bvh_file = action
