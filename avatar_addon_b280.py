@@ -668,7 +668,9 @@ class AVATAR_OT_LoadBVH (bpy.types.Operator):
             # retarget calculating rotaions from 3D positions: very slow
             # retarget.retarget_skeleton(bone_corresp_file, file_path_bvh, obj)
             # retarget copying the bvh constraints: very slow
-            retarget.retarget_constraints(bone_corresp_file, file_path_bvh, obj, self.act_x, self.act_y, self.act_z)
+            # retarget.retarget_constraints(bone_corresp_file, file_path_bvh, obj, self.act_x, self.act_y, self.act_z)
+            # retarget using matrix world for every joint: faster
+            retarget.retarget_matworld (bone_corresp_file, file_path_bvh, obj)
         else:
             print("Please, select a model to transfer the bvh action")
 

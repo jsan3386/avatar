@@ -106,6 +106,19 @@ def worldMatrix(ArmatureObject,Bone):
     _obj = ArmatureObject
     return _obj.matrix_world * _bone.matrix
 
+# working version
+def matrix_world(armature_ob, bone_name):
+    local = armature_ob.data.bones[bone_name].matrix_local
+    basis = armature_ob.pose.bones[bone_name].matrix_basis
+
+    parent = armature_ob.pose.bones[bone_name].parent
+    if parent == None:
+        return  local @ basis
+    else:
+        parent_local = armature_ob.data.bones[parent.name].matrix_local
+        return matrix_world(armature_ob, parent.name) @ (parent_local.inverted() @ local) @ basis         
+
+
 def trans_coord_system(p1, o1, o2, M1, M2):
 
     # note is necessary to use a copy version of the matrix
@@ -268,6 +281,95 @@ def retarget_constraints(bone_corresp_file, action, trg_skel, act_x, act_y, act_
     for block in bpy.data.actions:
         if block.users == 0:
             bpy.data.actions.remove(block)
+
+
+def retarget_matworld(bone_corresp_file, action, trg_skel):
+
+    # load bvh file
+    bvh_file = action
+    bpy.ops.import_anim.bvh(filepath=bvh_file, axis_up='Y', axis_forward='-Z', filter_glob="*.bvh",
+                                    target='ARMATURE', global_scale=1.0, frame_start=1, use_fps_scale=True,
+                                    use_cyclic=False, update_scene_duration=True, rotate_mode='NATIVE')
+
+    # create target animation
+    trg_skel.animation_data_clear()
+
+    # get frames of action
+    fbvh = bpy.path.basename(bvh_file)
+    spbvh = fbvh.split('.')
+    bvh_obj_name = spbvh[0]
+    bvh_obj = bpy.data.objects[bvh_obj_name]
+    act_size = bvh_obj.animation_data.action.frame_range
+
+    nfirst = int(act_size[0])
+    nlast = int(act_size[1])
+
+    # read correspondence bones
+    list_bones_src = []
+    list_bones_trg = []
+    with open(bone_corresp_file, 'r') as f:
+        content = f.readlines()
+    # you may also want to remove whitespace characters like `\n` at the end of each line
+    content = [x.strip() for x in content] 
+
+    for text in content:
+        line = text.split()
+        if len(line) == 2:
+            list_bones_trg.append(line[0])
+            list_bones_src.append(line[1])
+
+    # Scale bvh skeleton to match size of our model
+    # This step is important to transfer correctly translations to target, otherwise human steps
+    # are too big or too small
+    bbox_corners_skel = [bvh_obj.matrix_world @ Vector(corner) for corner in bvh_obj.bound_box]
+    bbox_corners_target = [trg_skel.matrix_world @ Vector(corner) for corner in trg_skel.bound_box]
+    dist_skel = bbox_corners_skel[1][2] - bbox_corners_skel[0][2]
+    dist_target = bbox_corners_target[1][2] - bbox_corners_target[0][2]
+    fscale = dist_target / dist_skel
+    #fscale = 0.062
+    bvh_obj.scale = (fscale, fscale, fscale) 
+
+
+    for f in range(nfirst, nlast):
+
+        bpy.context.scene.frame_set(f)
+
+        for bidx, bone in enumerate(list_bones_trg):        
+
+            pb_trg = trg_skel.pose.bones[bone]
+
+            mw_src = matrix_world(bvh_obj, list_bones_src[bidx])
+            mw_trg = matrix_world(trg_skel, bone)
+
+            basis_trg = trg_skel.pose.bones[bone].matrix_basis
+
+            T1 = basis_trg @ mw_trg.inverted() @ mw_src
+
+            pb_trg.rotation_mode = 'XYZ'
+            pb_trg.rotation_euler = T1.to_euler('XYZ')
+            pb_trg.keyframe_insert(data_path='rotation_euler', frame=f)
+            
+            # need to introduce some rotation offsets to bone
+            # depending on the motion file (bvh) skeleton
+            # TODO
+
+            # Code assumes objects are created in world origin
+            # otherwise function need to change to account for the displacement
+            if bone == "Hips":
+                pb_src = bvh_obj.pose.bones[list_bones_src[bidx]]
+                loc = bvh_obj.matrix_world @ pb_src.matrix.to_translation()
+                pb_trg.location =  trg_skel.matrix_world.inverted() @ pb_trg.bone.matrix_local.inverted() @ loc
+                pb_trg.keyframe_insert(data_path='location', frame=f)
+
+
+    bpy.data.objects.remove(bvh_obj)
+    for block in bpy.data.armatures:
+        if block.users == 0:
+            bpy.data.armatures.remove(block)
+    for block in bpy.data.actions:
+        if block.users == 0:
+            bpy.data.actions.remove(block)
+
 
 
 def retarget_skeleton(source_skel_type, action, target):

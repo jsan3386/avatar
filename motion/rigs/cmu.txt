@@ -10,7 +10,7 @@ LeftLeg                 lShin
 LeftFoot                lFoot
 LeftToeBase             
 LowerBack  		abdomen             
-Spine                   
+Spine                   abdomen
 Spine1                  chest
 Neck                    neck
 Neck1                   head
