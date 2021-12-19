@@ -283,7 +283,7 @@ def retarget_constraints(bone_corresp_file, action, trg_skel, act_x, act_y, act_
             bpy.data.actions.remove(block)
 
 
-def retarget_matworld(bone_corresp_file, action, trg_skel):
+def retarget_matworld(bone_corresp_file, action, trg_skel, rig):
 
     # load bvh file
     bvh_file = action
@@ -345,9 +345,28 @@ def retarget_matworld(bone_corresp_file, action, trg_skel):
 
             T1 = basis_trg @ mw_trg.inverted() @ mw_src
 
-            pb_trg.rotation_mode = 'XYZ'
-            pb_trg.rotation_euler = T1.to_euler('XYZ')
-            pb_trg.keyframe_insert(data_path='rotation_euler', frame=f)
+            if rig == "mixamo" and bone == 'Hips':
+                # We need to invert X axis
+                S1 = mw_src
+                t, R, s = S1.decompose() # important decompose R to get
+                                         # correct angles later
+                rot_x = R.to_euler('XYZ')[0]
+                rot_y = R.to_euler('XYZ')[1]
+                rot_z = R.to_euler('XYZ')[2]
+                mat_x = Matrix.Rotation(rot_x, 4, 'X')
+                mat_y = Matrix.Rotation(rot_y, 4, 'Y')
+                mat_z = Matrix.Rotation(rot_z, 4, 'Z')
+                S1 = mat_z @ mat_y @ mat_x.inverted()
+                S1 = basis_trg @ mw_trg.inverted() @ S1
+
+                # apply rotation to bone
+                pb_trg.rotation_mode = 'XYZ'
+                pb_trg.rotation_euler = S1.to_euler('XYZ')
+                pb_trg.keyframe_insert(data_path='rotation_euler', frame=f)
+            else:
+                pb_trg.rotation_mode = 'XYZ'
+                pb_trg.rotation_euler = T1.to_euler('XYZ')
+                pb_trg.keyframe_insert(data_path='rotation_euler', frame=f)
             
             # need to introduce some rotation offsets to bone
             # depending on the motion file (bvh) skeleton
@@ -448,7 +467,7 @@ def retarget_skeleton(source_skel_type, action, target):
         #for to_match in goal.data.bones:
         for bone in target_cp.data.bones:
             bone_match = find_bone_match(bone_corresp, bone.name)
-            if bone_match is not "none":
+            if bone_match != "none":
                 #matrix_os[bone_match] = goal.data.bones[bone_match].matrix_local # if we want to match rest pose
                 ebp = bvh_obj.pose.bones[bone_match]
                 matrix_os[bone_match] = matrix_the_hard_way(ebp, bvh_obj)
@@ -460,7 +479,7 @@ def retarget_skeleton(source_skel_type, action, target):
         for pb in target_cp.pose.bones:
         
             bone_name = find_bone_match(bone_corresp, pb.name)
-            if bone_name is not "none":
+            if bone_name != "none":
                 goal_bone = bone_name
             
                 # source bone

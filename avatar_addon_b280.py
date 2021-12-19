@@ -670,7 +670,7 @@ class AVATAR_OT_LoadBVH (bpy.types.Operator):
             # retarget copying the bvh constraints: very slow
             # retarget.retarget_constraints(bone_corresp_file, file_path_bvh, obj, self.act_x, self.act_y, self.act_z)
             # retarget using matrix world for every joint: faster
-            retarget.retarget_matworld (bone_corresp_file, file_path_bvh, obj)
+            retarget.retarget_matworld (bone_corresp_file, file_path_bvh, obj, scn.skel_rig)
         else:
             print("Please, select a model to transfer the bvh action")
 
