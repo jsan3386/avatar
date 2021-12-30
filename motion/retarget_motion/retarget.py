@@ -1,7 +1,8 @@
 import bpy
-from mathutils import Matrix, Vector, Quaternion
+from mathutils import Matrix, Vector, Quaternion, Euler
 import numpy as np
 import math
+from collections import OrderedDict
 
 def get_bone_head_position(obj, bone_name):
     return (obj.matrix_world @ Matrix.Translation(obj.pose.bones[bone_name].head)).to_translation()
@@ -167,6 +168,83 @@ def compute_rotation(poseBone, pt0, pt1, pt2):
 
     return q
 
+# set skel in T pose
+D = math.pi / 180
+TPose2 = {
+    "LeftShoulder" : (0, 0, -90*D, 'XYZ'),
+    "LeftArm" : (0, 0, -90*D, 'XYZ'),
+    "LeftForeArm" :   (0, 0, -90*D, 'XYZ'),
+    "LeftHand" :      (0, 0, -90*D, 'XYZ'),
+
+    "RightShoulder" : (0, 0, 90*D, 'XYZ'),
+    "RightArm" : (0, 0, 90*D, 'XYZ'),
+    "RightForeArm" :   (0, 0, 90*D, 'XYZ'),
+    "RightHand" :      (0, 0, 90*D, 'XYZ'),
+
+    "LeftUpLeg" :     (-90*D, 0, 0, 'XYZ'),
+    "LeftLeg" :      (-90*D, 0, 0, 'XYZ'),
+    #"foot.L" :      (None, 0, 0, 'XYZ'),
+    #"toe.L" :       (pi, 0, 0, 'XYZ'),
+
+    "RightUpLeg" :     (-90*D, 0, 0, 'XYZ'),
+    "RightLeg" :      (-90*D, 0, 0, 'XYZ'),
+    #"foot.R" :      (None, 0, 0, 'XYZ'),
+    #"toe.R" :       (pi, 0, 0, 'XYZ'),
+}
+
+def insertRotation(pb, mat, frame=None):
+    if frame is None:
+        frame = bpy.context.scene.frame_current
+    if pb.rotation_mode == 'QUATERNION':
+        pb.rotation_quaternion = mat.to_quaternion()
+        pb.keyframe_insert("rotation_quaternion", frame=frame, group=pb.name)
+    elif pb.rotation_mode == "AXIS_ANGLE":
+        pb.rotation_axis_angle = mat.to_axis_angle()
+        pb.keyframe_insert("rotation_axis_angle", frame=frame, group=pb.name)
+    else:
+        pb.rotation_euler = mat.to_euler(pb.rotation_mode)
+        pb.keyframe_insert("rotation_euler", frame=frame, group=pb.name)
+
+
+def updateScene():
+    deps = bpy.context.evaluated_depsgraph_get()
+    deps.update()
+
+def put_in_rest_pose(rig):
+    for pb in rig.pose.bones:
+        pb.matrix_basis = Matrix()
+    updateScene()
+
+
+def put_in_tpose(rig):
+    for pb in rig.pose.bones:
+        if pb.name in TPose2.keys():
+            ex,ey,ez,order = TPose2[pb.name]
+        else:
+            continue
+
+        euler = pb.matrix.to_euler(order)
+        if ex is None:
+            ex = euler.x
+        if ey is None:
+            ey = euler.y
+        if ez is None:
+            ez = euler.z
+        euler = Euler((ex,ey,ez), order)
+        mat = euler.to_matrix().to_4x4()
+        mat.col[3] = pb.matrix.col[3]
+
+        loc = pb.bone.matrix_local
+        if pb.parent:
+            mat = pb.parent.matrix.inverted() @ mat
+            loc = pb.parent.bone.matrix_local.inverted() @ loc
+        mat =  loc.inverted() @ mat
+        euler = mat.to_euler('YZX')
+        euler.y = 0
+        pb.matrix_basis = euler.to_matrix().to_4x4()
+        updateScene()
+
+
 def retarget_constraints(bone_corresp_file, action, trg_skel, act_x, act_y, act_z):
 
     # load bvh file
@@ -283,6 +361,189 @@ def retarget_constraints(bone_corresp_file, action, trg_skel, act_x, act_y, act_
             bpy.data.actions.remove(block)
 
 
+class CAnimation:
+
+    def __init__(self, srcRig, trgRig, list_bones_trg, list_bones_src, obj, skel):
+        self.srcRig = srcRig
+        self.trgRig = trgRig
+        self.scene = bpy.context.scene
+        self.boneAnims = OrderedDict()
+        self.list_bones_trg = list_bones_trg
+        self.list_bones_src = list_bones_src
+        self.obj = obj
+        self.skel = skel
+
+        # for b_idx, b_name in enumerate(bones_skel):
+        for b_idx, b_name in enumerate(self.list_bones_trg):
+            trgBone = trgRig.pose.bones[b_name]
+            srcBone = srcRig.pose.bones[self.list_bones_src[b_idx]]
+            parent = self.get_parent_name(trgBone, self.list_bones_trg)
+            self.boneAnims[b_name] = CBoneAnim(srcBone, trgBone, parent, self.obj, self.skel)
+            # print("InitCanimation", parent, trgBone, srcBone)
+
+    def get_parent_name (self, p_bone, list_bones):
+    # find parent
+        pb_parent = p_bone.parent
+        if pb_parent:
+            list_parent = pb_parent.name
+            while (list_parent not in list_bones):
+                new_bone = self.skel.pose.bones[list_parent].parent
+                list_parent = new_bone.name
+            return self.boneAnims[list_parent]
+        else:
+            return None
+
+    def putInTPoses(self):
+        scn = bpy.context.scene
+        scn.frame_set(0)
+        put_in_rest_pose(self.srcRig)
+        put_in_tpose(self.srcRig)
+        put_in_rest_pose(self.trgRig)
+        put_in_tpose(self.trgRig)
+        for banim in self.boneAnims.values():
+            banim.getTPoseMatrix()
+
+
+    def retarget(self, frames):
+        scn = bpy.context.scene
+        for frame in frames:
+            scn.frame_set(frame)
+            for banim in self.boneAnims.values():
+                banim.retarget(frame)
+
+
+class CBoneAnim:
+
+    def __init__(self, srcBone, trgBone, parent, obj, skel):
+        self.srcMatrix = None
+        self.trgMatrix = None
+        self.srcBone = srcBone
+        self.trgBone = trgBone
+        self.parent = parent
+        self.aMatrix = None
+        self.obj = obj
+        self.skel = skel
+        # matrix_local: rest pose matrix in bone local space
+        if self.parent:
+            self.bMatrix = trgBone.bone.matrix_local.inverted() @ self.parent.trgBone.bone.matrix_local
+        else:
+            self.bMatrix = trgBone.bone.matrix_local.inverted()
+
+
+    def getTPoseMatrix(self):
+        trgrot = self.trgBone.matrix.decompose()[1]
+        trgmat = trgrot.to_matrix().to_4x4()
+        srcrot = self.srcBone.matrix.decompose()[1]
+        srcmat = srcrot.to_matrix().to_4x4()
+        self.aMatrix = srcmat.inverted() @ trgmat
+
+
+    def retarget(self, frame):
+        self.srcMatrix = self.srcBone.matrix.copy()
+        self.trgMatrix = self.srcMatrix @ self.aMatrix
+        # self.trgMatrix.col[3] = self.srcMatrix.col[3]
+        if self.parent:
+            mat1 = self.parent.trgMatrix.inverted() @ self.trgMatrix
+        else:
+            mat1 = self.trgMatrix
+        mat2 = self.bMatrix @ mat1
+
+        insertRotation(self.trgBone, mat2, frame)
+        if not self.parent:
+            pb = self.trgBone
+            pb_src = self.srcBone
+            loc = self.obj.matrix_world @ pb_src.matrix.to_translation()
+            pb.location =  self.skel.matrix_world.inverted() @ pb.bone.matrix_local.inverted() @ loc
+            pb.keyframe_insert(data_path='location', frame=frame)
+
+        return
+
+
+
+def retarget_addon(bone_corresp_file, action, trg_skel, rig):
+    # retarget based on bvh_retarget addon by Thomas Larsson
+    # https://bitbucket.org/Diffeomorphic/retarget_bvh/src/master/
+
+    print("Using Retarget Addon")
+
+    # load bvh file
+    bvh_file = action
+    bpy.ops.import_anim.bvh(filepath=bvh_file, axis_up='Y', axis_forward='-Z', filter_glob="*.bvh",
+                                    target='ARMATURE', global_scale=1.0, frame_start=1, use_fps_scale=True,
+                                    use_cyclic=False, update_scene_duration=True, rotate_mode='NATIVE')
+
+    # create target animation
+    trg_skel.animation_data_clear()
+
+    # get frames of action
+    fbvh = bpy.path.basename(bvh_file)
+    spbvh = fbvh.split('.')
+    bvh_obj_name = spbvh[0]
+    bvh_obj = bpy.data.objects[bvh_obj_name]
+    act_size = bvh_obj.animation_data.action.frame_range
+
+    nfirst = int(act_size[0])
+    nlast = int(act_size[1])
+
+    # read correspondence bones
+    list_bones_src = []
+    list_bones_trg = []
+    with open(bone_corresp_file, 'r') as f:
+        content = f.readlines()
+    # you may also want to remove whitespace characters like `\n` at the end of each line
+    content = [x.strip() for x in content] 
+
+    for text in content:
+        line = text.split()
+        if len(line) == 2:
+            list_bones_trg.append(line[0])
+            list_bones_src.append(line[1])
+
+    # Scale bvh skeleton to match size of our model
+    # This step is important to transfer correctly translations to target, otherwise human steps
+    # are too big or too small
+    # # Not working if action starts lay down
+    # bbox_corners_skel = [bvh_obj.matrix_world @ Vector(corner) for corner in bvh_obj.bound_box]
+    # bbox_corners_target = [trg_skel.matrix_world @ Vector(corner) for corner in trg_skel.bound_box]
+    # dist_skel = bbox_corners_skel[1][2] - bbox_corners_skel[0][2]
+    # dist_target = bbox_corners_target[1][2] - bbox_corners_target[0][2]
+    # fscale = dist_target / dist_skel
+    # # Calculate scale using bone length
+    bidx = list_bones_trg.index("LeftUpLeg")
+    trg_bone_length = trg_skel.pose.bones[list_bones_trg[bidx]].length
+    src_bone_length = bvh_obj.pose.bones[list_bones_src[bidx]].length
+    fscale = trg_bone_length / src_bone_length
+
+    #fscale = 0.062
+    bvh_obj.scale = (fscale, fscale, fscale) 
+
+    # bpy.context.view_layer.update()
+
+    anim = CAnimation(bvh_obj, trg_skel, list_bones_trg, list_bones_src, bvh_obj, trg_skel)
+    anim.putInTPoses()
+    vals = np.arange(nfirst, nlast + 1)
+    anim.retarget(vals)
+
+    bpy.context.scene.frame_start = nfirst
+    bpy.context.scene.frame_end = nlast
+
+    act = trg_skel.animation_data.action
+    act.name = bvh_obj.name
+
+    # set frame to 1
+    bpy.context.scene.frame_set(1)
+
+
+    bpy.data.objects.remove(bvh_obj)
+    for block in bpy.data.armatures:
+        if block.users == 0:
+            bpy.data.armatures.remove(block)
+    for block in bpy.data.actions:
+        if block.users == 0:
+            bpy.data.actions.remove(block)
+
+
+
 def retarget_matworld(bone_corresp_file, action, trg_skel, rig):
 
     # load bvh file
@@ -329,6 +590,29 @@ def retarget_matworld(bone_corresp_file, action, trg_skel, rig):
     #fscale = 0.062
     bvh_obj.scale = (fscale, fscale, fscale) 
 
+    # if rig == 'mixamo':
+    #     list1 = ["mixamorig:LeftUpLeg", "mixamorig:LeftLeg"]
+    #     list2 = ["LeftUpLeg", "LeftLeg"]
+
+    #     # Set Avatar bone rolls to be the same as the input bvh motion
+    #     bpy.context.view_layer.objects.active = bvh_obj
+    #     bpy.ops.object.mode_set(mode = 'EDIT')
+    #     src_bones_roll = []
+    #     for bone in list1:
+    #         src_ebone = bvh_obj.data.edit_bones[bone]
+    #         src_bones_roll.append(src_ebone.roll)
+    #     src_bones_roll = np.array(src_bones_roll)
+    #     bpy.ops.object.mode_set(mode = 'OBJECT')
+
+
+    #     bpy.context.view_layer.objects.active = trg_skel
+    #     bpy.ops.object.mode_set(mode = 'EDIT')
+    #     for bidx, bone in enumerate(list2):
+    #         # select bone to copy roll
+    #         trg_skel.data.edit_bones[bone].roll = src_bones_roll[bidx]
+    #     bpy.ops.object.mode_set(mode = 'OBJECT')
+
+    # bpy.context.view_layer.update()
 
     for f in range(nfirst, nlast):
 
@@ -341,9 +625,13 @@ def retarget_matworld(bone_corresp_file, action, trg_skel, rig):
             mw_src = matrix_world(bvh_obj, list_bones_src[bidx])
             mw_trg = matrix_world(trg_skel, bone)
 
-            basis_trg = trg_skel.pose.bones[bone].matrix_basis
+            t_src, mw_src_R, s_src = mw_src.decompose()
+            t_trg, mw_trg_R, s_trg = mw_trg.decompose()
 
-            T1 = basis_trg @ mw_trg.inverted() @ mw_src
+            basis_trg = trg_skel.pose.bones[bone].matrix_basis
+            basis_t, basis_trg_R, basis_s = basis_trg.decompose()
+
+            T1 = basis_trg_R @ mw_trg_R.inverted() @ mw_src_R
 
             if rig == "mixamo" and bone == 'Hips':
                 # We need to invert X axis
