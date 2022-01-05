@@ -39,7 +39,8 @@ import addon_utils
 
 for mod in addon_utils.modules():
     if mod.bl_info['name'] == "Avatar":
-        avt_path = mod.__file__
+        avt_path_file = mod.__file__
+        avt_path = avt_path_file[:-12]
     else:
         pass
 
@@ -66,9 +67,6 @@ importlib.reload(dressing)
 
 import motion_utils
 importlib.reload(motion_utils)
-
-import bvh_utils
-importlib.reload(bvh_utils)
 
 import retarget
 importlib.reload(retarget)
@@ -176,10 +174,6 @@ def reload_avatar():
         list_matrices3.append(bone.matrix_local.copy())
     mAvt.list_matrices_local = list_matrices3 
 
-    # bvh_file = "%s/body/Reference.bvh" % avt_path
-    # bvh_nodes, _, _ = bvh_utils.read_bvh(bpy.context, bvh_file)
-    # mAvt.list_nodes = bvh_utils.sorted_nodes(bvh_nodes)
-
     # Info to compute deformation of clothes in fast manner
     size = len(mAvt.body.data.vertices)
     mAvt.body_kdtree = mathutils.kdtree.KDTree(size)
@@ -225,10 +219,6 @@ class AVATAR_OT_LoadModel(bpy.types.Operator):
         for bone in mAvt.skel.data.bones:
             list_matrices3.append(bone.matrix_local.copy())
         mAvt.list_matrices_local = list_matrices3 
-
-        # bvh_file = "%s/body/Reference.bvh" % avt_path
-        # bvh_nodes, _, _ = bvh_utils.read_bvh(bpy.context, bvh_file)
-        # mAvt.list_nodes = bvh_utils.sorted_nodes(bvh_nodes)
 
         # Info to compute deformation of clothes in fast manner
         size = len(mAvt.body.data.vertices)
