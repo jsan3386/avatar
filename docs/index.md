@@ -22,10 +22,7 @@ Integration of Makehuman inside Blender with a intuitive interface for a fast pr
 
 Requirements: Blender >= 2.8
 
-1. Create a file in the avatar github folder named config.py with the following content:  
-    ``avt_path = "/path/of/root/avatar/github/project"``
-2. Go to Edit>Preferences>FilePaths and add to Scripts the path to the github avatar folder
-3. Go to Edit>Preferences>Add-ons>Install and choose the file avatar_addon_b280.py 
+1. Go to Edit>Preferences>Add-ons>Install and choose zip file 
 
 The new addon should appear in the right tab (press N on the 3Dviewer screen)
 
