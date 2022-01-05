@@ -4,9 +4,9 @@
 
 ### Install
 
-1. Download or clone repository <br />
+1. Download zip from ```https://github.com/jsan3386/avatar ``` <br />
 2. Install Addon in Blender
-3. Download [cloth textures](todo) and extract files in avatar folder
+3. Download [cloth textures](https://cv.iri.upc-csic.es/Dataset/avatar/textures.zip) and extract files in avatar folder
 
 <!--- 
 ``` git clone https://github.com/jsan3386/avatar.git ``` 
