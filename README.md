@@ -4,23 +4,31 @@
 
 ### Install
 
-Download or clone repository
-(Optional) remove .git folder
-Create a zip file
-In Blender>Edit>Preferences>Install... choose zip file
-Activate addon
+1. Download or clone repository <br />
+2. Install Addon in Blender
+3. Download [cloth textures](todo) and extract files in avatar folder
 
-For cloth textures, download and extract [zip file](todo) on the installed avatar addon folder
+<!--- 
+``` git clone https://github.com/jsan3386/avatar.git ``` 
+2. (Optional) remove .git folder <br />
+``` cd $path_avatar/avatar ```<br />
+``` rm -rf .git ``` 
+3. Create a zip file
+4. In Blender>Edit>Preferences>Install... choose zip file
+5. Activate addon
+
+6. For cloth textures, download and extract [zip file](todo) on the installed avatar addon folder
+-->
 
 ### Documentation
 
-# Body Panel
+#### Body Panel
 
-# Dressing Panel
+#### Dressing Panel
 
-# Motion Panel
+#### Motion Panel
 
-# Code examples and further documentation
+#### Code examples and further documentation
 [Avatar Blender Add-on Docs](https://jsan3386.github.io/avatar/)
 
 
