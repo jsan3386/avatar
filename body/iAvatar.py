@@ -54,7 +54,7 @@ class Avatar:
         self.increment_radius = 0.2
 
         # weights and means to control shape
-        self.val_breast = self.val_torso = self.val_belly = self.val_hips = 0.0 
+        self.val_breast = self.val_torso = self.val_hips = 0.0 
         self.val_armslegs = self.val_weight = self.val_strength = 0.0
 
         self.vertices_breast, self.vertices_torso, self.vertices_strength = [], [], []
@@ -106,12 +106,6 @@ class Avatar:
         pca_vec = weights - mean_model
         self.vertices_strength = shape_utils.compose_vertices_eigenmat(pca_vec)
 
-        # TEST: load weights/mean belly
-        file_eigen_weights = "%s/body/PCA/Eigenbodies/parts/belly/eigenbody0.txt" % (self.addon_path)
-        weights = shape_utils.read_eigenbody(file_eigen_weights)
-        pca_vec = weights - mean_model
-        self.vertices_belly = shape_utils.compose_vertices_eigenmat(pca_vec)
-
 
 
     def refresh_shape(self, body_mesh):
@@ -123,7 +117,6 @@ class Avatar:
         # verts = self.body.data.vertices
         for i in range(0,len(verts)):
             verts[i].co = Vector((# X
-                                  self.vertices_belly[i][0] * self.val_belly + 
                                   self.vertices_weight[i][0] * self.val_weight + 
                                   self.vertices_breast[i][0] * self.val_breast + 
                                   self.vertices_armslegs[i][0] * self.val_armslegs + 
@@ -132,7 +125,6 @@ class Avatar:
                                   self.vertices_torso[i][0] * self.val_torso + 
                                   self.vertices_model[i][0],
                                   # Y 
-                                  self.vertices_belly[i][0] * self.val_belly + 
                                   self.vertices_weight[i][1] * self.val_weight + 
                                   self.vertices_breast[i][1] * self.val_breast +
                                   self.vertices_armslegs[i][1] * self.val_armslegs + 
@@ -141,7 +133,6 @@ class Avatar:
                                   self.vertices_torso[i][1] * self.val_torso + 
                                   self.vertices_model[i][1],
                                   # Z 
-                                  self.vertices_belly[i][0] * self.val_belly + 
                                   self.vertices_weight[i][2] * self.val_weight + 
                                   self.vertices_breast[i][2] * self.val_breast + 
                                   self.vertices_armslegs[i][2] * self.val_armslegs + 
@@ -180,8 +171,6 @@ class Avatar:
             
         # all vertices in destination mesh
         for cloth_vertex_index in range(0,total_vertices):
-#		for cloth_vertex_index in range(0,1):
-            #self.update_vertex() 
             
             # set vertices to empty first
             self.mesh_chosen_vertices = []  
@@ -189,9 +178,6 @@ class Avatar:
             # Need to pre-compute most of the values to make reshaping cloths faster
             current_vertex2 = cloth_verts[cloth_vertex_index].co @ cloth_mat_world_inv 
             current_vertex = cloth_mat_world @ cloth_verts[cloth_vertex_index].co    
-            #self.mesh_chosen_vertices = self.select_required_verts(current_vertex,0)
-#			print("Vertices found 1")
-#			print(self.select_required_verts(current_vertex,0)) 
 
             # 2 possible versions - radius or n-neighbours
             # kd.find_range() or kd.find_n()
@@ -199,47 +185,19 @@ class Avatar:
             #for (co, index, dist) in self.body_kdtree.find_range(current_vertex, 0.2):
                 #print("    ", co, index, dist)
                 self.mesh_chosen_vertices.append(index)
-
-#			print("Vertices found 2")
-#			print(self.mesh_chosen_vertices)
-
-#			for idx in range(0,len(self.mesh_chosen_vertices)):
-#				self.mesh.data.vertices[self.mesh_chosen_vertices[idx]].select = True
-
-#			cloth_verts[0].select = True
             
             # check we find some vertices
             if(len(self.mesh_chosen_vertices) == 0):
                 print("Failed to find surrounding vertices")
                 return False
 
-#			# update cloth vertex position
-#			result_position = Vector()    
-#			for v in self.mesh_chosen_vertices:
-#				result_position +=  self.mesh_prev[v].co    
-#			result_position /= len(self.mesh_chosen_vertices)
-
-#			result_position2 = Vector()
-#			for v in self.mesh_chosen_vertices:
-#				result_position2 += self.mesh.data.vertices[v].co        
-#			result_position2 /= len(self.mesh_chosen_vertices)    
-#			result = result_position2 - result_position + current_vertex        
-
             vals = self.np_mesh_diff[self.mesh_chosen_vertices,:]
-#			print("VALUES TEST")
-#			print(vals)
             disp = np.mean(vals, axis=0)
-#			print(disp)
             result = Vector((disp[0], disp[1], disp[2])) + current_vertex
-            #print("Result")
-            #print(current_vertex)
-            #print(result)
 
             # set vertex position
             cloth_verts[cloth_vertex_index].co = cloth_mesh.matrix_world.inverted() @ result
     
-#			current_vertex = cloth_mat_world * cloth_verts[cloth_vertex_index].co    
-#			cloth_verts[cloth_vertex_index].co = cloth_mesh.matrix_world.inverted() * result
 
     # select required vertices within a radius and return array of indices
     def select_vertices(self, center, radius):            

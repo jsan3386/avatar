@@ -2,14 +2,6 @@
 
 [Avatar Blender Add-on Docs](https://jsan3386.github.io/avatar/)
 
-### List TODOs, things to fix
-
-- correct belly shape parameter; better create new global model for shape parameters 
-- load bvh very slow; find other methods to properly retarget action
-- need complete clothes masks
-- improve MH vertex weights; some deformations are strange
-- re-implement class avatar; now easy to lose variables, and can't use multiple human models
-
 
 ### Credits
 
