@@ -1,6 +1,6 @@
 ### License
 
-[MIT](https://github.com/jsan3386/avatar/LICENSE)
+[MIT](LICENSE)
 
 ### Documentation
 
