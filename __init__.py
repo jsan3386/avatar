@@ -34,24 +34,22 @@ import mathutils
 #from bpy.props import * 
 import bpy.utils.previews 
 
-for p in bpy.utils.script_paths():
-    sys.path.append(p)
 
-# Set a file 'config.py' with variable avt_path that contains the
-# path of the script
-# need to add the root path in the blender preferences panel
-from config import avt_path
+import addon_utils
+
+for mod in addon_utils.modules():
+    if mod.bl_info['name'] == "Avatar":
+        avt_path = mod.__file__
+    else:
+        pass
 
 # add extra paths
 sys.path.append(os.path.join(avt_path, "body"))
 sys.path.append(os.path.join(avt_path, "dressing"))
 sys.path.append(os.path.join(avt_path, "dressing", "materials"))
 sys.path.append(os.path.join(avt_path, "motion"))
-# sys.path.append(os.path.join(avt_path, "motion", "net_models", "cpm_pose")
 sys.path.append(os.path.join(avt_path, "motion", "retarget_motion"))
 
-# #import load as load
-# import zmq
 
 import importlib
 
@@ -75,9 +73,6 @@ importlib.reload(bvh_utils)
 import retarget
 importlib.reload(retarget)
 
-# import load
-# importlib.reload(load)
-
 
 from bpy_extras.io_utils import axis_conversion
 
@@ -98,7 +93,7 @@ def generate_previews():
                'hat01.png', 'hat02.png', 'hat03.png', 'hat04.png',
                'jacket01.png', 'jacket02.png',
                'pants01.png', 'pants02.png', 'pants03.png', 'pants04.png', 'pants05.png', 'pants06.png',
-               'shirt01.png', 'shirt02.png', 'shirt03.png', 'shirt04.png', 'shirt05.png', 'shirt06.png', 'shirt07.png', 'shirt08.png',
+               'shirt01.png', 'shirt02.png', 'shirt03.png', 'shirt04.png', 'shirt05.png', 'shirt06.png', 'shirt07.png',
                'shoes01.png', 'shoes02.png', 'shoes03.png', 'shoes04.png',
                'skirt01.png', 'skirt02.png',
                'suit01.png',
@@ -123,21 +118,12 @@ def update_weights (self, context):
     #obj = context.active_object
     global mAvt
 
-    print("UpDATE WEIGHTS")
     if mAvt.body is not None:
         obj = mAvt.body
-        print("body none")
-        print(mAvt.body)
     else:
-        print("else")
         # for now assume avatar already there
         reload_avatar()
-        # obj = context.active_object
-        # print(obj)
 
-    # # set previous mesh vertices values
-    # cp_vals = obj.data.copy()
-    # mAvt.np_mesh_prev = mAvt.read_verts(cp_vals)
     
     # calculate new shape with PCA shapes
     mAvt.val_breast = self.val_breast
@@ -146,7 +132,6 @@ def update_weights (self, context):
     mAvt.val_armslegs = self.val_limbs
     mAvt.val_weight = - self.val_weight
     mAvt.val_strength = self.val_strength
-    mAvt.val_belly = self.val_belly
 
     mAvt.refresh_shape(obj)
 
@@ -191,9 +176,9 @@ def reload_avatar():
         list_matrices3.append(bone.matrix_local.copy())
     mAvt.list_matrices_local = list_matrices3 
 
-    bvh_file = "%s/body/Reference.bvh" % avt_path
-    bvh_nodes, _, _ = bvh_utils.read_bvh(bpy.context, bvh_file)
-    mAvt.list_nodes = bvh_utils.sorted_nodes(bvh_nodes)
+    # bvh_file = "%s/body/Reference.bvh" % avt_path
+    # bvh_nodes, _, _ = bvh_utils.read_bvh(bpy.context, bvh_file)
+    # mAvt.list_nodes = bvh_utils.sorted_nodes(bvh_nodes)
 
     # Info to compute deformation of clothes in fast manner
     size = len(mAvt.body.data.vertices)
@@ -219,8 +204,6 @@ class AVATAR_OT_LoadModel(bpy.types.Operator):
         obj = context.active_object
         
         # load makehuman model
-        # model_file = "%s/body/models/standard.mhx2" % avt_path
-        # bpy.ops.import_scene.makehuman_mhx2(filepath=model_file)
         model_file = "%s/body/models/avatar.blend" % avt_path
         load_model_from_blend_file(model_file)
 
@@ -243,9 +226,9 @@ class AVATAR_OT_LoadModel(bpy.types.Operator):
             list_matrices3.append(bone.matrix_local.copy())
         mAvt.list_matrices_local = list_matrices3 
 
-        bvh_file = "%s/body/Reference.bvh" % avt_path
-        bvh_nodes, _, _ = bvh_utils.read_bvh(bpy.context, bvh_file)
-        mAvt.list_nodes = bvh_utils.sorted_nodes(bvh_nodes)
+        # bvh_file = "%s/body/Reference.bvh" % avt_path
+        # bvh_nodes, _, _ = bvh_utils.read_bvh(bpy.context, bvh_file)
+        # mAvt.list_nodes = bvh_utils.sorted_nodes(bvh_nodes)
 
         # Info to compute deformation of clothes in fast manner
         size = len(mAvt.body.data.vertices)
@@ -260,16 +243,15 @@ class AVATAR_OT_LoadModel(bpy.types.Operator):
         bpy.ops.object.modifier_add(type='COLLISION')
 
         # Create skin material: eyes material should be created too
-        skin_material = importlib.import_module('skin_material')
-        importlib.reload(skin_material)
-        skin_mat = skin_material.create_material('skin', 0, 1)
+        # importlib.import_module('material_utils')
+        import material_utils
+        importlib.reload(material_utils)
+        skin_mat = material_utils.create_material_generic('skin', 0, 1)
         tex_img, tex_norm, tex_spec = dressing.read_file_textures(avt_path, 'skin')
-        skin_material.assign_textures(mAvt.body, skin_mat, tex_img, tex_norm, tex_spec)
-        eyes_material = importlib.import_module('eyes_material')
-        importlib.reload(eyes_material)
-        eyes_mat = eyes_material.create_material('eyes', 0, 1)
+        material_utils.assign_textures_generic_mat(mAvt.body, skin_mat, tex_img, tex_norm, tex_spec)
+        eyes_mat = material_utils.create_material_generic('eyes', 0, 1)
         tex_img, tex_norm, tex_spec = dressing.read_file_textures(avt_path, 'eyes')
-        eyes_material.assign_textures(mAvt.eyes, eyes_mat, tex_img, tex_norm, tex_spec)
+        material_utils.assign_textures_generic_mat(mAvt.eyes, eyes_mat, tex_img, tex_norm, tex_spec)
 
         return {'FINISHED'}
 
@@ -320,7 +302,7 @@ class AVATAR_OT_ResetParams(bpy.types.Operator):
 
         # calculate new shape with PCA shapes
         obj.val_breast = obj.val_torso = obj.val_hips = obj.val_limbs = 0.0
-        obj.val_weight = obj.val_strength = obj.val_belly = 0.0
+        obj.val_weight = obj.val_strength = 0.0
 
         mAvt.refresh_shape(obj)
 
@@ -353,9 +335,7 @@ class AVATAR_PT_LoadPanel(bpy.types.Panel):
                                                 min=-0.5, max=1.5, precision=2, update=update_weights)
     bpy.types.Object.val_strength = FloatProperty(name="Strength", description="Body Strength", default=0, 
                                                   min=0.0, max=0.5, precision=2, update=update_weights)
-    bpy.types.Object.val_belly = FloatProperty(name="Belly", description="Body Belly", default=0, 
-                                                  min=-10.0, max=10.0, precision=2, update=update_weights)
-    
+
 
     def draw(self, context):
         layout = self.layout
@@ -375,7 +355,6 @@ class AVATAR_PT_LoadPanel(bpy.types.Panel):
         layout.prop(obj, "val_hips")
         layout.prop(obj, "val_weight")
         layout.prop(obj, "val_strength")
-        layout.prop(obj, "val_belly")
         layout.separator()
         row = layout.row()
         row.operator('avt.reset_params', text="Reset parameters")		
@@ -417,12 +396,12 @@ class AVATAR_OT_WearCloth (bpy.types.Operator):
         cloth.select_set(True)
 
         # Create cloth material
-        cloth_material = importlib.import_module(iconname)
-        importlib.reload(cloth_material)
+        import material_utils
+        importlib.reload(material_utils)
         mat_id = dressing.get_material_id (iconname)
-        cloth_mat = cloth_material.create_material(iconname, 0, mat_id)
+        cloth_mat = material_utils.create_material_generic(iconname, 0, mat_id)
         tex_img, tex_norm, tex_spec = dressing.read_file_textures(avt_path, iconname)
-        cloth_material.assign_textures(cloth, cloth_mat, tex_img, tex_norm, tex_spec)
+        material_utils.assign_textures_generic_mat(cloth, cloth_mat, tex_img, tex_norm, tex_spec)
                             
         return {'FINISHED'}
 
@@ -459,22 +438,6 @@ class AVATAR_PT_DressingPanel(bpy.types.Panel):
         row = layout.row()
         row.operator('avt.create_studio', text="Create studio")	
 
-# def recv_array(socket, flags=0, copy=True, track=False):
-#     """recv a numpy array"""
-#     md = socket.recv_json(flags=flags)
-#     msg = socket.recv(flags=flags, copy=copy, track=track)
-#     #buf = memoryview(msg)
-#     A = np.frombuffer(msg, dtype=md['dtype'])
-#     return A.reshape(md['shape'])
-
-# def send_array(socket, A, flags=0, copy=True, track=False):
-#     """send a numpy array with metadata"""
-#     md = dict(
-#         dtype = str(A.dtype),
-#         shape = A.shape,
-#     )
-#     socket.send_json(md, flags|zmq.SNDMORE)
-#     return socket.send(A, flags, copy=copy, track=track)
 
 class AVATAR_OT_SetRestPose(bpy.types.Operator):
     bl_idname = "avt.set_rest_pose"
@@ -491,135 +454,6 @@ class AVATAR_OT_SetRestPose(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# class AVATAR_OT_StreamingPose(bpy.types.Operator):
-#     bl_idname = "avt.streaming_pose"
-#     bl_label = "Connect socket"  # Display name in the interface.
-# #    bl_options = {'REGISTER', 'UNDO'} 
-#     bl_options = {'REGISTER'} 
-
-#     def execute(self, context):  # execute() is called when running the operator.
-#         global mAvt
-
-#         if not context.window_manager.socket_connected:
-#             self.zmq_ctx = zmq.Context().instance()  # zmq.Context().instance()  # Context
-#             bpy.types.WindowManager.socket = self.zmq_ctx.socket(zmq.SUB)
-#             bpy.types.WindowManager.socket.connect(f"tcp://127.0.0.1:5667")  # publisher connects to this (subscriber)
-#             bpy.types.WindowManager.socket.setsockopt(zmq.SUBSCRIBE, ''.encode('ascii'))
-#             print("Waiting for data...")
-
-#             # poller socket for checking server replies (synchronous)
-#             self.poller = zmq.Poller()
-#             self.poller.register(bpy.types.WindowManager.socket, zmq.POLLIN)
-
-#             # let Blender know our socket is connected
-#             context.window_manager.socket_connected = True
-#             mAvt.frame = 1
-#             mAvt.start_origin = context.window_manager.start_origin
-#             mAvt.write_timeline = context.window_manager.write_timeline
-
-#             bpy.app.timers.register(self.timed_msg_poller)
-
-#         # stop ZMQ poller timer and disconnect ZMQ socket
-#         else:
-#             # cancel timer function with poller if active
-#             if bpy.app.timers.is_registered(self.timed_msg_poller):
-#                 bpy.app.timers.unregister(self.timed_msg_poller())
-
-#             try:
-#                 # close connection
-#                 bpy.types.WindowManager.socket.close()
-#                 print("Subscriber socket closed")
-#                 # remove reference
-#             except AttributeError:
-#                 print("Subscriber socket was not active")
-
-#             # let Blender know our socket is disconnected
-#             bpy.types.WindowManager.socket = None
-#             context.window_manager.socket_connected = False
-#             context.window_manager.pid = 0
-
-#         return {'FINISHED'}  # Lets Blender know the operator finished successfully.
-
-#     def timed_msg_poller(self):  # context
-#         global mAvt
-#         socket_sub = bpy.types.WindowManager.socket
-# #        write_timeline = bpy.types.WindowManager.write_timeline
-# #        start_origin = bpy.types.WindowManager.start_origin
-#         # only keep running if socket reference exist (not None)
-#         if socket_sub:
-#             # get sockets with messages (0: don't wait for msgs)
-#             sockets = dict(self.poller.poll(0))
-#             # check if our sub socket has a message
-#             if socket_sub in sockets:
-#                 # get the message
-#                 points3d = recv_array(socket_sub)
-#                 #print(points3d)
-#                 # When using points obtained from Matlab
-#                 # M_mb = motion_utils.get_trans_mat_blend_to_matlab()
-#                 # pts_skel = np.matmul(points3d, M_mb)
-#                 pts_skel = points3d
-#                 if mAvt.start_origin:
-#                     # translate points
-#                     new_pts_skel = []
-#                     if mAvt.frame == 1:
-#                         hips = pts_skel[14,:]
-#                         mAvt.trans = hips - np.array(mAvt.hips_pos)
-#                     for pt in pts_skel:
-#                         new_pts_skel.append( [pt[0]-mAvt.trans[0], pt[1]-mAvt.trans[1], pt[2]-mAvt.trans[2]])
-#                     pts_skel = np.array(new_pts_skel)
-
-#                 # set skeleton rest position: MAYBE MOVE ALL THIS TO SERVER.PY IN ORDER TO MAKE FASTER UPDATES
-#                 # slow version
-#                 # motion_utils.set_rest_pose(mAvt.skel, mAvt.skel_ref, mAvt.list_bones)
-#                 # motion_utils.calculate_rotations(mAvt.skel, pts_skel)
-#                 # faster version
-#                 motion_utils.set_rest_pose3(mAvt.skel, mAvt.list_matrices_basis, mAvt.list_matrices_local)
-#                 motion_utils.calculate_rotations_fast(mAvt.skel, mAvt.list_nodes, pts_skel)
-
-
-#                 if mAvt.write_timeline:
-#                     bpy.context.view_layer.update()
-#                     mAvt.skel.keyframe_insert(data_path = "location", index = -1, frame = mAvt.frame)
-            
-#                     for bone in mAvt.list_bones:
-#                         mAvt.skel.pose.bones[bone].keyframe_insert(data_path = "rotation_quaternion", index = -1, frame = mAvt.frame)
-
-#                     mAvt.frame += 1
-
-#         # keep running
-#         return 0.001
-
-
-# class AVATAR_OT_StreamingPublisher(bpy.types.Operator):
-#     bl_idname = "avt.streaming_publisher"
-#     bl_label = "Start streaming"  # Display name in the interface.
-# #    bl_options = {'REGISTER', 'UNDO'} 
-#     bl_options = {'REGISTER'} 
-
-#     bpy.types.WindowManager.pid = IntProperty(default=0)
-
-#     def execute(self, context):  # execute() is called when running the operator.
-#         global avt_path
-
-#         if not context.window_manager.streaming:
-#             str_fps = str(context.window_manager.fps)
-#             # path_frames = "%s/motion/frames" % avt_path
-#             # path_frames = "/mnt/data/jsanchez/Blender/Renders/sequence_animation/goalie_throw/seq"
-#             path_frames = "/mnt/data/jordi_tf/Projects/Avatar/Results-Avatar"
-#             # path_frames = "/mnt/data/jordi_tf/Projects/Avatar/Results-Avatar/real_seq"
-#             prog = "%s/motion/server.py" % avt_path
-#             proc = subprocess.Popen(["python", prog, "-frames_mixamo", path_frames, str_fps]) 
-#             context.window_manager.pid = proc.pid
-#             context.window_manager.streaming = True
-#             mAvt.start_origin = context.window_manager.start_origin
-#             mAvt.write_timeline = context.window_manager.write_timeline
-
-#         else:
-#             if context.window_manager.pid != 0:
-#                 os.kill(context.window_manager.pid, signal.SIGTERM)
-#             context.window_manager.streaming = False
-
-#         return {'FINISHED'}
 
 class AVATAR_OT_LoadBVH (bpy.types.Operator):
     
@@ -642,81 +476,21 @@ class AVATAR_OT_LoadBVH (bpy.types.Operator):
         global mAvt
         scn = context.scene
         obj = context.active_object
-        #
-        # print(mAvt)
-        # mAvt.bvh_offset = obj.bvh_offset
-        # mAvt.bvh_start_origin = obj.bvh_start_origin
-
-        # arm2 = mAvt.skel
-        
-        # bones = ["Hips","LHipJoint","LeftUpLeg","LeftLeg","LeftFoot","LeftToeBase","LowerBack","Spine","Spine1","LeftShoulder","LeftArm","LeftForeArm","LeftHand","LThumb","LeftFingerBase","LeftHandFinger1","Neck","Neck1","Head","RightShoulder","RightArm","RightForeArm","RightHand","RThumb","RightFingerBase","RightHandFinger1","RHipJoint","RightUpLeg","RightLeg","RightFoot","RightToeBase"]        
-            
-        # for i in range(len(bones)):
-        #     bone = bones[i]
-        #     matrix = arm2.pose.bones[bone].matrix
-        #     original_position.append(matrix)
-
-        # original_position = []
-        # for b in obj.pose.bones:
-        #     original_position.append(b.matrix.copy())
             
         file_path_bvh = self.filepath 
         
         bone_corresp_file = "%s/motion/rigs/%s.txt" % (avt_path, scn.skel_rig)
 
         if obj is not None:
-            # retarget calculating rotaions from 3D positions: very slow
-            # retarget.retarget_skeleton(bone_corresp_file, file_path_bvh, obj)
-            # retarget copying the bvh constraints: very slow
-            retarget.retarget_constrains(bone_corresp_file, file_path_bvh, obj, self.act_x, self.act_y, self.act_z)
+            retarget.retarget_addon(bone_corresp_file, file_path_bvh, obj, scn.skel_rig)
         else:
             print("Please, select a model to transfer the bvh action")
 
-#        retarget.loadRetargetSimplify(context, file_path, original_position, 0, False) 
-
-#        retarget.loadRetargetSimplify(context, file_path, original_position, obj.bvh_offset, obj.bvh_start_origin) 
 
         return {'FINISHED'}
 
 
 
-# class AVATAR_OT_LoadBVH (bpy.types.Operator):
-    
-#     bl_idname = "avt.load_bvh"
-#     bl_label = "Load BVH"
-#     bl_description = "Transfer motion to human model"
-
-#     filepath = bpy.props.StringProperty(subtype="FILE_PATH") 
-
-#     def invoke(self, context, event):
-#         bpy.context.window_manager.fileselect_add(self)
-#         return {'RUNNING_MODAL'}
-
-#     def execute(self, context):
-#         global avt_path
-#         global mAvt
-#         scn = context.scene
-#         obj = context.active_object
-#         #
-#         reference_body = "%s/body/Reference.bvh" % avt_path
-#         file_bone_corresp = "%s/motion/bones/avt_corrsp_01.txt" % avt_path
-#         file_path = self.filepath 
-
-#         bvh_nodes, bvh_frame_time, bvh_frame_count = bvh_utils.read_bvh(context, file_path) 
-#         avt_nodes, _, _ = bvh_utils.read_bvh(context, reference_body)
-
-#         bvh_name = bpy.path.display_name_from_filepath(file_path)
-#         global_matrix = axis_conversion(from_forward='-Z', from_up='Y').to_4x4()        
-#         bones_eq = bvh_utils.bone_equivalence(file_bone_corresp)
-
-#         bvh_utils.transfer_motion(avt_nodes, bvh_nodes, mAvt.skel, mAvt.armature, bones_eq, global_matrix)
-# #        bvh_utils.bvh_node_dict2armature(context, bvh_name, bvh_nodes, bvh_frame_time, mAvt.armature, mAvt.skel, 
-# #                                         global_matrix=global_matrix)
-# #        print(bvh_nodes)
-#         print(bvh_frame_time)
-#         print(bvh_frame_count)
-
-#         return {'FINISHED'}
 
 
 class AVATAR_PT_MotionPanel(bpy.types.Panel):
@@ -730,13 +504,6 @@ class AVATAR_PT_MotionPanel(bpy.types.Panel):
     # NOTE:
     # For the moment we don't implement write_bvh. This can be done registering motin to timeline and the export to bvh
 
-#    bpy.types.WindowManager.socket_connected = BoolProperty(name="Connect status", description="Boolean", default=False)
-#    bpy.types.WindowManager.streaming = BoolProperty(name="Streaming status", description="Boolean", default=False)
-#    bpy.types.WindowManager.fps = IntProperty(name="FPS", description="Streaming frame rate", default=30, min=1, max=60)
-##    bpy.types.WindowManager.write_bvh = BoolProperty(name = "wBvh", description="Start at origin", default = False)
-#    bpy.types.WindowManager.write_timeline = BoolProperty(name = "wTimeline", description="Start at origin", default = False)
-#    bpy.types.WindowManager.start_origin = BoolProperty(name = "sOrigin", description="Start at origin", default = False)
-
     bpy.types.Object.bvh_offset = IntProperty(name = "Offset", description="Start motion offset", default = 0, min = 0, max = 250)
     bpy.types.Object.bvh_start_origin = BoolProperty(name = "Origin", description="Start at origin", default = False)
 
@@ -746,40 +513,9 @@ class AVATAR_PT_MotionPanel(bpy.types.Panel):
         obj = context.object
         wm = context.window_manager
         
-        #row = layout.row()
-
-#        row = layout.row()
         layout.operator("avt.set_rest_pose", text="Reset pose")
-#        layout.prop(wm, "write_bvh", text="Write BVH file")
-        #layout.prop(context.scene, 'test_enum', text='enum property', icon='NLA')
         layout.prop(context.scene, 'skel_rig', text='')
         layout.operator("avt.load_bvh", text="Load BVH")
-        # layout.prop(obj, "bvh_offset", text="Motion offset")
-        # layout.prop(obj, "bvh_start_origin", text="Start origin")
-
-        # if not wm.socket_connected:
-        #     layout.operator("avt.streaming_pose")  # , text="Connect Socket"
-        # else:
-        #     layout.operator("avt.streaming_pose", text="Disconnect Socket")
-
-        # if not wm.socket_connected:
-        #     return
-
-        # row = layout.row()
-        # layout.operator("avt.streaming_publisher")  # , text="Connect Socket"
-
-# #        row = layout.row()
-#         if not wm.streaming:
-#             layout.operator("avt.streaming_publisher")  # , text="Start streaming"
-#         else:
-#             layout.operator("avt.streaming_publisher", text="Stop streaming")
-
-        # layout.prop(wm, "fps")
-        # layout.prop(wm, "write_timeline", text="Write timeline keypoints")
-        # layout.prop(wm, "start_origin", text="Start at origin")
-
-# def set_source_skeleton(self, context):
-#     skel = self.skel_type
 
 
 classes  = (
@@ -791,8 +527,6 @@ classes  = (
             AVATAR_OT_WearCloth,
             AVATAR_OT_CreateStudio,
             AVATAR_PT_MotionPanel,
-#            AVATAR_OT_StreamingPose,
-#            AVATAR_OT_StreamingPublisher,
             AVATAR_OT_SetRestPose,
             AVATAR_OT_LoadBVH,
 )
@@ -814,12 +548,6 @@ def enum_menu_items():
 
         menu_items.append((name, name, '', i))
 
-    # aenum_menu_items = [
-    #             ('OPT1','Option 1','',1),
-    #             ('OPT2','Option 2','',2),
-    #             ('OPT3','Option 3','',3),
-    #             ('OPT4','Option 4','',4),
-    #             ]
     return menu_items
 
 def register():

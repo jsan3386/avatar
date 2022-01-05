@@ -30,7 +30,6 @@ Shirt
 -----
 F lusekofta                -- shirt01.png
 Knitted sweater 01         -- shirt02.png
-* * Knitted sweater 02         -- (same as knitted sweater01 only change texture)
 Tank top 01                -- shirt03.png
 Spaghetti strap tank top   -- shirt04.png
 Lace up blouse             -- shirt05.png
