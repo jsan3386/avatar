@@ -1,3 +1,7 @@
+### License
+
+[MIT](https://jsan3386.github.io/avatar/LICENSE)
+
 ### Documentation
 
 [Avatar Blender Add-on Docs](https://jsan3386.github.io/avatar/)
