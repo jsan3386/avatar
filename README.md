@@ -2,8 +2,25 @@
 
 [MIT](LICENSE)
 
+### Install
+
+Download or clone repository
+(Optional) remove .git folder
+Create a zip file
+In Blender>Edit>Preferences>Install... choose zip file
+Activate addon
+
+For cloth textures, download and extract [zip file](todo) on the installed avatar addon folder
+
 ### Documentation
 
+# Body Panel
+
+# Dressing Panel
+
+# Motion Panel
+
+# Code examples and further documentation
 [Avatar Blender Add-on Docs](https://jsan3386.github.io/avatar/)
 
 
@@ -11,7 +28,7 @@
 
 - [Makehuman](http://www.makehumancommunity.org/)
     - Clothes mostly on Mindfront, punkduck 
-- Marta Altarriba Fatsini - Motion transfer from set of 3D points
+<!--- - Marta Altarriba Fatsini - Motion transfer from set of 3D points -->
 - Aniol Civit Bertran - Human model shape parameters
 - Code and help from:
     - [Blender Stack Exchange](https://blender.stackexchange.com/)
