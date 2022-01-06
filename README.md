@@ -19,6 +19,8 @@
 1. Select Avatar body
 2. Move shape sliders to desired body shape
 
+![](./docs/figures/video_shape.gif)
+
 #### Dressing Avatar
 1. Select cloth garment from library
 2. Load cloth to Avatar
