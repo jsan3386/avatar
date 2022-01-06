@@ -86,16 +86,16 @@ def generate_previews():
 
     enum_items = []
 
-    gallery = ['dress01.png', 'dress02.png', 'dress03.png', 'dress04.png', 'dress05.png', 'dress06.png',
-                'glasses01.png', 'glasses02.png',
-               'hat01.png', 'hat02.png', 'hat03.png', 'hat04.png',
-               'jacket01.png', 'jacket02.png',
-               'pants01.png', 'pants02.png', 'pants03.png', 'pants04.png', 'pants05.png', 'pants06.png',
-               'shirt01.png', 'shirt02.png', 'shirt03.png', 'shirt04.png', 'shirt05.png', 'shirt06.png', 'shirt07.png',
-               'shoes01.png', 'shoes02.png', 'shoes03.png', 'shoes04.png',
-               'skirt01.png', 'skirt02.png',
-               'suit01.png',
-               'swimming01.png', 'swimming02.png', 'swimming03.png', 'swimming04.png']
+    gallery = ['dress01.jpg', 'dress02.jpg', 'dress03.jpg', 'dress04.jpg', 'dress05.jpg', 'dress06.jpg',
+               'glasses01.jpg', 'glasses02.jpg',
+               'hat01.jpg', 'hat02.jpg', 'hat03.jpg', 'hat04.jpg',
+               'jacket01.jpg', 'jacket02.jpg',
+               'pants01.jpg', 'pants02.jpg', 'pants03.jpg', 'pants04.jpg', 'pants05.jpg', 'pants06.jpg',
+               'shirt01.jpg', 'shirt02.jpg', 'shirt03.jpg', 'shirt04.jpg', 'shirt05.jpg', 'shirt06.jpg', 'shirt07.jpg',
+               'shoes01.jpg', 'shoes02.jpg', 'shoes03.jpg', 'shoes04.jpg',
+               'skirt01.jpg', 'skirt02.jpg',
+               'suit01.jpg',
+               'swimming01.jpg', 'swimming02.jpg', 'swimming03.jpg', 'swimming04.jpg']
 
     a = 0
     for i in gallery:
