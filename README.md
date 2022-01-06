@@ -13,13 +13,24 @@
    ```mv $avatar  $blender_install/$blender_version/scripts/addons ```<br />
 4. In Blender>Edit>Preferences search for avatar and activate addon
 
-### Documentation
+### Features
 
-#### Body Panel
+#### Shape Parameters
+1. Select Avatar body
+2. Move shape sliders to desired body shape
 
-#### Dressing Panel
+#### Dressing Avatar
+1. Select cloth garment from library
+2. Load cloth to Avatar
 
-#### Motion Panel
+![](./docs/figures/dressing_panel.gif) <img src="./docs/figures/cloth_previews.jpg" height="256" />
+
+#### Transfer BVH motion files
+1. Select Avatar skeleton
+2. Select bvh file skeleton (blender_repo, cmu, mixamo)
+3. Load bvh file to Avatar
+
+![](./docs/figures/video_motion.gif)
 
 #### Code examples and further documentation
 [Avatar Blender Add-on Docs](https://jsan3386.github.io/avatar/)
