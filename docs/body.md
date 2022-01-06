@@ -33,6 +33,36 @@ model.val_weight = val # weight values goes from -0.5 to 1.5
 bpy.ops.avt.set_body_shape()
 ```
 
+```
+import bpy
+import numpy as np
+import random
+
+
+out_path = "/some/user/path"
+
+model = bpy.data.objects["Avatar"]
+
+scene = bpy.context.scene
+
+bpy.ops.avt.reset_params()
+
+for f in range(100):
+    
+    print(f)
+
+    model.val_breast = random.uniform(0, 1)
+    model.val_weight = random.uniform(0, 1)
+    model.val_hips = random.uniform(0, 1)
+
+    bpy.ops.avt.set_body_shape()
+    
+    # set output path so render won't get overwritten
+    scene.render.filepath = "%s/%04d.jpg" % (out_path, f)
+    bpy.ops.render.render(write_still=True) # render still
+```
+
+
 #### Pose
 
 List of Avatar joints. For some reason, if you save different models and load them again, blender modifies the joint order, so it is important to read them from a list or sort joints to obtain them always in the same order.
