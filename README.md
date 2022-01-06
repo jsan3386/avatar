@@ -4,21 +4,10 @@
 
 ### Install
 
-1. Download zip from ```https://github.com/jsan3386/avatar ``` <br />
-2. Install Addon in Blender
-3. Download [cloth textures](https://cv.iri.upc-csic.es/Dataset/avatar/textures.zip) and extract files in avatar folder
-
-<!--- 
-``` git clone https://github.com/jsan3386/avatar.git ``` 
-2. (Optional) remove .git folder <br />
-``` cd $path_avatar/avatar ```<br />
-``` rm -rf .git ``` 
-3. Create a zip file
-4. In Blender>Edit>Preferences>Install... choose zip file
-5. Activate addon
-
-6. For cloth textures, download and extract [zip file](todo) on the installed avatar addon folder
--->
+1. Clone avatar ```git clone https://github.com/jsan3386/avatar ```
+2. Download [cloth textures](https://cv.iri.upc-csic.es/Dataset/avatar/textures.zip) and extract files in avatar folder
+3. Move avatar folder to Blender addons folder
+4. In Blender>Edit>Preferences search for avatar and activate addon
 
 ### Documentation
 
