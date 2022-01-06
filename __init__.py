@@ -86,7 +86,7 @@ def generate_previews():
 
     enum_items = []
 
-    gallery = ['dress01.png', 'dress02.png', 'dress03.png', 'dress04.png', 'dress05.png', 'dress06.png', 'dress07.png',
+    gallery = ['dress01.png', 'dress02.png', 'dress03.png', 'dress04.png', 'dress05.png', 'dress06.png',
                 'glasses01.png', 'glasses02.png',
                'hat01.png', 'hat02.png', 'hat03.png', 'hat04.png',
                'jacket01.png', 'jacket02.png',

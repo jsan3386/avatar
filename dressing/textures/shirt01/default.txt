@@ -1,4 +1,3 @@
 F_Lusekofta.png
 F_Lusekofta_NRM.png
 F_Lusekofta_SPEC.png
-F_Lusekofta_METAL.png

@@ -4,7 +4,7 @@ import bpy
 import math
 
 # clothes used in avatar
-clthlst = ['dress01', 'dress02', 'dress03', 'dress04', 'dress05', 'dress06', 'dress07',
+clthlst = ['dress01', 'dress02', 'dress03', 'dress04', 'dress05', 'dress06',
            'glasses01', 'glasses02',
            'hat01', 'hat02', 'hat03', 'hat04',
            'jacket01', 'jacket02',

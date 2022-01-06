@@ -1,2 +1,2 @@
-short_jeans.png
-short_jeans_normals.png
+shortjeans.png
+shortjeans_normals.png

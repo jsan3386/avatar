@@ -1,2 +1,2 @@
-costume_leggins.png
-costume_leggins_norm.png
+costume_leggings.png
+costume_leggings_norm.png
