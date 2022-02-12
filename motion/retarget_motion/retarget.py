@@ -468,9 +468,7 @@ def retarget_addon(bone_corresp_file, action, trg_skel, rig):
 
     # load bvh file
     bvh_file = action
-    bpy.ops.import_anim.bvh(filepath=bvh_file, axis_up='Y', axis_forward='-Z', filter_glob="*.bvh",
-                                    target='ARMATURE', global_scale=1.0, frame_start=1, use_fps_scale=True,
-                                    use_cyclic=False, update_scene_duration=True, rotate_mode='NATIVE')
+    bpy.ops.import_anim.bvh(filepath=bvh_file)
 
     # create target animation
     trg_skel.animation_data_clear()
